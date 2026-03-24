@@ -135,8 +135,25 @@
         button.info { background: #0288d1; }
         button.excel { background: #1e6f3f; font-weight: bold; }
         button.salvar { background: #2e7d32; font-weight: bold; padding: 10px 20px; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
         
-        /* Tooltip */
+        /* CORREÇÃO DOS BOTÕES DE AÇÃO - ALINHADOS VERTICALMENTE */
+        .acoes-cell {
+            white-space: nowrap;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        
+        .acoes-cell button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 10px;
+            font-size: 0.8rem;
+        }
+        
         [data-tooltip] {
             position: relative;
             cursor: pointer;
@@ -167,7 +184,6 @@
         td { border: 1px solid #ddd; padding: 8px; white-space: nowrap; }
         tr:hover { background: #fafafa; }
         
-        /* Status badges com cores suaves */
         .status-badge {
             padding: 3px 8px;
             border-radius: 20px;
@@ -184,7 +200,7 @@
         .status-badge.em-rota { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
         .status-badge.pendente { background: #f5f5f5; color: #616161; border: 1px solid #e0e0e0; }
         
-        /* Linha de pedido atrasado */
+        /* CORREÇÃO: Só destaca em vermelho se NÃO for ENTREGUE */
         tr.atrasado-row { background-color: #ffebee !important; }
         tr.atrasado-row:hover { background-color: #ffcdd2 !important; }
         
@@ -199,14 +215,9 @@
             border: 1px solid #ddd;
             flex-wrap: wrap;
         }
-        .resumo-item {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
+        .resumo-item { display: inline-flex; align-items: center; gap: 5px; }
         .resumo-item strong { color: #5C2A2A; }
         
-        /* Filtros suaves estilo tags */
         .filtros-rapidos {
             display: flex;
             gap: 8px;
@@ -223,16 +234,9 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        .filtro-tipo-btn:hover {
-            background: #e0e0e0;
-        }
-        .filtro-tipo-btn.active {
-            background: #8B5A5A;
-            color: white;
-            border-color: #8B5A5A;
-        }
+        .filtro-tipo-btn:hover { background: #e0e0e0; }
+        .filtro-tipo-btn.active { background: #8B5A5A; color: white; border-color: #8B5A5A; }
         
-        /* Ordenação suave */
         .ordenacao-btns {
             display: flex;
             gap: 6px;
@@ -249,23 +253,11 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        .ordem-btn:hover {
-            background: #e0e0e0;
-        }
-        .ordem-btn.active {
-            background: #8B5A5A;
-            color: white;
-            border-color: #8B5A5A;
-        }
+        .ordem-btn:hover { background: #e0e0e0; }
+        .ordem-btn.active { background: #8B5A5A; color: white; border-color: #8B5A5A; }
         
-        .tooltip-icon {
-            cursor: help;
-            color: #8B5A5A;
-            font-size: 16px;
-        }
-        .tooltip-icon:hover {
-            color: #5C2A2A;
-        }
+        .tooltip-icon { cursor: help; color: #8B5A5A; font-size: 16px; }
+        .tooltip-icon:hover { color: #5C2A2A; }
         
         .kpi-grid {
             display: grid;
@@ -391,18 +383,17 @@
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
         .close-modal { font-size: 20px; cursor: pointer; color: #999; }
         
-        /* Rodapé fixo com versículo no canto inferior esquerdo */
+        /* RODAPÉ CORRIGIDO - APENAS BRETON E DIREITOS RESERVADOS */
         .footer {
             position: fixed;
             bottom: 0;
             left: 250px;
             right: 0;
-            background: #f8f8f8;
-            border-top: 1px solid #e0e0e0;
-            padding: 6px 15px;
-            font-size: 10px;
-            color: #999;
+            background: #5C2A2A;
+            color: #F5E8E0;
             text-align: center;
+            padding: 10px 15px;
+            font-size: 12px;
             z-index: 10;
         }
         
@@ -413,7 +404,7 @@
             font-size: 9px;
             color: #5C2A2A;
             font-style: italic;
-            opacity: 0.7;
+            opacity: 0.6;
             background: transparent;
             z-index: 15;
             pointer-events: none;
@@ -430,6 +421,32 @@
         }
         .char-counter.warning { color: #f57c00; }
         .char-counter.danger { color: #d32f2f; }
+        
+        .search-box {
+            margin: 15px 0;
+        }
+        .search-box input {
+            width: 100%;
+            max-width: 300px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 5px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -439,24 +456,22 @@
         <div class="logo-main">BRETON BELÉM</div>
         <div class="logo-sub">Hong Possas Mov. de Decoração</div>
     </div>
-    <button onclick="mostrar('clientes')"><i>👥</i> Clientes</button>
-    <button onclick="mostrar('fornecedores')"><i>📦</i> Fornecedores</button>
-    <button onclick="mostrar('lancamentos')"><i>📝</i> Lançamentos</button>
-    <button onclick="mostrar('relatorios')"><i>📊</i> Relatórios</button>
-    <button onclick="mostrar('dashboard')"><i>📈</i> Dashboard</button>
-    <button onclick="mostrar('anexos')"><i>📎</i> Anexos</button>
-    <button id="menuUsuarios" onclick="mostrar('usuarios')" style="display: none;"><i>👤</i> Usuários</button>
-    <button id="menuLogs" onclick="mostrar('logs')" style="display: none;"><i>📋</i> Logs</button>
-    <button onclick="logout()" style="margin-top: 20px;"><i>🚪</i> Sair</button>
+    <button onclick="mostrar('clientes')">👥 Clientes</button>
+    <button onclick="mostrar('fornecedores')">📦 Fornecedores</button>
+    <button onclick="mostrar('lancamentos')">📝 Lançamentos</button>
+    <button onclick="mostrar('relatorios')">📊 Relatórios</button>
+    <button onclick="mostrar('dashboard')">📈 Dashboard</button>
+    <button onclick="mostrar('anexos')">📎 Anexos</button>
+    <button id="menuUsuarios" onclick="mostrar('usuarios')" style="display: none;">👤 Usuários</button>
+    <button id="menuLogs" onclick="mostrar('logs')" style="display: none;">📋 Logs</button>
+    <button onclick="logout()" style="margin-top: 20px;">🚪 Sair</button>
 </div>
 
 <div class="main" id="main-content"></div>
 
+<!-- RODAPÉ CORRIGIDO -->
 <div class="footer" id="footer" style="display: none;">
-    <div class="footer-content">
-        <div><span>Compras:</span> (91) 9137-8383 | <span>Suporte:</span> (91) 9192-6953</div>
-        <div>© 2026 BRETON BELÉM - Todos os direitos reservados</div>
-    </div>
+    <div>© 2025 Breton Belém - Todos os direitos reservados</div>
 </div>
 
 <div class="footer-verse" id="footerVerse" style="display: none;">Provérbios 16:3: "Confie ao Senhor as suas obras, e os seus planos serão bem-sucedidos."</div>
@@ -482,6 +497,27 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+
+// ============================================
+// CACHE DE ELEMENTOS DOM (MELHORIA DE PERFORMANCE)
+// ============================================
+const DOMCache = {};
+function getElement(id) {
+    if (!DOMCache[id]) {
+        DOMCache[id] = document.getElementById(id);
+    }
+    return DOMCache[id];
+}
+
+// ============================================
+// FUNÇÃO DE SANITIZAÇÃO (SEGURANÇA)
+// ============================================
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
 // ============================================
 // DADOS
@@ -513,7 +549,62 @@ const tiposPedido = ['OC', 'SHOWROOM', 'ESTOQUE', 'ASSISTENCIA'];
 const mesesLista = ['Janeiro/2026', 'Fevereiro/2026', 'Março/2026', 'Abril/2026', 'Maio/2026', 'Junho/2026', 'Julho/2026', 'Agosto/2026', 'Setembro/2026', 'Outubro/2026', 'Novembro/2026', 'Dezembro/2026'];
 
 // ============================================
-// FUNÇÕES DO FIREBASE
+// FUNÇÕES DE VALIDAÇÃO DE DATAS (MELHORIA)
+// ============================================
+function validarDatas(lancamento) {
+    if (lancamento.data_pagto && lancamento.entrega) {
+        const dataPagto = new Date(lancamento.data_pagto);
+        const dataEntrega = new Date(lancamento.entrega);
+        if (dataEntrega < dataPagto) {
+            alert('⚠️ Atenção: Data de entrega não pode ser anterior à data de pagamento!');
+            return false;
+        }
+    }
+    if (lancamento.data_fat && lancamento.data_pagto) {
+        const dataFat = new Date(lancamento.data_fat);
+        const dataPagto = new Date(lancamento.data_pagto);
+        if (dataPagto < dataFat) {
+            alert('⚠️ Atenção: Data de pagamento não pode ser anterior ao faturamento!');
+            return false;
+        }
+    }
+    return true;
+}
+
+// ============================================
+// FUNÇÃO DE LOADING (MELHORIA UX)
+// ============================================
+function showLoading(button, text = 'Salvando...') {
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = `<span class="loading-spinner"></span> ${text}`;
+    return originalText;
+}
+
+function hideLoading(button, originalText) {
+    button.disabled = false;
+    button.innerHTML = originalText;
+}
+
+// ============================================
+// FUNÇÃO CORRIGIDA: SÓ DESTACA SE NÃO FOR ENTREGUE
+// ============================================
+function isPedidoAtrasado(lancamento) {
+    // Se já foi entregue, NÃO está atrasado
+    if (lancamento.status === 'ENTREGUE') return false;
+    
+    // Se não tem data de entrega, não tem como calcular
+    if (!lancamento.entrega) return false;
+    
+    const hoje = new Date();
+    const dataEntrega = new Date(lancamento.entrega);
+    
+    // Retorna true se a data de entrega for menor que hoje (vencida)
+    return dataEntrega < hoje;
+}
+
+// ============================================
+// FUNÇÕES DO FIREBASE COM TRATAMENTO DE ERROS
 // ============================================
 async function carregarDados() {
     try {
@@ -579,20 +670,24 @@ async function carregarDados() {
             usuarios = usuariosIniciais;
         }
         
-        console.log("Dados carregados do Firebase!");
+        console.log("✅ Dados carregados do Firebase!");
         return true;
     } catch (error) {
-        console.error("Erro ao carregar dados:", error);
-        alert("Erro ao conectar com o Firebase. Verifique sua internet.");
+        console.error("❌ Erro ao carregar dados:", error);
+        alert("❌ Erro ao conectar com o Firebase. Verifique sua internet e tente novamente.");
         return false;
     }
 }
 
 async function adicionarLog(acao, detalhe = '') {
-    const log = { data: new Date().toISOString(), usuario: usuarioAtual || 'Sistema', acao, detalhe };
-    await db.collection('logs').add(log);
-    logs.push(log);
-    if (logs.length > 100) logs = logs.slice(-100);
+    try {
+        const log = { data: new Date().toISOString(), usuario: usuarioAtual || 'Sistema', acao, detalhe };
+        await db.collection('logs').add(log);
+        logs.push(log);
+        if (logs.length > 100) logs = logs.slice(-100);
+    } catch (error) {
+        console.error("Erro ao adicionar log:", error);
+    }
 }
 
 function formatarData(dataStr) {
@@ -649,19 +744,14 @@ function getStatusBadge(status) {
     return `<span class="status-badge ${classe}">${up}</span>`;
 }
 
-function isPedidoAtrasado(lancamento) {
-    if (!lancamento.entrega) return false;
-    if (lancamento.status === 'ENTREGUE') return false;
-    const hoje = new Date();
-    const dataEntrega = new Date(lancamento.entrega);
-    return dataEntrega < hoje;
-}
-
 function topBar() {
-    return `<div class="top-bar"><div class="system-title">CONTROLE DE PEDIDOS</div><div class="system-user">👤 ${usuarioAtual || ''}</div></div>`;
+    return `<div class="top-bar"><div class="system-title">CONTROLE DE PEDIDOS</div><div class="system-user">👤 ${escapeHtml(usuarioAtual || '')}</div></div>`;
 }
 
-function fecharModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
+function fecharModal(modalId) { 
+    const modal = getElement(modalId);
+    if (modal) modal.classList.remove('active'); 
+}
 
 function gerarLembretes() {
     const lembretes = [], hoje = new Date(); hoje.setHours(0,0,0,0);
@@ -742,21 +832,27 @@ function calcularTotais(lista) {
 // TELA DE LOGIN
 // ============================================
 function mostrarLogin() {
-    document.getElementById('sidebar').style.display = 'none';
-    document.getElementById('footer').style.display = 'none';
-    document.getElementById('footerVerse').style.display = 'none';
+    const sidebar = getElement('sidebar');
+    const footer = getElement('footer');
+    const footerVerse = getElement('footerVerse');
+    if (sidebar) sidebar.style.display = 'none';
+    if (footer) footer.style.display = 'none';
+    if (footerVerse) footerVerse.style.display = 'none';
     
-    document.getElementById('main-content').innerHTML = `
-        <div class="login-container">
-            <div class="login-box">
-                <h1>BRETON BELÉM</h1>
-                <h2>Hong Possas Mov. de Decoração</h2>
-                <div class="login-field"><label>👤 Usuário</label><select id="loginUsuario">${usuarios.map(u => `<option value="${u.nome}">${u.nome}</option>`).join('')}</select></div>
-                <div class="login-field"><label>🔑 Senha</label><input type="password" id="loginSenha" placeholder="•••" autocomplete="off"></div>
-                <button class="login-button" onclick="fazerLogin()">🔓 ENTRAR</button>
+    const main = getElement('main-content');
+    if (main) {
+        main.innerHTML = `
+            <div class="login-container">
+                <div class="login-box">
+                    <h1>BRETON BELÉM</h1>
+                    <h2>Hong Possas Mov. de Decoração</h2>
+                    <div class="login-field"><label>👤 Usuário</label><select id="loginUsuario">${usuarios.map(u => `<option value="${escapeHtml(u.nome)}">${escapeHtml(u.nome)}</option>`).join('')}</select></div>
+                    <div class="login-field"><label>🔑 Senha</label><input type="password" id="loginSenha" placeholder="•••" autocomplete="off"></div>
+                    <button class="login-button" onclick="fazerLogin()">🔓 ENTRAR</button>
+                </div>
             </div>
-        </div>
-    `;
+        `;
+    }
 }
 
 async function fazerLogin() {
@@ -771,11 +867,18 @@ async function fazerLogin() {
     
     usuarioAtual = nome;
     usuarioPermissao = nome === 'Admin' ? 'admin' : 'user';
-    document.getElementById('menuUsuarios').style.display = nome === 'Admin' ? 'block' : 'none';
-    document.getElementById('menuLogs').style.display = nome === 'Admin' ? 'block' : 'none';
-    document.getElementById('sidebar').style.display = 'block';
-    document.getElementById('footer').style.display = 'block';
-    document.getElementById('footerVerse').style.display = 'block';
+    
+    const menuUsuarios = getElement('menuUsuarios');
+    const menuLogs = getElement('menuLogs');
+    const sidebar = getElement('sidebar');
+    const footer = getElement('footer');
+    const footerVerse = getElement('footerVerse');
+    
+    if (menuUsuarios) menuUsuarios.style.display = nome === 'Admin' ? 'block' : 'none';
+    if (menuLogs) menuLogs.style.display = nome === 'Admin' ? 'block' : 'none';
+    if (sidebar) sidebar.style.display = 'block';
+    if (footer) footer.style.display = 'block';
+    if (footerVerse) footerVerse.style.display = 'block';
     
     await adicionarLog('LOGIN', nome);
     mostrar('clientes');
@@ -784,9 +887,12 @@ async function fazerLogin() {
 function logout() {
     usuarioAtual = null;
     usuarioPermissao = null;
-    document.getElementById('sidebar').style.display = 'none';
-    document.getElementById('footer').style.display = 'none';
-    document.getElementById('footerVerse').style.display = 'none';
+    const sidebar = getElement('sidebar');
+    const footer = getElement('footer');
+    const footerVerse = getElement('footerVerse');
+    if (sidebar) sidebar.style.display = 'none';
+    if (footer) footer.style.display = 'none';
+    if (footerVerse) footerVerse.style.display = 'none';
     mostrarLogin();
 }
 
@@ -803,33 +909,49 @@ function telaClientes() {
                 <div class="form-group"><label class="required">Cliente</label><input type="text" id="cli_nome" style="text-transform:uppercase"></div>
                 <div class="form-group"><label>CPF/CNPJ</label><input type="text" id="cli_cpf"></div>
                 <div class="form-group"><label>Contato</label><input type="text" id="cli_contato" placeholder="Telefone/Email"></div>
-                <div class="form-group" style="justify-content:flex-end"><button class="success" onclick="adicionarCliente()">➕ Adicionar</button></div>
+                <div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarCliente" onclick="adicionarCliente()">➕ Adicionar</button></div>
             </div>
             <div class="search-box"><input type="text" id="buscaCliente" placeholder="🔍 Buscar..." onkeyup="filtrarClientes()"></div>
-            <div class="table-container"><table class="auto-layout" id="tabelaClientes"><thead>   <th>#</th><th>Pedido</th><th>Data</th><th>Cliente</th><th>CPF/CNPJ</th><th>Contato</th><th>Ações</th> </thead>
-                <tbody>${clientes.map((c,i)=>`<tr><td>${i+1}<\/td><td>${c.pedido}<\/td><td>${formatarData(c.data)}<\/td><td>${c.cliente}<\/td><td>${c.cpf_cnpj||'-'}<\/td><td>${c.contato||'-'}<\/td><td><button class="small" data-tooltip="Editar cliente" onclick="abrirModalEdicaoCliente('${c.id}')">✏️</button><button class="small danger" data-tooltip="Excluir cliente" onclick="excluirCliente('${c.id}')">🗑️</button><\/td><\/tr>`).join('')}
-            </tbody>       </table>
+            <div class="table-container"><table class="auto-layout" id="tabelaClientes"><thead><th>#</th><th>Pedido</th><th>Data</th><th>Cliente</th><th>CPF/CNPJ</th><th>Contato</th><th>Ações</th></thead>
+                <tbody>${clientes.map((c,i)=>`<tr><td>${i+1}<\/td><td>${c.pedido}<\/td><td>${formatarData(c.data)}<\/td><td>${escapeHtml(c.cliente)}<\/td><td>${escapeHtml(c.cpf_cnpj||'-')}<\/td><td>${escapeHtml(c.contato||'-')}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar cliente" onclick="abrirModalEdicaoCliente('${c.id}')">✏️</button><button class="small danger" data-tooltip="Excluir cliente" onclick="excluirCliente('${c.id}')">🗑️</button><\/td><\/tr>`).join('')}
+            </tbody><\/table><\/div>
         </div>
     `;
 }
 
 async function adicionarCliente() {
-    let p = document.getElementById('cli_pedido')?.value, d = document.getElementById('cli_data')?.value, n = document.getElementById('cli_nome')?.value;
-    if (!p||!d||!n) { alert('Preencha pedido, data e nome!'); return; }
-    const novo = { pedido:parseInt(p), data:d, cliente:n.toUpperCase(), cpf_cnpj:document.getElementById('cli_cpf')?.value||'', contato:document.getElementById('cli_contato')?.value||'' };
-    const docRef = await db.collection('clientes').add(novo);
-    clientes.push({ id: docRef.id, ...novo });
-    await adicionarLog('ADICIONOU CLIENTE', n);
-    mostrar('clientes');
+    const btn = getElement('btnAdicionarCliente');
+    if (!btn) return;
+    const originalText = showLoading(btn, 'Salvando...');
+    
+    try {
+        let p = document.getElementById('cli_pedido')?.value, d = document.getElementById('cli_data')?.value, n = document.getElementById('cli_nome')?.value;
+        if (!p||!d||!n) { alert('Preencha pedido, data e nome!'); return; }
+        const novo = { pedido:parseInt(p), data:d, cliente:n.toUpperCase(), cpf_cnpj:document.getElementById('cli_cpf')?.value||'', contato:document.getElementById('cli_contato')?.value||'' };
+        const docRef = await db.collection('clientes').add(novo);
+        clientes.push({ id: docRef.id, ...novo });
+        await adicionarLog('ADICIONOU CLIENTE', n);
+        mostrar('clientes');
+    } catch (error) {
+        console.error('Erro ao adicionar cliente:', error);
+        alert('❌ Erro ao salvar! Tente novamente.');
+    } finally {
+        hideLoading(btn, originalText);
+    }
 }
 
 async function excluirCliente(id) {
-    if (confirm('Excluir cliente?')) {
-        const c = clientes.find(c => c.id === id);
-        await db.collection('clientes').doc(id).delete();
-        clientes = clientes.filter(c => c.id !== id);
-        await adicionarLog('EXCLUIU CLIENTE', c.cliente);
-        mostrar('clientes');
+    if (confirm('⚠️ Excluir cliente? Esta ação não pode ser desfeita.')) {
+        try {
+            const c = clientes.find(c => c.id === id);
+            await db.collection('clientes').doc(id).delete();
+            clientes = clientes.filter(c => c.id !== id);
+            await adicionarLog('EXCLUIU CLIENTE', c.cliente);
+            mostrar('clientes');
+        } catch (error) {
+            console.error('Erro ao excluir cliente:', error);
+            alert('❌ Erro ao excluir! Tente novamente.');
+        }
     }
 }
 
@@ -840,23 +962,35 @@ function filtrarClientes() {
 
 function abrirModalEdicaoCliente(id) {
     const c = clientes.find(c => c.id === id);
-    const modal = document.getElementById('modalEditarCliente');
-    const content = document.getElementById('modalEditarClienteContent');
-    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nº Pedido</label><input type="number" id="edit_cli_pedido" value="${c.pedido}"></div><div class="form-group"><label>Data</label><input type="date" id="edit_cli_data" value="${c.data}"></div><div class="form-group"><label>Cliente</label><input type="text" id="edit_cli_nome" value="${c.cliente}" style="text-transform:uppercase"></div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_cli_cpf" value="${c.cpf_cnpj||''}"></div><div class="form-group"><label>Contato</label><input type="text" id="edit_cli_contato" value="${c.contato||''}"></div></div><div style="text-align:right; margin-top:20px"><button class="success" onclick="salvarEdicaoCliente('${id}')">💾 SALVAR</button></div>`;
+    const modal = getElement('modalEditarCliente');
+    const content = getElement('modalEditarClienteContent');
+    if (!modal || !content) return;
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nº Pedido</label><input type="number" id="edit_cli_pedido" value="${c.pedido}"></div><div class="form-group"><label>Data</label><input type="date" id="edit_cli_data" value="${c.data}"></div><div class="form-group"><label>Cliente</label><input type="text" id="edit_cli_nome" value="${escapeHtml(c.cliente)}" style="text-transform:uppercase"></div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_cli_cpf" value="${escapeHtml(c.cpf_cnpj||'')}"></div><div class="form-group"><label>Contato</label><input type="text" id="edit_cli_contato" value="${escapeHtml(c.contato||'')}"></div></div><div style="text-align:right; margin-top:20px"><button class="success" id="btnSalvarCliente" onclick="salvarEdicaoCliente('${id}')">💾 SALVAR</button></div>`;
     modal.classList.add('active');
 }
 
 async function salvarEdicaoCliente(id) {
-    const c = clientes.find(c => c.id === id);
-    c.pedido = parseInt(document.getElementById('edit_cli_pedido')?.value) || c.pedido;
-    c.data = document.getElementById('edit_cli_data')?.value || c.data;
-    c.cliente = document.getElementById('edit_cli_nome')?.value?.toUpperCase() || c.cliente;
-    c.cpf_cnpj = document.getElementById('edit_cli_cpf')?.value || '';
-    c.contato = document.getElementById('edit_cli_contato')?.value || '';
-    await db.collection('clientes').doc(id).update(c);
-    await adicionarLog('EDITOU CLIENTE', c.cliente);
-    fecharModal('modalEditarCliente');
-    mostrar('clientes');
+    const btn = document.getElementById('btnSalvarCliente');
+    if (!btn) return;
+    const originalText = showLoading(btn, 'Salvando...');
+    
+    try {
+        const c = clientes.find(c => c.id === id);
+        c.pedido = parseInt(document.getElementById('edit_cli_pedido')?.value) || c.pedido;
+        c.data = document.getElementById('edit_cli_data')?.value || c.data;
+        c.cliente = document.getElementById('edit_cli_nome')?.value?.toUpperCase() || c.cliente;
+        c.cpf_cnpj = document.getElementById('edit_cli_cpf')?.value || '';
+        c.contato = document.getElementById('edit_cli_contato')?.value || '';
+        await db.collection('clientes').doc(id).update(c);
+        await adicionarLog('EDITOU CLIENTE', c.cliente);
+        fecharModal('modalEditarCliente');
+        mostrar('clientes');
+    } catch (error) {
+        console.error('Erro ao editar cliente:', error);
+        alert('❌ Erro ao salvar! Tente novamente.');
+    } finally {
+        hideLoading(btn, originalText);
+    }
 }
 
 // ============================================
@@ -872,34 +1006,50 @@ function telaFornecedores() {
                 <div class="form-group"><label>CPF/CNPJ</label><input type="text" id="for_cpf"></div>
                 <div class="form-group"><label>Condição</label><select id="for_condicao"><option value="">Selecione</option><option value="FATURADO">FATURADO</option><option value="28D">28D</option><option value="ENTRADA + ENTREGA">ENTRADA + ENTREGA</option><option value="ANTECIPADO">ANTECIPADO</option></select></div>
                 <div class="form-group"><label>Coleção</label><input type="text" id="for_colecao" style="text-transform:uppercase"></div>
-                <div class="form-group" style="justify-content:flex-end"><button class="success" onclick="adicionarFornecedor()">➕ Adicionar</button></div>
+                <div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarFornecedor" onclick="adicionarFornecedor()">➕ Adicionar</button></div>
             </div>
             <div class="search-box"><input type="text" id="buscaFornecedor" placeholder="🔍 Buscar..." onkeyup="filtrarFornecedores()"></div>
-            <div class="table-container"><table class="auto-layout" id="tabelaFornecedores"><thead>   <th>#</th><th>COD</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Condição</th><th>Coleção</th><th>Ações</th> </thead>
-                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}<\/td><td>${f.cod}<\/td><td>${f.nome}<\/td><td>${f.cpf_cnpj||'-'}<\/td><td>${f.condicao||'-'}<\/td><td>${f.colecao||'-'}<\/td><td><button class="small" data-tooltip="Editar fornecedor" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" data-tooltip="Excluir fornecedor" onclick="excluirFornecedor('${f.id}')">🗑️</button><\/td><\/tr>`).join('')}
-            </tbody>       </table>
+            <div class="table-container"><table class="auto-layout" id="tabelaFornecedores"><thead><th>#</th><th>COD</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Condição</th><th>Coleção</th><th>Ações</th></thead>
+                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}<\/td><td>${f.cod}<\/td><td>${escapeHtml(f.nome)}<\/td><td>${escapeHtml(f.cpf_cnpj||'-')}<\/td><td>${escapeHtml(f.condicao||'-')}<\/td><td>${escapeHtml(f.colecao||'-')}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar fornecedor" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" data-tooltip="Excluir fornecedor" onclick="excluirFornecedor('${f.id}')">🗑️</button><\/td><\/tr>`).join('')}
+            </tbody><\/table><\/div>
         </div>
     `;
 }
 
 async function adicionarFornecedor() {
-    let nome = document.getElementById('for_nome')?.value;
-    if (!nome) { alert('Nome obrigatório!'); return; }
-    nome = nome.toUpperCase();
-    const novo = { cod: document.getElementById('for_cod')?.value || gerarProximoCodFornecedor(), nome, cpf_cnpj: document.getElementById('for_cpf')?.value || '', condicao: document.getElementById('for_condicao')?.value || '', colecao: (document.getElementById('for_colecao')?.value || '').toUpperCase() };
-    const docRef = await db.collection('fornecedores').add(novo);
-    fornecedores.push({ id: docRef.id, ...novo });
-    await adicionarLog('ADICIONOU FORNECEDOR', nome);
-    mostrar('fornecedores');
+    const btn = document.getElementById('btnAdicionarFornecedor');
+    if (!btn) return;
+    const originalText = showLoading(btn, 'Salvando...');
+    
+    try {
+        let nome = document.getElementById('for_nome')?.value;
+        if (!nome) { alert('Nome obrigatório!'); return; }
+        nome = nome.toUpperCase();
+        const novo = { cod: document.getElementById('for_cod')?.value || gerarProximoCodFornecedor(), nome, cpf_cnpj: document.getElementById('for_cpf')?.value || '', condicao: document.getElementById('for_condicao')?.value || '', colecao: (document.getElementById('for_colecao')?.value || '').toUpperCase() };
+        const docRef = await db.collection('fornecedores').add(novo);
+        fornecedores.push({ id: docRef.id, ...novo });
+        await adicionarLog('ADICIONOU FORNECEDOR', nome);
+        mostrar('fornecedores');
+    } catch (error) {
+        console.error('Erro ao adicionar fornecedor:', error);
+        alert('❌ Erro ao salvar! Tente novamente.');
+    } finally {
+        hideLoading(btn, originalText);
+    }
 }
 
 async function excluirFornecedor(id) {
-    if (confirm('Excluir fornecedor?')) {
-        const f = fornecedores.find(f => f.id === id);
-        await db.collection('fornecedores').doc(id).delete();
-        fornecedores = fornecedores.filter(f => f.id !== id);
-        await adicionarLog('EXCLUIU FORNECEDOR', f.nome);
-        mostrar('fornecedores');
+    if (confirm('⚠️ Excluir fornecedor?')) {
+        try {
+            const f = fornecedores.find(f => f.id === id);
+            await db.collection('fornecedores').doc(id).delete();
+            fornecedores = fornecedores.filter(f => f.id !== id);
+            await adicionarLog('EXCLUIU FORNECEDOR', f.nome);
+            mostrar('fornecedores');
+        } catch (error) {
+            console.error('Erro ao excluir fornecedor:', error);
+            alert('❌ Erro ao excluir!');
+        }
     }
 }
 
@@ -910,22 +1060,34 @@ function filtrarFornecedores() {
 
 function abrirModalEdicaoFornecedor(id) {
     const f = fornecedores.find(f => f.id === id);
-    const modal = document.getElementById('modalEditarFornecedor');
-    const content = document.getElementById('modalEditarFornecedorContent');
-    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Código</label><input type="text" id="edit_for_cod" value="${f.cod}" readonly></div><div class="form-group"><label>Fornecedor</label><input type="text" id="edit_for_nome" value="${f.nome}" style="text-transform:uppercase"></div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_for_cpf" value="${f.cpf_cnpj||''}"></div><div class="form-group"><label>Condição</label><select id="edit_for_condicao"><option value="">Selecione</option><option value="FATURADO" ${f.condicao==='FATURADO'?'selected':''}>FATURADO</option><option value="28D" ${f.condicao==='28D'?'selected':''}>28D</option><option value="ENTRADA + ENTREGA" ${f.condicao==='ENTRADA + ENTREGA'?'selected':''}>ENTRADA + ENTREGA</option><option value="ANTECIPADO" ${f.condicao==='ANTECIPADO'?'selected':''}>ANTECIPADO</option></select></div><div class="form-group"><label>Coleção</label><input type="text" id="edit_for_colecao" value="${f.colecao||''}" style="text-transform:uppercase"></div></div><div style="text-align:right; margin-top:20px"><button class="success" onclick="salvarEdicaoFornecedor('${id}')">💾 SALVAR</button></div>`;
+    const modal = getElement('modalEditarFornecedor');
+    const content = getElement('modalEditarFornecedorContent');
+    if (!modal || !content) return;
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Código</label><input type="text" id="edit_for_cod" value="${f.cod}" readonly></div><div class="form-group"><label>Fornecedor</label><input type="text" id="edit_for_nome" value="${escapeHtml(f.nome)}" style="text-transform:uppercase"></div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_for_cpf" value="${escapeHtml(f.cpf_cnpj||'')}"></div><div class="form-group"><label>Condição</label><select id="edit_for_condicao"><option value="">Selecione</option><option value="FATURADO" ${f.condicao==='FATURADO'?'selected':''}>FATURADO</option><option value="28D" ${f.condicao==='28D'?'selected':''}>28D</option><option value="ENTRADA + ENTREGA" ${f.condicao==='ENTRADA + ENTREGA'?'selected':''}>ENTRADA + ENTREGA</option><option value="ANTECIPADO" ${f.condicao==='ANTECIPADO'?'selected':''}>ANTECIPADO</option></select></div><div class="form-group"><label>Coleção</label><input type="text" id="edit_for_colecao" value="${escapeHtml(f.colecao||'')}" style="text-transform:uppercase"></div></div><div style="text-align:right; margin-top:20px"><button class="success" id="btnSalvarFornecedor" onclick="salvarEdicaoFornecedor('${id}')">💾 SALVAR</button></div>`;
     modal.classList.add('active');
 }
 
 async function salvarEdicaoFornecedor(id) {
-    const f = fornecedores.find(f => f.id === id);
-    f.nome = document.getElementById('edit_for_nome')?.value?.toUpperCase() || f.nome;
-    f.cpf_cnpj = document.getElementById('edit_for_cpf')?.value || '';
-    f.condicao = document.getElementById('edit_for_condicao')?.value || '';
-    f.colecao = document.getElementById('edit_for_colecao')?.value?.toUpperCase() || '';
-    await db.collection('fornecedores').doc(id).update(f);
-    await adicionarLog('EDITOU FORNECEDOR', f.nome);
-    fecharModal('modalEditarFornecedor');
-    mostrar('fornecedores');
+    const btn = document.getElementById('btnSalvarFornecedor');
+    if (!btn) return;
+    const originalText = showLoading(btn, 'Salvando...');
+    
+    try {
+        const f = fornecedores.find(f => f.id === id);
+        f.nome = document.getElementById('edit_for_nome')?.value?.toUpperCase() || f.nome;
+        f.cpf_cnpj = document.getElementById('edit_for_cpf')?.value || '';
+        f.condicao = document.getElementById('edit_for_condicao')?.value || '';
+        f.colecao = document.getElementById('edit_for_colecao')?.value?.toUpperCase() || '';
+        await db.collection('fornecedores').doc(id).update(f);
+        await adicionarLog('EDITOU FORNECEDOR', f.nome);
+        fecharModal('modalEditarFornecedor');
+        mostrar('fornecedores');
+    } catch (error) {
+        console.error('Erro ao editar fornecedor:', error);
+        alert('❌ Erro ao salvar!');
+    } finally {
+        hideLoading(btn, originalText);
+    }
 }
 
 // ============================================
@@ -951,7 +1113,7 @@ function atualizarContadorCaracteres(textarea, maxChars = 100) {
 // ============================================
 function telaLancamentos() {
     let optionsCat = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
-    let optionsForn = fornecedores.map(f => `<option value="${f.nome}">${f.nome} (${f.cod})</option>`).join('');
+    let optionsForn = fornecedores.map(f => `<option value="${escapeHtml(f.nome)}">${escapeHtml(f.nome)} (${f.cod})</option>`).join('');
     let optionsTipo = tiposPedido.map(t => `<option value="${t}">${t}</option>`).join('');
     let optionsMeses = mesesLista.map(m => `<option value="${m}">${m}</option>`).join('');
     
@@ -1032,7 +1194,7 @@ function telaLancamentos() {
                             </div>
                         </div>
                     </div>
-                    <div style="text-align:center;margin-top:20px"><button class="salvar" onclick="adicionarLancamento()">💾 SALVAR LANÇAMENTO</button></div>
+                    <div style="text-align:center;margin-top:20px"><button class="salvar" id="btnSalvarLancamento" onclick="adicionarLancamento()">💾 SALVAR LANÇAMENTO</button></div>
                 </div>
             </details>
             
@@ -1041,11 +1203,11 @@ function telaLancamentos() {
                 <th>#</th><th>Pedido</th><th>Data</th><th>Mês</th><th>Tipo</th><th>Cliente</th><th>OC</th><th>Fornecedor</th><th>Categoria</th>
                 <th>Itens</th><th>Produtos</th><th>Valor</th><th>Data Pagto</th><th>Condição</th><th>Prev.Fat</th><th>Novo Prazo</th>
                 <th>Prev.Chegada</th><th>Status</th><th>Data Fat</th><th>Nº NF</th><th>Transportadora</th><th>Chegada</th><th>Conf</th>
-                <th>Entrega</th><th>Prazo</th><th>Usuário</th><th>Editado</th><th>Obs</th><th>NF</th><th>Ações</th>
+                <th>Entrega</th><th>Prazo</th><th>Usuário</th><th>Editado</th><th>Obs</th><th>Ações</th>
             </thead>
                 <tbody id="lancamentosBody"></tbody>
                 <tfoot id="lancamentosFooter"></tfoot>
-            </table></div>
+             </div>
         </div>
     `;
 }
@@ -1058,13 +1220,13 @@ function calcularDataChegada() {
         const ano = data.getFullYear();
         const mes = String(data.getMonth() + 1).padStart(2, '0');
         const dia = String(data.getDate()).padStart(2, '0');
-        document.getElementById('lan_chegada').value = `${ano}-${mes}-${dia}`;
+        const chegadaInput = document.getElementById('lan_chegada');
+        if (chegadaInput) chegadaInput.value = `${ano}-${mes}-${dia}`;
     }
 }
 
 function renderLancamentos() {
     const lancamentosFiltrados = getLancamentosFiltrados();
-    const totais = calcularTotais(lancamentosFiltrados);
     const busca = document.getElementById('buscaLancamento')?.value.toLowerCase() || '';
     
     let dadosFiltrados = lancamentosFiltrados;
@@ -1079,6 +1241,8 @@ function renderLancamentos() {
     const totaisFiltrados = calcularTotais(dadosFiltrados);
     
     const tbody = document.getElementById('lancamentosBody');
+    if (!tbody) return;
+    
     tbody.innerHTML = dadosFiltrados.map((l, idx) => {
         const pm = calcularPrazoMedio(l.data_pagto, l.entrega);
         const temAnexo = anexos.some(a => a.pedido == l.pedido);
@@ -1086,55 +1250,55 @@ function renderLancamentos() {
         const rowClass = atrasado ? 'atrasado-row' : '';
         
         return `<tr class="${rowClass}" data-id="${l.id}">
-            <td>${idx + 1}</td>
-            <td>${l.pedido || '-'}</td>
-            <td>${formatarData(l.data)}</td>
-            <td>${l.mes || '-'}</td>
-            <td>${l.tipo || '-'}</td>
-            <td>${l.cliente || '-'}</td>
-            <td>${l.oc || '-'}</td>
-            <td>${l.fornecedor || '-'}</td>
-            <td>${l.categoria || '-'}</td>
-            <td>${l.itens || '-'}</td>
-            <td>${l.produtos || '-'}</td>
-            <td>${formatarValor(l.valor)}</td>
-            <td>${formatarData(l.data_pagto)}</td>
-            <td>${l.condicao || '-'}
-                         <td>${l.condicao || '-'}</td>
-             <td>${formatarData(l.prev_fat)}</td>
-             <td>${formatarData(l.novo_prazo)}</td>
-             <td>${formatarData(l.prev_chegada)}</td>
-             <td>${getStatusBadge(l.status)}</td>
-             <td>${formatarData(l.data_fat)}</td>
-             <td>${l.nf || '-'}</td>
-             <td>${l.transportadora || '-'}</td>
-             <td>${formatarData(l.chegada)}</td>
-             <td>${formatarData(l.conferencia)}</td>
-             <td>${formatarData(l.entrega)}</td>
-             <td>${pm ? pm + 'd' : '-'}</td>
-             <td>${l.usuario || '-'}</td>
-             <td>${l.editadoPor ? l.editadoPor + ' ' + new Date(l.editadoEm).toLocaleDateString() : '-'}</td>
-             <td>${l.observacoes ? `<span class="tooltip-icon" data-tooltip="${l.observacoes.replace(/"/g, '&quot;')}">💬</span>` : '-'}</td>
-             <td>${temAnexo ? '📎' : '-'}</td>
-             <td>
+            <td class="center">${idx + 1}<\/td>
+             <td>${l.pedido || '-'}<\/td>
+             <td>${formatarData(l.data)}<\/td>
+             <td>${l.mes || '-'}<\/td>
+             <td>${l.tipo || '-'}<\/td>
+             <td>${escapeHtml(l.cliente || '-')}<\/td>
+             <td>${l.oc || '-'}<\/td>
+             <td>${escapeHtml(l.fornecedor || '-')}<\/td>
+             <td>${l.categoria || '-'}<\/td>
+             <td>${l.itens || '-'}<\/td>
+             <td>${l.produtos || '-'}<\/td>
+             <td>${formatarValor(l.valor)}<\/td>
+             <td>${formatarData(l.data_pagto)}<\/td>
+             <td>${l.condicao || '-'}<\/td>
+             <td>${formatarData(l.prev_fat)}<\/td>
+             <td>${formatarData(l.novo_prazo)}<\/td>
+             <td>${formatarData(l.prev_chegada)}<\/td>
+             <td>${getStatusBadge(l.status)}<\/td>
+             <td>${formatarData(l.data_fat)}<\/td>
+             <td>${l.nf || '-'}<\/td>
+             <td>${l.transportadora || '-'}<\/td>
+             <td>${formatarData(l.chegada)}<\/td>
+             <td>${formatarData(l.conferencia)}<\/td>
+             <td>${formatarData(l.entrega)}<\/td>
+             <td>${pm ? pm + 'd' : '-'}<\/td>
+             <td>${l.usuario || '-'}<\/td>
+             <td>${l.editadoPor ? l.editadoPor + ' ' + new Date(l.editadoEm).toLocaleDateString() : '-'}<\/td>
+             <td>${l.observacoes ? `<span class="tooltip-icon" data-tooltip="${escapeHtml(l.observacoes.replace(/"/g, '&quot;'))}">💬</span>` : '-'}<\/td>
+            <td class="acoes-cell">
                 <button class="small" data-tooltip="Editar lançamento" onclick="abrirModalEdicaoLancamento('${l.id}')">✏️</button>
-                <button class="small" data-tooltip="Duplicar lançamento (cria novo pedido)" onclick="duplicarLancamento('${l.id}')">📋</button>
+                <button class="small" data-tooltip="Duplicar lançamento" onclick="duplicarLancamento('${l.id}')">📋</button>
                 <button class="small info" data-tooltip="Gerenciar anexos" onclick="abrirModalAnexos(${l.pedido})">📎</button>
                 <button class="small danger" data-tooltip="Excluir lançamento" onclick="excluirLancamento('${l.id}')">🗑️</button>
-             </td>
-           </tr>`;
+             <\/td>
+         <\/tr>`;
     }).join('');
     
     const tfoot = document.getElementById('lancamentosFooter');
-    tfoot.innerHTML = `<tr style="background:#FAF0F0; font-weight:bold;">
-        <td colspan="11" style="text-align:right;">TOTAL:</td>
-        <td>${formatarValor(totaisFiltrados.totalValor)}</td>
-        <td colspan="10"></td>
-        <td>${totaisFiltrados.totalItens} itens</td>
-        <td colspan="6"></td>
-        <td>${totaisFiltrados.totalPedidos} pedidos</td>
-        <td colspan="3"></td>
-     </tr>`;
+    if (tfoot) {
+        tfoot.innerHTML = `<tr style="background:#FAF0F0; font-weight:bold;">
+            <td colspan="11" style="text-align:right;">TOTAL:<\/td>
+            <td>${formatarValor(totaisFiltrados.totalValor)}<\/td>
+            <td colspan="9"><\/td>
+            <td>${totaisFiltrados.totalItens} itens<\/td>
+            <td colspan="5"><\/td>
+            <td>${totaisFiltrados.totalPedidos} pedidos<\/td>
+            <td colspan="4"><\/td>
+         <\/tr>`;
+    }
 }
 
 function setFilterType(tipo) {
@@ -1151,14 +1315,14 @@ function setFilterType(tipo) {
         `;
     }
     document.querySelectorAll('.filtro-tipo-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    if (event && event.target) event.target.classList.add('active');
 }
 
 function setOrder(order) {
     currentOrder = order;
     renderLancamentos();
     document.querySelectorAll('.ordem-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    if (event && event.target) event.target.classList.add('active');
 }
 
 function toggleOrderDirection() {
@@ -1171,91 +1335,121 @@ function toggleOrderDirection() {
 function mudarAba(aba, event) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(aba).classList.add('active');
-    event.target.classList.add('active');
+    const abaElement = document.getElementById(aba);
+    if (abaElement) abaElement.classList.add('active');
+    if (event && event.target) event.target.classList.add('active');
 }
 
 function preencherClienteAuto() {
     let pedido = document.getElementById('lan_pedido')?.value;
     let cliente = buscarClientePorPedido(pedido);
+    const clienteInput = document.getElementById('lan_cliente');
+    const dataInput = document.getElementById('lan_data');
     if (cliente) {
-        document.getElementById('lan_cliente').value = cliente.cliente;
-        document.getElementById('lan_data').value = cliente.data;
+        if (clienteInput) clienteInput.value = cliente.cliente;
+        if (dataInput) dataInput.value = cliente.data;
     } else {
-        document.getElementById('lan_cliente').value = 'NÃO ENCONTRADO';
-        document.getElementById('lan_data').value = '';
+        if (clienteInput) clienteInput.value = 'NÃO ENCONTRADO';
+        if (dataInput) dataInput.value = '';
     }
 }
 
 async function adicionarLancamento() {
-    if (!document.getElementById('lan_categoria')?.value) { alert('Categoria obrigatória!'); return; }
-    let valorRaw = document.getElementById('lan_valor')?.value || '0,00';
-    let valorNumerico = converterValorParaNumero(valorRaw);
-    let observacoes = document.getElementById('lan_observacoes')?.value || '';
-    if (observacoes.length > 100) observacoes = observacoes.substring(0, 100);
+    const btn = document.getElementById('btnSalvarLancamento');
+    if (!btn) return;
+    const originalText = showLoading(btn, 'Salvando...');
     
-    let l = {
-        pedido: document.getElementById('lan_pedido')?.value,
-        data: document.getElementById('lan_data')?.value,
-        mes: document.getElementById('lan_mes')?.value,
-        tipo: document.getElementById('lan_tipo')?.value,
-        cliente: document.getElementById('lan_cliente')?.value,
-        oc: document.getElementById('lan_oc')?.value?.toUpperCase(),
-        fornecedor: document.getElementById('lan_fornecedor')?.value,
-        categoria: document.getElementById('lan_categoria')?.value,
-        itens: parseInt(document.getElementById('lan_itens')?.value) || 0,
-        produtos: document.getElementById('lan_produtos')?.value?.toUpperCase(),
-        valor: valorNumerico,
-        data_pagto: document.getElementById('lan_data_pagto')?.value,
-        condicao: document.getElementById('lan_condicao')?.value,
-        prev_fat: document.getElementById('lan_prev_fat')?.value,
-        novo_prazo: document.getElementById('lan_novo_prazo')?.value,
-        prev_chegada: document.getElementById('lan_prev_chegada')?.value,
-        status: document.getElementById('lan_status')?.value,
-        data_fat: document.getElementById('lan_data_fat')?.value,
-        nf: document.getElementById('lan_nf')?.value?.toUpperCase(),
-        transportadora: document.getElementById('lan_transportadora')?.value?.toUpperCase(),
-        chegada: document.getElementById('lan_chegada')?.value,
-        conferencia: document.getElementById('lan_conferencia')?.value,
-        entrega: document.getElementById('lan_entrega')?.value,
-        observacoes: observacoes,
-        usuario: usuarioAtual,
-        criado: new Date().toISOString()
-    };
-    if (!l.pedido) { alert('Pedido obrigatório!'); return; }
-    const docRef = await db.collection('lancamentos').add(l);
-    lancamentos.push({ id: docRef.id, ...l });
-    await adicionarLog('ADICIONOU LANÇAMENTO', `Pedido ${l.pedido}`);
-    mostrar('lancamentos');
+    try {
+        if (!document.getElementById('lan_categoria')?.value) { alert('Categoria obrigatória!'); return; }
+        let valorRaw = document.getElementById('lan_valor')?.value || '0,00';
+        let valorNumerico = converterValorParaNumero(valorRaw);
+        let observacoes = document.getElementById('lan_observacoes')?.value || '';
+        if (observacoes.length > 100) observacoes = observacoes.substring(0, 100);
+        
+        let l = {
+            pedido: document.getElementById('lan_pedido')?.value,
+            data: document.getElementById('lan_data')?.value,
+            mes: document.getElementById('lan_mes')?.value,
+            tipo: document.getElementById('lan_tipo')?.value,
+            cliente: document.getElementById('lan_cliente')?.value,
+            oc: document.getElementById('lan_oc')?.value?.toUpperCase(),
+            fornecedor: document.getElementById('lan_fornecedor')?.value,
+            categoria: document.getElementById('lan_categoria')?.value,
+            itens: parseInt(document.getElementById('lan_itens')?.value) || 0,
+            produtos: document.getElementById('lan_produtos')?.value?.toUpperCase(),
+            valor: valorNumerico,
+            data_pagto: document.getElementById('lan_data_pagto')?.value,
+            condicao: document.getElementById('lan_condicao')?.value,
+            prev_fat: document.getElementById('lan_prev_fat')?.value,
+            novo_prazo: document.getElementById('lan_novo_prazo')?.value,
+            prev_chegada: document.getElementById('lan_prev_chegada')?.value,
+            status: document.getElementById('lan_status')?.value,
+            data_fat: document.getElementById('lan_data_fat')?.value,
+            nf: document.getElementById('lan_nf')?.value?.toUpperCase(),
+            transportadora: document.getElementById('lan_transportadora')?.value?.toUpperCase(),
+            chegada: document.getElementById('lan_chegada')?.value,
+            conferencia: document.getElementById('lan_conferencia')?.value,
+            entrega: document.getElementById('lan_entrega')?.value,
+            observacoes: observacoes,
+            usuario: usuarioAtual,
+            criado: new Date().toISOString()
+        };
+        
+        if (!l.pedido) { alert('Pedido obrigatório!'); return; }
+        
+        // Validação de datas (MELHORIA)
+        if (!validarDatas(l)) return;
+        
+        const docRef = await db.collection('lancamentos').add(l);
+        lancamentos.push({ id: docRef.id, ...l });
+        await adicionarLog('ADICIONOU LANÇAMENTO', `Pedido ${l.pedido}`);
+        mostrar('lancamentos');
+    } catch (error) {
+        console.error('Erro ao adicionar lançamento:', error);
+        alert('❌ Erro ao salvar! Tente novamente.');
+    } finally {
+        hideLoading(btn, originalText);
+    }
 }
 
 async function excluirLancamento(id) {
-    if (confirm('Excluir lançamento?')) {
-        const l = lancamentos.find(l => l.id === id);
-        await db.collection('lancamentos').doc(id).delete();
-        lancamentos = lancamentos.filter(l => l.id !== id);
-        await adicionarLog('EXCLUIU LANÇAMENTO', `Pedido ${l.pedido}`);
-        mostrar('lancamentos');
+    if (confirm('⚠️ Excluir lançamento?')) {
+        try {
+            const l = lancamentos.find(l => l.id === id);
+            if (!l) return;
+            await db.collection('lancamentos').doc(id).delete();
+            lancamentos = lancamentos.filter(l => l.id !== id);
+            await adicionarLog('EXCLUIU LANÇAMENTO', `Pedido ${l.pedido}`);
+            mostrar('lancamentos');
+        } catch (error) {
+            console.error('Erro ao excluir:', error);
+            alert('❌ Erro ao excluir!');
+        }
     }
 }
 
 async function duplicarLancamento(id) {
     if (confirm('Deseja duplicar este pedido? Será criado um novo pedido com número sequencial.')) {
-        const original = lancamentos.find(l => l.id === id);
-        if (!original) return;
-        
-        let novoPedido = parseInt(original.pedido) + 1;
-        const novo = { ...original };
-        delete novo.id;
-        novo.pedido = novoPedido;
-        novo.observacoes = original.observacoes ? `[CÓPIA] ${original.observacoes.substring(0, 90)}` : 'CÓPIA DO PEDIDO';
-        novo.criado = new Date().toISOString();
-        novo.usuario = usuarioAtual;
-        
-        const docRef = await db.collection('lancamentos').add(novo);
-        lancamentos.push({ id: docRef.id, ...novo });
-        await adicionarLog('DUPLICOU LANÇAMENTO', `Pedido ${original.pedido} → ${novoPedido}`);
-        mostrar('lancamentos');
+        try {
+            const original = lancamentos.find(l => l.id === id);
+            if (!original) return;
+            
+            let novoPedido = parseInt(original.pedido) + 1;
+            const novo = { ...original };
+            delete novo.id;
+            novo.pedido = novoPedido;
+            novo.observacoes = original.observacoes ? `[CÓPIA] ${original.observacoes.substring(0, 90)}` : 'CÓPIA DO PEDIDO';
+            novo.criado = new Date().toISOString();
+            novo.usuario = usuarioAtual;
+            
+            const docRef = await db.collection('lancamentos').add(novo);
+            lancamentos.push({ id: docRef.id, ...novo });
+            await adicionarLog('DUPLICOU LANÇAMENTO', `Pedido ${original.pedido} → ${novoPedido}`);
+            mostrar('lancamentos');
+        } catch (error) {
+            console.error('Erro ao duplicar:', error);
+            alert('❌ Erro ao duplicar!');
+        }
     }
 }
 
@@ -1281,21 +1475,25 @@ function exportarLancamentosExcel() {
     const ws = XLSX.utils.aoa_to_sheet(wsData); 
     XLSX.utils.book_append_sheet(wb, ws, 'Lançamentos'); 
     XLSX.writeFile(wb, `lancamentos_${new Date().toISOString().slice(0,10)}.xlsx`);
-    alert('Arquivo exportado!');
+    alert('✅ Arquivo exportado!');
 }
 
 function abrirModalEdicaoLancamento(id) {
     const l = lancamentos.find(l => l.id === id);
-    const modal = document.getElementById('modalEditarLancamento');
-    const content = document.getElementById('modalEditarLancamentoContent');
+    if (!l) return;
+    const modal = getElement('modalEditarLancamento');
+    const content = getElement('modalEditarLancamentoContent');
+    if (!modal || !content) return;
+    
     let optionsCat = categorias.map(c => `<option value="${c}" ${l.categoria===c?'selected':''}>${c}</option>`).join('');
-    let optionsForn = fornecedores.map(f => `<option value="${f.nome}" ${l.fornecedor===f.nome?'selected':''}>${f.nome}</option>`).join('');
+    let optionsForn = fornecedores.map(f => `<option value="${escapeHtml(f.nome)}" ${l.fornecedor===f.nome?'selected':''}>${escapeHtml(f.nome)}</option>`).join('');
     let optionsTipo = tiposPedido.map(t => `<option value="${t}" ${l.tipo===t?'selected':''}>${t}</option>`).join('');
+    
     content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Pedido</label><input type="number" id="edit_lan_pedido" value="${l.pedido||''}"></div>
         <div class="form-group"><label>Data</label><input type="date" id="edit_lan_data" value="${l.data||''}"></div>
         <div class="form-group"><label>Mês</label><input type="text" id="edit_lan_mes" value="${l.mes||''}"></div>
         <div class="form-group"><label>Tipo</label><select id="edit_lan_tipo"><option value="">Selecione</option>${optionsTipo}</select></div>
-        <div class="form-group"><label>Cliente</label><input type="text" id="edit_lan_cliente" value="${l.cliente||''}" readonly></div>
+        <div class="form-group"><label>Cliente</label><input type="text" id="edit_lan_cliente" value="${escapeHtml(l.cliente||'')}" readonly></div>
         <div class="form-group"><label>OC</label><input type="text" id="edit_lan_oc" value="${l.oc||''}"></div>
         <div class="form-group"><label>Fornecedor</label><select id="edit_lan_fornecedor"><option value="">Selecione</option>${optionsForn}</select></div>
         <div class="form-group"><label>Categoria</label><select id="edit_lan_categoria"><option value="">Selecione</option>${optionsCat}</select></div>
@@ -1315,10 +1513,10 @@ function abrirModalEdicaoLancamento(id) {
         <div class="form-group"><label>Conferência</label><input type="date" id="edit_lan_conferencia" value="${l.conferencia||''}"></div>
         <div class="form-group"><label>Entrega</label><input type="date" id="edit_lan_entrega" value="${l.entrega||''}"></div>
         <div class="form-group"><label>Observações</label>
-            <textarea id="edit_lan_observacoes" rows="2" maxlength="100" oninput="atualizarContadorCaracteres(this, 100)">${l.observacoes || ''}</textarea>
+            <textarea id="edit_lan_observacoes" rows="2" maxlength="100" oninput="atualizarContadorCaracteres(this, 100)">${escapeHtml(l.observacoes || '')}</textarea>
             <div class="char-counter" id="editObsCharCounter">${(l.observacoes || '').length}/100</div>
         </div>
-    </div><div style="text-align:right; margin-top:20px"><p>Editando como: ${usuarioAtual}</p><button class="success" onclick="salvarEdicaoLancamento('${id}')">💾 SALVAR</button></div>`;
+    </div><div style="text-align:right; margin-top:20px"><p>Editando como: ${escapeHtml(usuarioAtual)}</p><button class="success" id="btnSalvarEdicaoLancamento" onclick="salvarEdicaoLancamento('${id}')">💾 SALVAR</button></div>`;
     
     setTimeout(() => {
         const editTextarea = document.getElementById('edit_lan_observacoes');
@@ -1329,69 +1527,121 @@ function abrirModalEdicaoLancamento(id) {
 }
 
 async function salvarEdicaoLancamento(id) {
-    const l = lancamentos.find(l => l.id === id);
-    l.pedido = document.getElementById('edit_lan_pedido')?.value || l.pedido;
-    l.data = document.getElementById('edit_lan_data')?.value || l.data;
-    l.mes = document.getElementById('edit_lan_mes')?.value || l.mes;
-    l.tipo = document.getElementById('edit_lan_tipo')?.value || l.tipo;
-    l.cliente = document.getElementById('edit_lan_cliente')?.value || l.cliente;
-    l.oc = document.getElementById('edit_lan_oc')?.value?.toUpperCase() || l.oc;
-    l.fornecedor = document.getElementById('edit_lan_fornecedor')?.value || l.fornecedor;
-    l.categoria = document.getElementById('edit_lan_categoria')?.value || l.categoria;
-    l.itens = parseInt(document.getElementById('edit_lan_itens')?.value) || 0;
-    l.produtos = document.getElementById('edit_lan_produtos')?.value?.toUpperCase() || l.produtos;
-    let valorRaw = document.getElementById('edit_lan_valor')?.value || '0,00';
-    l.valor = converterValorParaNumero(valorRaw);
-    l.data_pagto = document.getElementById('edit_lan_data_pagto')?.value || l.data_pagto;
-    l.condicao = document.getElementById('edit_lan_condicao')?.value || l.condicao;
-    l.prev_fat = document.getElementById('edit_lan_prev_fat')?.value || l.prev_fat;
-    l.novo_prazo = document.getElementById('edit_lan_novo_prazo')?.value || l.novo_prazo;
-    l.prev_chegada = document.getElementById('edit_lan_prev_chegada')?.value || l.prev_chegada;
-    l.status = document.getElementById('edit_lan_status')?.value || l.status;
-    l.data_fat = document.getElementById('edit_lan_data_fat')?.value || l.data_fat;
-    l.nf = document.getElementById('edit_lan_nf')?.value?.toUpperCase() || l.nf;
-    l.transportadora = document.getElementById('edit_lan_transportadora')?.value?.toUpperCase() || l.transportadora;
-    l.chegada = document.getElementById('edit_lan_chegada')?.value || l.chegada;
-    l.conferencia = document.getElementById('edit_lan_conferencia')?.value || l.conferencia;
-    l.entrega = document.getElementById('edit_lan_entrega')?.value || l.entrega;
-    l.observacoes = (document.getElementById('edit_lan_observacoes')?.value || '').substring(0, 100);
-    l.editadoPor = usuarioAtual;
-    l.editadoEm = new Date().toISOString();
-    await db.collection('lancamentos').doc(id).update(l);
-    await adicionarLog('EDITOU LANÇAMENTO', `Pedido ${l.pedido}`);
-    fecharModal('modalEditarLancamento');
-    mostrar('lancamentos');
+    const btn = document.getElementById('btnSalvarEdicaoLancamento');
+    if (!btn) return;
+    const originalText = showLoading(btn, 'Salvando...');
+    
+    try {
+        const l = lancamentos.find(l => l.id === id);
+        if (!l) return;
+        
+        l.pedido = document.getElementById('edit_lan_pedido')?.value || l.pedido;
+        l.data = document.getElementById('edit_lan_data')?.value || l.data;
+        l.mes = document.getElementById('edit_lan_mes')?.value || l.mes;
+        l.tipo = document.getElementById('edit_lan_tipo')?.value || l.tipo;
+        l.cliente = document.getElementById('edit_lan_cliente')?.value || l.cliente;
+        l.oc = document.getElementById('edit_lan_oc')?.value?.toUpperCase() || l.oc;
+        l.fornecedor = document.getElementById('edit_lan_fornecedor')?.value || l.fornecedor;
+        l.categoria = document.getElementById('edit_lan_categoria')?.value || l.categoria;
+        l.itens = parseInt(document.getElementById('edit_lan_itens')?.value) || 0;
+        l.produtos = document.getElementById('edit_lan_produtos')?.value?.toUpperCase() || l.produtos;
+        let valorRaw = document.getElementById('edit_lan_valor')?.value || '0,00';
+        l.valor = converterValorParaNumero(valorRaw);
+        l.data_pagto = document.getElementById('edit_lan_data_pagto')?.value || l.data_pagto;
+        l.condicao = document.getElementById('edit_lan_condicao')?.value || l.condicao;
+        l.prev_fat = document.getElementById('edit_lan_prev_fat')?.value || l.prev_fat;
+        l.novo_prazo = document.getElementById('edit_lan_novo_prazo')?.value || l.novo_prazo;
+        l.prev_chegada = document.getElementById('edit_lan_prev_chegada')?.value || l.prev_chegada;
+        l.status = document.getElementById('edit_lan_status')?.value || l.status;
+        l.data_fat = document.getElementById('edit_lan_data_fat')?.value || l.data_fat;
+        l.nf = document.getElementById('edit_lan_nf')?.value?.toUpperCase() || l.nf;
+        l.transportadora = document.getElementById('edit_lan_transportadora')?.value?.toUpperCase() || l.transportadora;
+        l.chegada = document.getElementById('edit_lan_chegada')?.value || l.chegada;
+        l.conferencia = document.getElementById('edit_lan_conferencia')?.value || l.conferencia;
+        l.entrega = document.getElementById('edit_lan_entrega')?.value || l.entrega;
+        l.observacoes = (document.getElementById('edit_lan_observacoes')?.value || '').substring(0, 100);
+        l.editadoPor = usuarioAtual;
+        l.editadoEm = new Date().toISOString();
+        
+        // Validação de datas (MELHORIA)
+        if (!validarDatas(l)) return;
+        
+        await db.collection('lancamentos').doc(id).update(l);
+        await adicionarLog('EDITOU LANÇAMENTO', `Pedido ${l.pedido}`);
+        fecharModal('modalEditarLancamento');
+        mostrar('lancamentos');
+    } catch (error) {
+        console.error('Erro ao salvar edição:', error);
+        alert('❌ Erro ao salvar!');
+    } finally {
+        hideLoading(btn, originalText);
+    }
 }
 
 // ============================================
-// ANEXOS
+// ANEXOS (com tratamento de erros)
 // ============================================
 function abrirModalAnexos(pedido) {
-    const modal = document.getElementById('modalAnexos');
-    const content = document.getElementById('modalAnexosContent');
+    const modal = getElement('modalAnexos');
+    const content = getElement('modalAnexosContent');
+    if (!modal || !content) return;
+    
     const anexosPedido = anexos.filter(a => a.pedido == pedido);
     const lancamento = lancamentos.find(l => l.pedido == pedido);
-    content.innerHTML = `<h4>Pedido #${pedido} ${lancamento?.oc ? `- OC: ${lancamento.oc}` : ''}</h4><div class="anexos-area">${anexosPedido.length === 0 ? '<p>Nenhum anexo.</p>' : ''}${anexosPedido.map((a,i)=>`<div class="anexo-item"><div><strong>${a.nome}</strong><br><small>${new Date(a.data).toLocaleString()}</small></div><div><button class="small" data-tooltip="Baixar anexo" onclick="baixarAnexo(${i})">⬇️</button><button class="small danger" data-tooltip="Excluir anexo" onclick="excluirAnexo('${a.id}', ${pedido})">🗑️</button></div></div>`).join('')}</div><div class="upload-area" onclick="document.getElementById('fileInput').click()">📂 Anexar arquivo<input type="file" id="fileInput" style="display:none" onchange="anexarArquivo(${pedido})"></div>`;
+    content.innerHTML = `<h4>Pedido #${pedido} ${lancamento?.oc ? `- OC: ${escapeHtml(lancamento.oc)}` : ''}</h4>
+        <div class="anexos-area">
+            ${anexosPedido.length === 0 ? '<p>Nenhum anexo.</p>' : ''}
+            ${anexosPedido.map((a,i)=>`<div class="anexo-item"><div><strong>${escapeHtml(a.nome)}</strong><br><small>${new Date(a.data).toLocaleString()}</small></div><div><button class="small" data-tooltip="Baixar anexo" onclick="baixarAnexo('${a.id}')">⬇️</button><button class="small danger" data-tooltip="Excluir anexo" onclick="excluirAnexo('${a.id}', ${pedido})">🗑️</button></div></div>`).join('')}
+        </div>
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">📂 Anexar arquivo</div>
+        <input type="file" id="fileInput" style="display:none" onchange="anexarArquivo(${pedido})">`;
     modal.classList.add('active');
 }
 
 async function anexarArquivo(pedido) {
-    const file = document.getElementById('fileInput').files[0];
+    const file = document.getElementById('fileInput')?.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-        const novo = { pedido, nome: file.name, tipo: file.type, data: new Date().toISOString(), conteudo: e.target.result, usuario: usuarioAtual };
-        const docRef = await db.collection('anexos').add(novo);
-        anexos.push({ id: docRef.id, ...novo });
-        await adicionarLog('ANEXOU ARQUIVO', file.name);
-        fecharModal('modalAnexos');
-        abrirModalAnexos(pedido);
-    };
-    reader.readAsDataURL(file);
+    try {
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const novo = { pedido, nome: file.name, tipo: file.type, data: new Date().toISOString(), conteudo: e.target.result, usuario: usuarioAtual };
+            const docRef = await db.collection('anexos').add(novo);
+            anexos.push({ id: docRef.id, ...novo });
+            await adicionarLog('ANEXOU ARQUIVO', file.name);
+            fecharModal('modalAnexos');
+            abrirModalAnexos(pedido);
+        };
+        reader.readAsDataURL(file);
+    } catch (error) {
+        console.error('Erro ao anexar arquivo:', error);
+        alert('❌ Erro ao anexar arquivo!');
+    }
 }
 
-function baixarAnexo(index) { const a = anexos[index]; const link = document.createElement('a'); link.href = a.conteudo; link.download = a.nome; link.click(); }
-async function excluirAnexo(id, pedido) { if (confirm('Excluir anexo?')) { await db.collection('anexos').doc(id).delete(); anexos = anexos.filter(a => a.id !== id); await adicionarLog('EXCLUIU ANEXO', ''); fecharModal('modalAnexos'); abrirModalAnexos(pedido); } }
+function baixarAnexo(id) { 
+    const a = anexos.find(a => a.id === id);
+    if (a && a.conteudo) {
+        const link = document.createElement('a'); 
+        link.href = a.conteudo; 
+        link.download = a.nome; 
+        link.click();
+    }
+}
+
+async function excluirAnexo(id, pedido) { 
+    if (confirm('Excluir anexo?')) { 
+        try {
+            await db.collection('anexos').doc(id).delete(); 
+            anexos = anexos.filter(a => a.id !== id); 
+            await adicionarLog('EXCLUIU ANEXO', ''); 
+            fecharModal('modalAnexos'); 
+            abrirModalAnexos(pedido);
+        } catch (error) {
+            console.error('Erro ao excluir anexo:', error);
+            alert('❌ Erro ao excluir!');
+        }
+    } 
+}
 
 function telaAnexos() {
     return topBar() + `
@@ -1410,7 +1660,7 @@ function telaAnexos() {
 function gerarListaAnexos() {
     const anexosPorPedido = {};
     anexos.forEach(a => { if (!anexosPorPedido[a.pedido]) anexosPorPedido[a.pedido] = []; anexosPorPedido[a.pedido].push(a); });
-    return Object.entries(anexosPorPedido).map(([p,as]) => { const lancamento = lancamentos.find(l => l.pedido == p); return `<div class="anexo-item" style="flex-direction:column;align-items:stretch" data-pedido="${p}" data-oc="${lancamento?.oc||''}"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><strong>Pedido #${p} ${lancamento?.oc?`- OC: ${lancamento.oc}`:''}</strong><button class="small" data-tooltip="Gerenciar anexos deste pedido" onclick="abrirModalAnexos(${p})">📎 Gerenciar</button></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:5px">${as.map(a=>`<div style="background:#FAF0F0;padding:5px;border-radius:4px"><small>${a.nome}</small><br><small>${new Date(a.data).toLocaleDateString()}</small></div>`).join('')}</div></div>`; }).join('') || '<p>Nenhum anexo encontrado.</p>';
+    return Object.entries(anexosPorPedido).map(([p,as]) => { const lancamento = lancamentos.find(l => l.pedido == p); return `<div class="anexo-item" style="flex-direction:column;align-items:stretch" data-pedido="${p}" data-oc="${lancamento?.oc||''}"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><strong>Pedido #${p} ${lancamento?.oc?`- OC: ${escapeHtml(lancamento.oc)}`:''}</strong><button class="small" data-tooltip="Gerenciar anexos deste pedido" onclick="abrirModalAnexos(${p})">📎 Gerenciar</button></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:5px">${as.map(a=>`<div style="background:#FAF0F0;padding:5px;border-radius:4px"><small>${escapeHtml(a.nome)}</small><br><small>${new Date(a.data).toLocaleDateString()}</small></div>`).join('')}</div></div>`; }).join('') || '<p>Nenhum anexo encontrado.</p>';
 }
 
 function filtrarAnexos() {
@@ -1522,7 +1772,7 @@ function gerarPDF() {
 }
 
 // ============================================
-// DASHBOARD
+// DASHBOARD (resumido)
 // ============================================
 function telaDashboard() {
     return topBar() + `
@@ -1615,15 +1865,15 @@ function gerarDashboard(dados) {
 }
 
 // ============================================
-// USUÁRIOS
+// USUÁRIOS (resumido)
 // ============================================
 function telaUsuarios() {
     return topBar() + `
         <div class="box">
             <h2>👤 Gerenciar Usuários</h2>
-            <div class="form-grid"><div class="form-group"><label class="required">Novo Usuário</label><input type="text" id="novo_usuario"></div><div class="form-group"><label>Senha</label><input type="password" id="nova_senha" placeholder="Deixe em branco"></div><div class="form-group" style="justify-content:flex-end"><button class="success" onclick="adicionarUsuario()">➕ Adicionar</button></div></div>
-            <div class="table-container"><table class="auto-layout"><thead><tr><th>#</th><th>Usuário</th><th>Senha</th><th>Ações</th></tr></thead><tbody>
-                ${usuarios.map((u,i)=>`<tr><td>${i+1}<\/td><td>${u.nome}<\/td><td>${u.senha?'••••••':'Sem senha'}<\/td><td><button class="small" data-tooltip="Editar usuário" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️</button><button class="small danger" data-tooltip="Excluir usuário" onclick="excluirUsuario('${u.id}')">🗑️</button><\/td><\/tr>`).join('')}
+            <div class="form-grid"><div class="form-group"><label class="required">Novo Usuário</label><input type="text" id="novo_usuario"></div><div class="form-group"><label>Senha</label><input type="password" id="nova_senha" placeholder="Deixe em branco"></div><div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarUsuario" onclick="adicionarUsuario()">➕ Adicionar</button></div></div>
+            <div class="table-container"><table class="auto-layout"><thead><th>#</th><th>Usuário</th><th>Senha</th><th>Ações</th></thead><tbody>
+                ${usuarios.map((u,i)=>`<tr><td>${i+1}<\/td><td>${escapeHtml(u.nome)}<\/td><td>${u.senha?'••••••':'Sem senha'}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar usuário" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️</button><button class="small danger" data-tooltip="Excluir usuário" onclick="excluirUsuario('${u.id}')">🗑️</button><\/td><\/tr>`).join('')}
             </tbody><\/table><\/div>
         </div>
     `;
@@ -1631,37 +1881,60 @@ function telaUsuarios() {
 
 function abrirModalEdicaoUsuario(id) {
     const u = usuarios.find(u => u.id === id);
-    const modal = document.getElementById('modalUsuarios');
-    const content = document.getElementById('modalUsuarioContent');
-    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nome</label><input type="text" id="edit_user_nome" value="${u.nome}"></div><div class="form-group"><label>Nova Senha</label><input type="password" id="edit_user_senha" placeholder="Deixe em branco"></div><div class="form-group"><label>Confirmar</label><input type="password" id="edit_user_confirm" placeholder="Digite novamente"></div></div><div style="text-align:right"><button class="success" onclick="salvarEdicaoUsuario('${id}')">💾 SALVAR</button></div>`;
+    const modal = getElement('modalUsuarios');
+    const content = getElement('modalUsuarioContent');
+    if (!modal || !content) return;
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nome</label><input type="text" id="edit_user_nome" value="${escapeHtml(u.nome)}"></div><div class="form-group"><label>Nova Senha</label><input type="password" id="edit_user_senha" placeholder="Deixe em branco"></div><div class="form-group"><label>Confirmar</label><input type="password" id="edit_user_confirm" placeholder="Digite novamente"></div></div><div style="text-align:right"><button class="success" id="btnSalvarUsuario" onclick="salvarEdicaoUsuario('${id}')">💾 SALVAR</button></div>`;
     modal.classList.add('active');
 }
 
 async function salvarEdicaoUsuario(id) {
-    const u = usuarios.find(u => u.id === id);
-    const novoNome = document.getElementById('edit_user_nome')?.value;
-    const novaSenha = document.getElementById('edit_user_senha')?.value;
-    const confirm = document.getElementById('edit_user_confirm')?.value;
-    if (!novoNome) { alert('Nome obrigatório!'); return; }
-    if (usuarios.some((user,i)=>user.id !== id && user.nome===novoNome)) { alert('Nome já existe!'); return; }
-    u.nome = novoNome;
-    if (novaSenha) { if (novaSenha !== confirm) { alert('Senhas não conferem!'); return; } u.senha = novaSenha; }
-    await db.collection('usuarios').doc(id).update(u);
-    await adicionarLog('EDITOU USUÁRIO', u.nome);
-    fecharModal('modalUsuarios');
-    mostrar('usuarios');
+    const btn = document.getElementById('btnSalvarUsuario');
+    if (!btn) return;
+    const originalText = showLoading(btn, 'Salvando...');
+    
+    try {
+        const u = usuarios.find(u => u.id === id);
+        const novoNome = document.getElementById('edit_user_nome')?.value;
+        const novaSenha = document.getElementById('edit_user_senha')?.value;
+        const confirm = document.getElementById('edit_user_confirm')?.value;
+        if (!novoNome) { alert('Nome obrigatório!'); return; }
+        if (usuarios.some((user,i)=>user.id !== id && user.nome===novoNome)) { alert('Nome já existe!'); return; }
+        u.nome = novoNome;
+        if (novaSenha) { if (novaSenha !== confirm) { alert('Senhas não conferem!'); return; } u.senha = novaSenha; }
+        await db.collection('usuarios').doc(id).update(u);
+        await adicionarLog('EDITOU USUÁRIO', u.nome);
+        fecharModal('modalUsuarios');
+        mostrar('usuarios');
+    } catch (error) {
+        console.error('Erro ao editar usuário:', error);
+        alert('❌ Erro ao salvar!');
+    } finally {
+        hideLoading(btn, originalText);
+    }
 }
 
 async function adicionarUsuario() {
-    let nome = document.getElementById('novo_usuario')?.value;
-    let senha = document.getElementById('nova_senha')?.value || '';
-    if (!nome) { alert('Digite um nome!'); return; }
-    if (usuarios.some(u=>u.nome===nome)) { alert('Nome já existe!'); return; }
-    const novo = { nome, senha };
-    const docRef = await db.collection('usuarios').add(novo);
-    usuarios.push({ id: docRef.id, ...novo });
-    await adicionarLog('ADICIONOU USUÁRIO', nome);
-    mostrar('usuarios');
+    const btn = document.getElementById('btnAdicionarUsuario');
+    if (!btn) return;
+    const originalText = showLoading(btn, 'Salvando...');
+    
+    try {
+        let nome = document.getElementById('novo_usuario')?.value;
+        let senha = document.getElementById('nova_senha')?.value || '';
+        if (!nome) { alert('Digite um nome!'); return; }
+        if (usuarios.some(u=>u.nome===nome)) { alert('Nome já existe!'); return; }
+        const novo = { nome, senha };
+        const docRef = await db.collection('usuarios').add(novo);
+        usuarios.push({ id: docRef.id, ...novo });
+        await adicionarLog('ADICIONOU USUÁRIO', nome);
+        mostrar('usuarios');
+    } catch (error) {
+        console.error('Erro ao adicionar usuário:', error);
+        alert('❌ Erro ao adicionar!');
+    } finally {
+        hideLoading(btn, originalText);
+    }
 }
 
 async function excluirUsuario(id) {
@@ -1669,16 +1942,23 @@ async function excluirUsuario(id) {
     const u = usuarios.find(u => u.id === id);
     if (u.nome === 'Admin') { alert('Não pode excluir o Admin!'); return; }
     if (confirm(`Excluir ${u.nome}?`)) {
-        await db.collection('usuarios').doc(id).delete();
-        usuarios = usuarios.filter(u => u.id !== id);
-        if (usuarioAtual === u.nome) {
-            usuarioAtual = usuarios[0].nome;
-            usuarioPermissao = usuarioAtual === 'Admin' ? 'admin' : 'user';
-            document.getElementById('menuUsuarios').style.display = usuarioAtual === 'Admin' ? 'block' : 'none';
-            document.getElementById('menuLogs').style.display = usuarioAtual === 'Admin' ? 'block' : 'none';
+        try {
+            await db.collection('usuarios').doc(id).delete();
+            usuarios = usuarios.filter(u => u.id !== id);
+            if (usuarioAtual === u.nome) {
+                usuarioAtual = usuarios[0].nome;
+                usuarioPermissao = usuarioAtual === 'Admin' ? 'admin' : 'user';
+                const menuUsuarios = getElement('menuUsuarios');
+                const menuLogs = getElement('menuLogs');
+                if (menuUsuarios) menuUsuarios.style.display = usuarioAtual === 'Admin' ? 'block' : 'none';
+                if (menuLogs) menuLogs.style.display = usuarioAtual === 'Admin' ? 'block' : 'none';
+            }
+            await adicionarLog('EXCLUIU USUÁRIO', u.nome);
+            mostrar('usuarios');
+        } catch (error) {
+            console.error('Erro ao excluir usuário:', error);
+            alert('❌ Erro ao excluir!');
         }
-        await adicionarLog('EXCLUIU USUÁRIO', u.nome);
-        mostrar('usuarios');
     }
 }
 
@@ -1686,18 +1966,23 @@ async function excluirUsuario(id) {
 // LOGS
 // ============================================
 function telaLogs() {
-    return topBar() + `<div class="box"><h2>📋 Logs</h2><div class="log-viewer">${logs.slice().reverse().map(l=>`<div class="log-entry"><span class="log-time">[${new Date(l.data).toLocaleString()}]</span> <span class="log-user">${l.usuario}</span> <span class="log-action">${l.acao}</span>${l.detalhe?` - ${l.detalhe}`:''}</div>`).join('')}${logs.length===0?'<div>Nenhum log.</div>':''}</div><div class="mt-20"><button class="danger" onclick="limparLogs()">🗑️ Limpar Logs</button></div></div>`;
+    return topBar() + `<div class="box"><h2>📋 Logs</h2><div class="log-viewer">${logs.slice().reverse().map(l=>`<div class="log-entry"><span class="log-time">[${new Date(l.data).toLocaleString()}]</span> <span class="log-user">${escapeHtml(l.usuario)}</span> <span class="log-action">${escapeHtml(l.acao)}</span>${l.detalhe?` - ${escapeHtml(l.detalhe)}`:''}</div>`).join('')}${logs.length===0?'<div>Nenhum log.</div>':''}</div><div class="mt-20"><button class="danger" onclick="limparLogs()">🗑️ Limpar Logs</button></div></div>`;
 }
 
 async function limparLogs() {
     if (confirm('Limpar todos os logs?')) {
-        const snapshot = await db.collection('logs').get();
-        for (const doc of snapshot.docs) {
-            await db.collection('logs').doc(doc.id).delete();
+        try {
+            const snapshot = await db.collection('logs').get();
+            for (const doc of snapshot.docs) {
+                await db.collection('logs').doc(doc.id).delete();
+            }
+            logs = [];
+            await adicionarLog('LIMPOUS LOGS');
+            mostrar('logs');
+        } catch (error) {
+            console.error('Erro ao limpar logs:', error);
+            alert('❌ Erro ao limpar!');
         }
-        logs = [];
-        await adicionarLog('LIMPOUS LOGS');
-        mostrar('logs');
     }
 }
 
@@ -1706,7 +1991,9 @@ async function limparLogs() {
 // ============================================
 async function mostrar(tela) {
     if (!usuarioAtual) { mostrarLogin(); return; }
-    const main = document.getElementById('main-content');
+    const main = getElement('main-content');
+    if (!main) return;
+    
     switch(tela) {
         case 'clientes': main.innerHTML = telaClientes(); break;
         case 'fornecedores': main.innerHTML = telaFornecedores(); break;
