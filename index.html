@@ -133,24 +133,10 @@
         button.success { background: #2e7d32; }
         button.danger { background: #d32f2f; }
         button.info { background: #0288d1; }
+        button.excel { background: #1e6f3f; font-weight: bold; }
+        button.salvar { background: #2e7d32; font-weight: bold; padding: 10px 20px; }
         
-        /* CORREÇÃO DOS BOTÕES DE AÇÃO */
-        .acoes-cell {
-            white-space: nowrap;
-            display: flex;
-            gap: 5px;
-            align-items: center;
-            justify-content: flex-start;
-        }
-        
-        .acoes-cell button {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 6px 10px;
-            font-size: 0.8rem;
-        }
-        
+        /* Tooltip */
         [data-tooltip] {
             position: relative;
             cursor: pointer;
@@ -181,6 +167,7 @@
         td { border: 1px solid #ddd; padding: 8px; white-space: nowrap; }
         tr:hover { background: #fafafa; }
         
+        /* Status badges com cores suaves */
         .status-badge {
             padding: 3px 8px;
             border-radius: 20px;
@@ -197,6 +184,7 @@
         .status-badge.em-rota { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
         .status-badge.pendente { background: #f5f5f5; color: #616161; border: 1px solid #e0e0e0; }
         
+        /* Linha de pedido atrasado */
         tr.atrasado-row { background-color: #ffebee !important; }
         tr.atrasado-row:hover { background-color: #ffcdd2 !important; }
         
@@ -211,9 +199,14 @@
             border: 1px solid #ddd;
             flex-wrap: wrap;
         }
-        .resumo-item { display: inline-flex; align-items: center; gap: 5px; }
+        .resumo-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
         .resumo-item strong { color: #5C2A2A; }
         
+        /* Filtros suaves estilo tags */
         .filtros-rapidos {
             display: flex;
             gap: 8px;
@@ -230,9 +223,16 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        .filtro-tipo-btn:hover { background: #e0e0e0; }
-        .filtro-tipo-btn.active { background: #8B5A5A; color: white; border-color: #8B5A5A; }
+        .filtro-tipo-btn:hover {
+            background: #e0e0e0;
+        }
+        .filtro-tipo-btn.active {
+            background: #8B5A5A;
+            color: white;
+            border-color: #8B5A5A;
+        }
         
+        /* Ordenação suave */
         .ordenacao-btns {
             display: flex;
             gap: 6px;
@@ -249,11 +249,23 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        .ordem-btn:hover { background: #e0e0e0; }
-        .ordem-btn.active { background: #8B5A5A; color: white; border-color: #8B5A5A; }
+        .ordem-btn:hover {
+            background: #e0e0e0;
+        }
+        .ordem-btn.active {
+            background: #8B5A5A;
+            color: white;
+            border-color: #8B5A5A;
+        }
         
-        .tooltip-icon { cursor: help; color: #8B5A5A; font-size: 16px; }
-        .tooltip-icon:hover { color: #5C2A2A; }
+        .tooltip-icon {
+            cursor: help;
+            color: #8B5A5A;
+            font-size: 16px;
+        }
+        .tooltip-icon:hover {
+            color: #5C2A2A;
+        }
         
         .kpi-grid {
             display: grid;
@@ -379,17 +391,18 @@
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
         .close-modal { font-size: 20px; cursor: pointer; color: #999; }
         
-        /* RODAPÉ CORRIGIDO */
+        /* Rodapé fixo com versículo no canto inferior esquerdo */
         .footer {
             position: fixed;
             bottom: 0;
             left: 250px;
             right: 0;
-            background: #5C2A2A;
-            color: #F5E8E0;
+            background: #f8f8f8;
+            border-top: 1px solid #e0e0e0;
+            padding: 6px 15px;
+            font-size: 10px;
+            color: #999;
             text-align: center;
-            padding: 8px 15px;
-            font-size: 11px;
             z-index: 10;
         }
         
@@ -400,7 +413,7 @@
             font-size: 9px;
             color: #5C2A2A;
             font-style: italic;
-            opacity: 0.6;
+            opacity: 0.7;
             background: transparent;
             z-index: 15;
             pointer-events: none;
@@ -417,17 +430,6 @@
         }
         .char-counter.warning { color: #f57c00; }
         .char-counter.danger { color: #d32f2f; }
-        
-        .search-box {
-            margin: 15px 0;
-        }
-        .search-box input {
-            width: 100%;
-            max-width: 300px;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-        }
     </style>
 </head>
 <body>
@@ -437,28 +439,28 @@
         <div class="logo-main">BRETON BELÉM</div>
         <div class="logo-sub">Hong Possas Mov. de Decoração</div>
     </div>
-    <button onclick="mostrar('clientes')">👥 Clientes</button>
-    <button onclick="mostrar('fornecedores')">📦 Fornecedores</button>
-    <button onclick="mostrar('lancamentos')">📝 Lançamentos</button>
-    <button onclick="mostrar('relatorios')">📊 Relatórios</button>
-    <button onclick="mostrar('dashboard')">📈 Dashboard</button>
-    <button onclick="mostrar('anexos')">📎 Anexos</button>
-    <button id="menuUsuarios" onclick="mostrar('usuarios')" style="display: none;">👤 Usuários</button>
-    <button id="menuLogs" onclick="mostrar('logs')" style="display: none;">📋 Logs</button>
-    <button onclick="logout()" style="margin-top: 20px;">🚪 Sair</button>
+    <button onclick="mostrar('clientes')"><i>👥</i> Clientes</button>
+    <button onclick="mostrar('fornecedores')"><i>📦</i> Fornecedores</button>
+    <button onclick="mostrar('lancamentos')"><i>📝</i> Lançamentos</button>
+    <button onclick="mostrar('relatorios')"><i>📊</i> Relatórios</button>
+    <button onclick="mostrar('dashboard')"><i>📈</i> Dashboard</button>
+    <button onclick="mostrar('anexos')"><i>📎</i> Anexos</button>
+    <button id="menuUsuarios" onclick="mostrar('usuarios')" style="display: none;"><i>👤</i> Usuários</button>
+    <button id="menuLogs" onclick="mostrar('logs')" style="display: none;"><i>📋</i> Logs</button>
+    <button onclick="logout()" style="margin-top: 20px;"><i>🚪</i> Sair</button>
 </div>
 
 <div class="main" id="main-content"></div>
 
-<!-- RODAPÉ CORRIGIDO - APENAS BRETON E DIREITOS RESERVADOS -->
 <div class="footer" id="footer" style="display: none;">
-    <div>© 2024 Breton - Sistema de Gestão de Pedidos</div>
-    <div>Todos os direitos reservados</div>
+    <div class="footer-content">
+        <div><span>Compras:</span> (91) 9137-8383 | <span>Suporte:</span> (91) 9192-6953</div>
+        <div>© 2026 BRETON BELÉM - Todos os direitos reservados</div>
+    </div>
 </div>
 
 <div class="footer-verse" id="footerVerse" style="display: none;">Provérbios 16:3: "Confie ao Senhor as suas obras, e os seus planos serão bem-sucedidos."</div>
 
-<!-- MODAIS -->
 <div class="modal" id="modalEditarFornecedor"><div class="modal-content"><div class="modal-header"><h3>✏️ Editar Fornecedor</h3><span class="close-modal" onclick="fecharModal('modalEditarFornecedor')">&times;</span></div><div id="modalEditarFornecedorContent"></div></div></div>
 <div class="modal" id="modalEditarCliente"><div class="modal-content"><div class="modal-header"><h3>✏️ Editar Cliente</h3><span class="close-modal" onclick="fecharModal('modalEditarCliente')">&times;</span></div><div id="modalEditarClienteContent"></div></div></div>
 <div class="modal" id="modalEditarLancamento"><div class="modal-content"><div class="modal-header"><h3>✏️ Editar Lançamento</h3><span class="close-modal" onclick="fecharModal('modalEditarLancamento')">&times;</span></div><div id="modalEditarLancamentoContent"></div></div></div>
@@ -511,13 +513,86 @@ const tiposPedido = ['OC', 'SHOWROOM', 'ESTOQUE', 'ASSISTENCIA'];
 const mesesLista = ['Janeiro/2026', 'Fevereiro/2026', 'Março/2026', 'Abril/2026', 'Maio/2026', 'Junho/2026', 'Julho/2026', 'Agosto/2026', 'Setembro/2026', 'Outubro/2026', 'Novembro/2026', 'Dezembro/2026'];
 
 // ============================================
-// FUNÇÕES AUXILIARES
+// FUNÇÕES DO FIREBASE
 // ============================================
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+async function carregarDados() {
+    try {
+        const [clientesSnap, fornecedoresSnap, lancamentosSnap, anexosSnap, usuariosSnap, logsSnap] = await Promise.all([
+            db.collection('clientes').get(),
+            db.collection('fornecedores').get(),
+            db.collection('lancamentos').get(),
+            db.collection('anexos').get(),
+            db.collection('usuarios').get(),
+            db.collection('logs').get()
+        ]);
+        
+        clientes = clientesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        fornecedores = fornecedoresSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        lancamentos = lancamentosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        anexos = anexosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        usuarios = usuariosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        logs = logsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        if (clientes.length === 0) {
+            const clientesIniciais = [
+                { pedido: 1035, data: '2026-01-07', cliente: 'PAULA REGINA CASTRO MARTINS', cpf_cnpj: '616507732-34', contato: '(91) 99999-1234' },
+                { pedido: 1038, data: '2026-01-05', cliente: 'BARBARA EMILY LIMA GOUVEIA', cpf_cnpj: '014296542-10', contato: '(91) 99999-5678' }
+            ];
+            for (const c of clientesIniciais) {
+                await db.collection('clientes').add(c);
+            }
+            clientes = clientesIniciais;
+        }
+        
+        if (fornecedores.length === 0) {
+            const fornecedoresIniciais = [
+                { cod: 'FOR001', nome: 'FEFER', cpf_cnpj: '', condicao: '28D', colecao: 'VERÃO 2026' },
+                { cod: 'FOR002', nome: 'BRETON MÓVEIS', cpf_cnpj: '12.345.678/0001-90', condicao: 'FATURADO', colecao: 'INVERNO 2026' }
+            ];
+            for (const f of fornecedoresIniciais) {
+                await db.collection('fornecedores').add(f);
+            }
+            fornecedores = fornecedoresIniciais;
+        }
+        
+        if (lancamentos.length === 0) {
+            const lancamentosIniciais = [
+                { pedido: 1035, data: '2026-01-07', mes: 'Janeiro/2026', tipo: 'OC', cliente: 'PAULA REGINA CASTRO MARTINS', oc: 'OC001', fornecedor: 'FEFER', categoria: 'SOFA', itens: 2, produtos: 'SOFA RETRÁTIL', valor: 3500.00, data_pagto: '2026-01-10', condicao: 'Em aberto', prev_fat: '2026-01-15', novo_prazo: '', prev_chegada: '2026-02-01', status: 'EM ROTA', data_fat: '', nf: 'NF001', transportadora: 'TRANSPORTADORA A', chegada: '', conferencia: '', entrega: '2026-02-05', usuario: 'Admin', criado: new Date().toISOString(), observacoes: '' },
+                { pedido: 1038, data: '2026-01-05', mes: 'Janeiro/2026', tipo: 'OC', cliente: 'BARBARA EMILY LIMA GOUVEIA', oc: 'OC002', fornecedor: 'BRETON MÓVEIS', categoria: 'CADEIRA', itens: 4, produtos: 'CADEIRA DE JANTAR', valor: 1200.00, data_pagto: '2026-01-08', condicao: 'Em aberto', prev_fat: '2026-01-10', novo_prazo: '', prev_chegada: '2026-01-20', status: 'ENTREGUE', data_fat: '2026-01-09', nf: 'NF002', transportadora: 'TRANSPORTADORA B', chegada: '2026-01-19', conferencia: '2026-01-19', entrega: '2026-01-20', usuario: 'Admin', criado: new Date().toISOString(), observacoes: '' }
+            ];
+            for (const l of lancamentosIniciais) {
+                await db.collection('lancamentos').add(l);
+            }
+            lancamentos = lancamentosIniciais;
+        }
+        
+        if (usuarios.length === 0) {
+            const usuariosIniciais = [
+                { nome: 'Admin', senha: '123' },
+                { nome: 'Joana', senha: '' },
+                { nome: 'Carlos', senha: '' },
+                { nome: 'Mariana', senha: '' }
+            ];
+            for (const u of usuariosIniciais) {
+                await db.collection('usuarios').add(u);
+            }
+            usuarios = usuariosIniciais;
+        }
+        
+        console.log("Dados carregados do Firebase!");
+        return true;
+    } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+        alert("Erro ao conectar com o Firebase. Verifique sua internet.");
+        return false;
+    }
+}
+
+async function adicionarLog(acao, detalhe = '') {
+    const log = { data: new Date().toISOString(), usuario: usuarioAtual || 'Sistema', acao, detalhe };
+    await db.collection('logs').add(log);
+    logs.push(log);
+    if (logs.length > 100) logs = logs.slice(-100);
 }
 
 function formatarData(dataStr) {
@@ -583,13 +658,10 @@ function isPedidoAtrasado(lancamento) {
 }
 
 function topBar() {
-    return `<div class="top-bar"><div class="system-title">CONTROLE DE PEDIDOS</div><div class="system-user">👤 ${escapeHtml(usuarioAtual || '')}</div></div>`;
+    return `<div class="top-bar"><div class="system-title">CONTROLE DE PEDIDOS</div><div class="system-user">👤 ${usuarioAtual || ''}</div></div>`;
 }
 
-function fecharModal(modalId) { 
-    const modal = document.getElementById(modalId);
-    if (modal) modal.classList.remove('active'); 
-}
+function fecharModal(modalId) { document.getElementById(modalId).classList.remove('active'); }
 
 function gerarLembretes() {
     const lembretes = [], hoje = new Date(); hoje.setHours(0,0,0,0);
@@ -667,117 +739,24 @@ function calcularTotais(lista) {
 }
 
 // ============================================
-// CARREGAR DADOS DO FIREBASE
-// ============================================
-async function carregarDados() {
-    try {
-        const [clientesSnap, fornecedoresSnap, lancamentosSnap, anexosSnap, usuariosSnap, logsSnap] = await Promise.all([
-            db.collection('clientes').get(),
-            db.collection('fornecedores').get(),
-            db.collection('lancamentos').get(),
-            db.collection('anexos').get(),
-            db.collection('usuarios').get(),
-            db.collection('logs').get()
-        ]);
-        
-        clientes = clientesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        fornecedores = fornecedoresSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        lancamentos = lancamentosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        anexos = anexosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        usuarios = usuariosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        logs = logsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        if (clientes.length === 0) {
-            const clientesIniciais = [
-                { pedido: 1035, data: '2026-01-07', cliente: 'PAULA REGINA CASTRO MARTINS', cpf_cnpj: '616507732-34', contato: '(91) 99999-1234' },
-                { pedido: 1038, data: '2026-01-05', cliente: 'BARBARA EMILY LIMA GOUVEIA', cpf_cnpj: '014296542-10', contato: '(91) 99999-5678' }
-            ];
-            for (const c of clientesIniciais) {
-                await db.collection('clientes').add(c);
-            }
-            clientes = clientesIniciais;
-        }
-        
-        if (fornecedores.length === 0) {
-            const fornecedoresIniciais = [
-                { cod: 'FOR001', nome: 'FEFER', cpf_cnpj: '', condicao: '28D', colecao: 'VERÃO 2026' },
-                { cod: 'FOR002', nome: 'BRETON MÓVEIS', cpf_cnpj: '12.345.678/0001-90', condicao: 'FATURADO', colecao: 'INVERNO 2026' }
-            ];
-            for (const f of fornecedoresIniciais) {
-                await db.collection('fornecedores').add(f);
-            }
-            fornecedores = fornecedoresIniciais;
-        }
-        
-        if (lancamentos.length === 0) {
-            const lancamentosIniciais = [
-                { pedido: 1035, data: '2026-01-07', mes: 'Janeiro/2026', tipo: 'OC', cliente: 'PAULA REGINA CASTRO MARTINS', oc: 'OC001', fornecedor: 'FEFER', categoria: 'SOFA', itens: 2, produtos: 'SOFA RETRÁTIL', valor: 3500.00, data_pagto: '2026-01-10', condicao: 'Em aberto', prev_fat: '2026-01-15', novo_prazo: '', prev_chegada: '2026-02-01', status: 'EM ROTA', data_fat: '', nf: 'NF001', transportadora: 'TRANSPORTADORA A', chegada: '', conferencia: '', entrega: '2026-02-05', usuario: 'Admin', criado: new Date().toISOString(), observacoes: '' },
-                { pedido: 1038, data: '2026-01-05', mes: 'Janeiro/2026', tipo: 'OC', cliente: 'BARBARA EMILY LIMA GOUVEIA', oc: 'OC002', fornecedor: 'BRETON MÓVEIS', categoria: 'CADEIRA', itens: 4, produtos: 'CADEIRA DE JANTAR', valor: 1200.00, data_pagto: '2026-01-08', condicao: 'Em aberto', prev_fat: '2026-01-10', novo_prazo: '', prev_chegada: '2026-01-20', status: 'ENTREGUE', data_fat: '2026-01-09', nf: 'NF002', transportadora: 'TRANSPORTADORA B', chegada: '2026-01-19', conferencia: '2026-01-19', entrega: '2026-01-20', usuario: 'Admin', criado: new Date().toISOString(), observacoes: '' }
-            ];
-            for (const l of lancamentosIniciais) {
-                await db.collection('lancamentos').add(l);
-            }
-            lancamentos = lancamentosIniciais;
-        }
-        
-        if (usuarios.length === 0) {
-            const usuariosIniciais = [
-                { nome: 'Admin', senha: '123' },
-                { nome: 'Joana', senha: '' },
-                { nome: 'Carlos', senha: '' },
-                { nome: 'Mariana', senha: '' }
-            ];
-            for (const u of usuariosIniciais) {
-                await db.collection('usuarios').add(u);
-            }
-            usuarios = usuariosIniciais;
-        }
-        
-        console.log("✅ Dados carregados do Firebase!");
-        return true;
-    } catch (error) {
-        console.error("❌ Erro ao carregar dados:", error);
-        alert("Erro ao conectar com o Firebase. Verifique sua internet.");
-        return false;
-    }
-}
-
-async function adicionarLog(acao, detalhe = '') {
-    try {
-        const log = { data: new Date().toISOString(), usuario: usuarioAtual || 'Sistema', acao, detalhe };
-        await db.collection('logs').add(log);
-        logs.push(log);
-        if (logs.length > 100) logs = logs.slice(-100);
-    } catch (error) {
-        console.error("Erro ao adicionar log:", error);
-    }
-}
-
-// ============================================
 // TELA DE LOGIN
 // ============================================
 function mostrarLogin() {
-    const sidebar = document.getElementById('sidebar');
-    const footer = document.getElementById('footer');
-    const footerVerse = document.getElementById('footerVerse');
-    if (sidebar) sidebar.style.display = 'none';
-    if (footer) footer.style.display = 'none';
-    if (footerVerse) footerVerse.style.display = 'none';
+    document.getElementById('sidebar').style.display = 'none';
+    document.getElementById('footer').style.display = 'none';
+    document.getElementById('footerVerse').style.display = 'none';
     
-    const main = document.getElementById('main-content');
-    if (main) {
-        main.innerHTML = `
-            <div class="login-container">
-                <div class="login-box">
-                    <h1>BRETON BELÉM</h1>
-                    <h2>Hong Possas Mov. de Decoração</h2>
-                    <div class="login-field"><label>👤 Usuário</label><select id="loginUsuario">${usuarios.map(u => `<option value="${escapeHtml(u.nome)}">${escapeHtml(u.nome)}</option>`).join('')}</select></div>
-                    <div class="login-field"><label>🔑 Senha</label><input type="password" id="loginSenha" placeholder="•••" autocomplete="off"></div>
-                    <button class="login-button" onclick="fazerLogin()">🔓 ENTRAR</button>
-                </div>
+    document.getElementById('main-content').innerHTML = `
+        <div class="login-container">
+            <div class="login-box">
+                <h1>BRETON BELÉM</h1>
+                <h2>Hong Possas Mov. de Decoração</h2>
+                <div class="login-field"><label>👤 Usuário</label><select id="loginUsuario">${usuarios.map(u => `<option value="${u.nome}">${u.nome}</option>`).join('')}</select></div>
+                <div class="login-field"><label>🔑 Senha</label><input type="password" id="loginSenha" placeholder="•••" autocomplete="off"></div>
+                <button class="login-button" onclick="fazerLogin()">🔓 ENTRAR</button>
             </div>
-        `;
-    }
+        </div>
+    `;
 }
 
 async function fazerLogin() {
@@ -792,18 +771,11 @@ async function fazerLogin() {
     
     usuarioAtual = nome;
     usuarioPermissao = nome === 'Admin' ? 'admin' : 'user';
-    
-    const menuUsuarios = document.getElementById('menuUsuarios');
-    const menuLogs = document.getElementById('menuLogs');
-    const sidebar = document.getElementById('sidebar');
-    const footer = document.getElementById('footer');
-    const footerVerse = document.getElementById('footerVerse');
-    
-    if (menuUsuarios) menuUsuarios.style.display = nome === 'Admin' ? 'block' : 'none';
-    if (menuLogs) menuLogs.style.display = nome === 'Admin' ? 'block' : 'none';
-    if (sidebar) sidebar.style.display = 'block';
-    if (footer) footer.style.display = 'block';
-    if (footerVerse) footerVerse.style.display = 'block';
+    document.getElementById('menuUsuarios').style.display = nome === 'Admin' ? 'block' : 'none';
+    document.getElementById('menuLogs').style.display = nome === 'Admin' ? 'block' : 'none';
+    document.getElementById('sidebar').style.display = 'block';
+    document.getElementById('footer').style.display = 'block';
+    document.getElementById('footerVerse').style.display = 'block';
     
     await adicionarLog('LOGIN', nome);
     mostrar('clientes');
@@ -812,88 +784,33 @@ async function fazerLogin() {
 function logout() {
     usuarioAtual = null;
     usuarioPermissao = null;
-    const sidebar = document.getElementById('sidebar');
-    const footer = document.getElementById('footer');
-    const footerVerse = document.getElementById('footerVerse');
-    if (sidebar) sidebar.style.display = 'none';
-    if (footer) footer.style.display = 'none';
-    if (footerVerse) footerVerse.style.display = 'none';
+    document.getElementById('sidebar').style.display = 'none';
+    document.getElementById('footer').style.display = 'none';
+    document.getElementById('footerVerse').style.display = 'none';
     mostrarLogin();
 }
 
 // ============================================
-// FUNÇÃO PRINCIPAL
+// TELA DE CLIENTES
 // ============================================
-async function mostrar(tela) {
-    if (!usuarioAtual) { mostrarLogin(); return; }
-    const main = document.getElementById('main-content');
-    if (!main) return;
-    
-    switch(tela) {
-        case 'clientes': 
-            main.innerHTML = `<div class="top-bar"><div class="system-title">CONTROLE DE PEDIDOS</div><div class="system-user">👤 ${escapeHtml(usuarioAtual)}</div></div>
-            <div class="box"><h2>👥 Clientes</h2>
+function telaClientes() {
+    return topBar() + `
+        <div class="box">
+            <h2>👥 Clientes</h2>
             <div class="form-grid">
                 <div class="form-group"><label class="required">Nº Pedido</label><input type="number" id="cli_pedido"></div>
                 <div class="form-group"><label class="required">Data</label><input type="date" id="cli_data"></div>
                 <div class="form-group"><label class="required">Cliente</label><input type="text" id="cli_nome" style="text-transform:uppercase"></div>
                 <div class="form-group"><label>CPF/CNPJ</label><input type="text" id="cli_cpf"></div>
-                <div class="form-group"><label>Contato</label><input type="text" id="cli_contato"></div>
-                <div class="form-group"><button class="success" onclick="adicionarCliente()">➕ Adicionar</button></div>
+                <div class="form-group"><label>Contato</label><input type="text" id="cli_contato" placeholder="Telefone/Email"></div>
+                <div class="form-group" style="justify-content:flex-end"><button class="success" onclick="adicionarCliente()">➕ Adicionar</button></div>
             </div>
-            <div class="table-container"><table id="tabelaClientes"><thead><th>#</th><th>Pedido</th><th>Data</th><th>Cliente</th><th>CPF/CNPJ</th><th>Contato</th><th>Ações</th></thead><tbody>${clientes.map((c,i)=>`<tr><td>${i+1}</td><td>${c.pedido}</td><td>${formatarData(c.data)}</td><td>${escapeHtml(c.cliente)}</td><td>${escapeHtml(c.cpf_cnpj||'-')}</td><td>${escapeHtml(c.contato||'-')}</td><td class="acoes-cell"><button class="small" onclick="abrirModalEdicaoCliente('${c.id}')">✏️</button><button class="small danger" onclick="excluirCliente('${c.id}')">🗑️</button></td></tr>`).join('')}</tbody></table></div></div>`; 
-            break;
-        case 'fornecedores':
-            main.innerHTML = `<div class="top-bar"><div class="system-title">CONTROLE DE PEDIDOS</div><div class="system-user">👤 ${escapeHtml(usuarioAtual)}</div></div>
-            <div class="box"><h2>📦 Fornecedores</h2>
-            <div class="form-grid">
-                <div class="form-group"><label>Código</label><input type="text" id="for_cod" value="${gerarProximoCodFornecedor()}" readonly></div>
-                <div class="form-group"><label class="required">Fornecedor</label><input type="text" id="for_nome"></div>
-                <div class="form-group"><label>CPF/CNPJ</label><input type="text" id="for_cpf"></div>
-                <div class="form-group"><label>Condição</label><input type="text" id="for_condicao"></div>
-                <div class="form-group"><label>Coleção</label><input type="text" id="for_colecao"></div>
-                <div class="form-group"><button class="success" onclick="adicionarFornecedor()">➕ Adicionar</button></div>
-            </div>
-            <div class="table-container"><table id="tabelaFornecedores"><thead><th>#</th><th>COD</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Condição</th><th>Coleção</th><th>Ações</th></thead><tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}</td><td>${f.cod}</td><td>${escapeHtml(f.nome)}</td><td>${escapeHtml(f.cpf_cnpj||'-')}</td><td>${escapeHtml(f.condicao||'-')}</td><td>${escapeHtml(f.colecao||'-')}</td><td class="acoes-cell"><button class="small" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" onclick="excluirFornecedor('${f.id}')">🗑️</button></td></tr>`).join('')}</tbody></table></div></div>`;
-            break;
-        case 'lancamentos':
-            main.innerHTML = `<div class="top-bar"><div class="system-title">CONTROLE DE PEDIDOS</div><div class="system-user">👤 ${escapeHtml(usuarioAtual)}</div></div>
-            <div class="box"><h2>📝 Lançamentos</h2>
-            <div class="resumo-rapido" id="resumoLancamentos"></div>
-            <div class="filtros-rapidos">
-                <button class="filtro-tipo-btn ${currentFilterType === 'TODOS' ? 'active' : ''}" onclick="setFilterType('TODOS')">📋 TODOS</button>
-                <button class="filtro-tipo-btn ${currentFilterType === 'OC' ? 'active' : ''}" onclick="setFilterType('OC')">📄 OC</button>
-                <button class="filtro-tipo-btn ${currentFilterType === 'SHOWROOM' ? 'active' : ''}" onclick="setFilterType('SHOWROOM')">🖼️ SHOWROOM</button>
-            </div>
-            <div class="ordenacao-btns">
-                <button class="ordem-btn ${currentOrder === 'data' ? 'active' : ''}" onclick="setOrder('data')">📅 Data</button>
-                <button class="ordem-btn ${currentOrder === 'cliente' ? 'active' : ''}" onclick="setOrder('cliente')">👤 Cliente</button>
-                <button class="ordem-btn" onclick="toggleOrderDirection()">${currentOrderDirection === 'asc' ? '⬆️ Crescente' : '⬇️ Decrescente'}</button>
-            </div>
-            <details><summary style="cursor:pointer;padding:10px;background:#FAF0F0;">➕ NOVO LANÇAMENTO</summary>
-            <div class="form-grid"><div class="form-group"><label>Pedido</label><input type="number" id="lan_pedido" onchange="preencherClienteAuto()"></div>
-            <div class="form-group"><label>Data</label><input type="date" id="lan_data" readonly></div>
-            <div class="form-group"><label>Mês</label><select id="lan_mes">${mesesLista.map(m=>`<option>${m}</option>`).join('')}</select></div>
-            <div class="form-group"><label>Tipo</label><select id="lan_tipo">${tiposPedido.map(t=>`<option>${t}</option>`).join('')}</select></div>
-            <div class="form-group"><label>Cliente</label><input type="text" id="lan_cliente" readonly></div>
-            <div class="form-group"><label>OC</label><input type="text" id="lan_oc"></div>
-            <div class="form-group"><label>Fornecedor</label><input type="text" id="lan_fornecedor"></div>
-            <div class="form-group"><label>Categoria</label><select id="lan_categoria">${categorias.map(c=>`<option>${c}</option>`).join('')}</select></div>
-            <div class="form-group"><label>Itens</label><input type="number" id="lan_itens"></div>
-            <div class="form-group"><label>Produtos</label><input type="text" id="lan_produtos"></div>
-            <div class="form-group"><label>Valor</label><input type="text" id="lan_valor" onblur="formatarValorInput(this)"></div>
-            <div class="form-group"><label>Data Pagto</label><input type="date" id="lan_data_pagto"></div>
-            <div class="form-group"><label>Status</label><select id="lan_status"><option>EM ABERTO</option><option>ENTREGUE</option><option>ATRASADO</option></select></div>
-            <div class="form-group"><label>Entrega</label><input type="date" id="lan_entrega"></div>
-            <div class="form-group"><label>Observações</label><textarea id="lan_observacoes" rows="2"></textarea></div>
-            <div class="form-group"><button class="success" onclick="adicionarLancamento()">💾 SALVAR</button></div></div></details>
-            <div class="table-container"><table id="tabelaLancamentos"><thead><th>Pedido</th><th>Data</th><th>Cliente</th><th>Fornecedor</th><th>Valor</th><th>Status</th><th>Ações</th></thead><tbody id="lancamentosBody"></tbody><tfoot id="lancamentosFooter"></tfoot></table></div></div>`;
-            setTimeout(() => renderLancamentos(), 100);
-            break;
-        default:
-            main.innerHTML = `<div class="top-bar"><div class="system-title">CONTROLE DE PEDIDOS</div><div class="system-user">👤 ${escapeHtml(usuarioAtual)}</div></div><div class="box"><h2>📈 Dashboard</h2><div id="conteudoDashboard"></div></div>`;
-    }
-    await adicionarLog('VISUALIZOU', tela);
+            <div class="search-box"><input type="text" id="buscaCliente" placeholder="🔍 Buscar..." onkeyup="filtrarClientes()"></div>
+            <div class="table-container"><table class="auto-layout" id="tabelaClientes"><thead>   <th>#</th><th>Pedido</th><th>Data</th><th>Cliente</th><th>CPF/CNPJ</th><th>Contato</th><th>Ações</th> </thead>
+                <tbody>${clientes.map((c,i)=>`<tr><td>${i+1}<\/td><td>${c.pedido}<\/td><td>${formatarData(c.data)}<\/td><td>${c.cliente}<\/td><td>${c.cpf_cnpj||'-'}<\/td><td>${c.contato||'-'}<\/td><td><button class="small" data-tooltip="Editar cliente" onclick="abrirModalEdicaoCliente('${c.id}')">✏️</button><button class="small danger" data-tooltip="Excluir cliente" onclick="excluirCliente('${c.id}')">🗑️</button><\/td><\/tr>`).join('')}
+            </tbody>       </table>
+        </div>
+    `;
 }
 
 async function adicionarCliente() {
@@ -916,14 +833,17 @@ async function excluirCliente(id) {
     }
 }
 
+function filtrarClientes() {
+    let b = document.getElementById('buscaCliente')?.value.toLowerCase() || '';
+    document.querySelectorAll('#tabelaClientes tbody tr').forEach(l => l.style.display = l.textContent.toLowerCase().includes(b) ? '' : 'none');
+}
+
 function abrirModalEdicaoCliente(id) {
     const c = clientes.find(c => c.id === id);
     const modal = document.getElementById('modalEditarCliente');
     const content = document.getElementById('modalEditarClienteContent');
-    if (content) {
-        content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Pedido</label><input type="number" id="edit_cli_pedido" value="${c.pedido}"></div><div class="form-group"><label>Data</label><input type="date" id="edit_cli_data" value="${c.data}"></div><div class="form-group"><label>Cliente</label><input type="text" id="edit_cli_nome" value="${escapeHtml(c.cliente)}"></div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_cli_cpf" value="${escapeHtml(c.cpf_cnpj||'')}"></div><div class="form-group"><label>Contato</label><input type="text" id="edit_cli_contato" value="${escapeHtml(c.contato||'')}"></div></div><div style="text-align:right"><button class="success" onclick="salvarEdicaoCliente('${id}')">💾 SALVAR</button></div>`;
-        modal.classList.add('active');
-    }
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nº Pedido</label><input type="number" id="edit_cli_pedido" value="${c.pedido}"></div><div class="form-group"><label>Data</label><input type="date" id="edit_cli_data" value="${c.data}"></div><div class="form-group"><label>Cliente</label><input type="text" id="edit_cli_nome" value="${c.cliente}" style="text-transform:uppercase"></div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_cli_cpf" value="${c.cpf_cnpj||''}"></div><div class="form-group"><label>Contato</label><input type="text" id="edit_cli_contato" value="${c.contato||''}"></div></div><div style="text-align:right; margin-top:20px"><button class="success" onclick="salvarEdicaoCliente('${id}')">💾 SALVAR</button></div>`;
+    modal.classList.add('active');
 }
 
 async function salvarEdicaoCliente(id) {
@@ -937,6 +857,29 @@ async function salvarEdicaoCliente(id) {
     await adicionarLog('EDITOU CLIENTE', c.cliente);
     fecharModal('modalEditarCliente');
     mostrar('clientes');
+}
+
+// ============================================
+// TELA DE FORNECEDORES
+// ============================================
+function telaFornecedores() {
+    return topBar() + `
+        <div class="box">
+            <h2>📦 Fornecedores</h2>
+            <div class="form-grid">
+                <div class="form-group"><label>Código</label><input type="text" id="for_cod" value="${gerarProximoCodFornecedor()}" readonly></div>
+                <div class="form-group"><label class="required">Fornecedor</label><input type="text" id="for_nome" style="text-transform:uppercase"></div>
+                <div class="form-group"><label>CPF/CNPJ</label><input type="text" id="for_cpf"></div>
+                <div class="form-group"><label>Condição</label><select id="for_condicao"><option value="">Selecione</option><option value="FATURADO">FATURADO</option><option value="28D">28D</option><option value="ENTRADA + ENTREGA">ENTRADA + ENTREGA</option><option value="ANTECIPADO">ANTECIPADO</option></select></div>
+                <div class="form-group"><label>Coleção</label><input type="text" id="for_colecao" style="text-transform:uppercase"></div>
+                <div class="form-group" style="justify-content:flex-end"><button class="success" onclick="adicionarFornecedor()">➕ Adicionar</button></div>
+            </div>
+            <div class="search-box"><input type="text" id="buscaFornecedor" placeholder="🔍 Buscar..." onkeyup="filtrarFornecedores()"></div>
+            <div class="table-container"><table class="auto-layout" id="tabelaFornecedores"><thead>   <th>#</th><th>COD</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Condição</th><th>Coleção</th><th>Ações</th> </thead>
+                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}<\/td><td>${f.cod}<\/td><td>${f.nome}<\/td><td>${f.cpf_cnpj||'-'}<\/td><td>${f.condicao||'-'}<\/td><td>${f.colecao||'-'}<\/td><td><button class="small" data-tooltip="Editar fornecedor" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" data-tooltip="Excluir fornecedor" onclick="excluirFornecedor('${f.id}')">🗑️</button><\/td><\/tr>`).join('')}
+            </tbody>       </table>
+        </div>
+    `;
 }
 
 async function adicionarFornecedor() {
@@ -960,14 +903,17 @@ async function excluirFornecedor(id) {
     }
 }
 
+function filtrarFornecedores() {
+    let b = document.getElementById('buscaFornecedor')?.value.toLowerCase() || '';
+    document.querySelectorAll('#tabelaFornecedores tbody tr').forEach(l => l.style.display = l.textContent.toLowerCase().includes(b) ? '' : 'none');
+}
+
 function abrirModalEdicaoFornecedor(id) {
     const f = fornecedores.find(f => f.id === id);
     const modal = document.getElementById('modalEditarFornecedor');
     const content = document.getElementById('modalEditarFornecedorContent');
-    if (content) {
-        content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Código</label><input type="text" id="edit_for_cod" value="${f.cod}" readonly></div><div class="form-group"><label>Fornecedor</label><input type="text" id="edit_for_nome" value="${escapeHtml(f.nome)}"></div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_for_cpf" value="${escapeHtml(f.cpf_cnpj||'')}"></div><div class="form-group"><label>Condição</label><input type="text" id="edit_for_condicao" value="${escapeHtml(f.condicao||'')}"></div><div class="form-group"><label>Coleção</label><input type="text" id="edit_for_colecao" value="${escapeHtml(f.colecao||'')}"></div></div><div style="text-align:right"><button class="success" onclick="salvarEdicaoFornecedor('${id}')">💾 SALVAR</button></div>`;
-        modal.classList.add('active');
-    }
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Código</label><input type="text" id="edit_for_cod" value="${f.cod}" readonly></div><div class="form-group"><label>Fornecedor</label><input type="text" id="edit_for_nome" value="${f.nome}" style="text-transform:uppercase"></div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_for_cpf" value="${f.cpf_cnpj||''}"></div><div class="form-group"><label>Condição</label><select id="edit_for_condicao"><option value="">Selecione</option><option value="FATURADO" ${f.condicao==='FATURADO'?'selected':''}>FATURADO</option><option value="28D" ${f.condicao==='28D'?'selected':''}>28D</option><option value="ENTRADA + ENTREGA" ${f.condicao==='ENTRADA + ENTREGA'?'selected':''}>ENTRADA + ENTREGA</option><option value="ANTECIPADO" ${f.condicao==='ANTECIPADO'?'selected':''}>ANTECIPADO</option></select></div><div class="form-group"><label>Coleção</label><input type="text" id="edit_for_colecao" value="${f.colecao||''}" style="text-transform:uppercase"></div></div><div style="text-align:right; margin-top:20px"><button class="success" onclick="salvarEdicaoFornecedor('${id}')">💾 SALVAR</button></div>`;
+    modal.classList.add('active');
 }
 
 async function salvarEdicaoFornecedor(id) {
@@ -980,6 +926,253 @@ async function salvarEdicaoFornecedor(id) {
     await adicionarLog('EDITOU FORNECEDOR', f.nome);
     fecharModal('modalEditarFornecedor');
     mostrar('fornecedores');
+}
+
+// ============================================
+// FUNÇÃO PARA ATUALIZAR CONTADOR DE CARACTERES
+// ============================================
+function atualizarContadorCaracteres(textarea, maxChars = 100) {
+    const length = textarea.value.length;
+    const counter = document.getElementById('obsCharCounter');
+    if (counter) {
+        counter.textContent = `${length}/${maxChars}`;
+        counter.classList.remove('warning', 'danger');
+        if (length > maxChars * 0.8) counter.classList.add('warning');
+        if (length >= maxChars) counter.classList.add('danger');
+    }
+    if (length > maxChars) {
+        textarea.value = textarea.value.substring(0, maxChars);
+        atualizarContadorCaracteres(textarea, maxChars);
+    }
+}
+
+// ============================================
+// TELA DE LANÇAMENTOS (COMPLETA)
+// ============================================
+function telaLancamentos() {
+    let optionsCat = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+    let optionsForn = fornecedores.map(f => `<option value="${f.nome}">${f.nome} (${f.cod})</option>`).join('');
+    let optionsTipo = tiposPedido.map(t => `<option value="${t}">${t}</option>`).join('');
+    let optionsMeses = mesesLista.map(m => `<option value="${m}">${m}</option>`).join('');
+    
+    const lancamentosFiltrados = getLancamentosFiltrados();
+    const totais = calcularTotais(lancamentosFiltrados);
+    
+    return topBar() + `
+        <div class="box">
+            <h2>📝 Lançamentos</h2>
+            
+            <div class="resumo-rapido">
+                <span class="resumo-item">📊 <strong>${totais.totalPedidos}</strong> pedidos</span>
+                <span class="resumo-item">💰 <strong>${formatarValor(totais.totalValor)}</strong></span>
+                <span class="resumo-item">📦 <strong>${totais.totalItens}</strong> itens</span>
+                <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados</span>
+            </div>
+            
+            <div class="filtros-rapidos">
+                <button class="filtro-tipo-btn ${currentFilterType === 'TODOS' ? 'active' : ''}" onclick="setFilterType('TODOS')">📋 TODOS</button>
+                <button class="filtro-tipo-btn ${currentFilterType === 'OC' ? 'active' : ''}" onclick="setFilterType('OC')">📄 OC</button>
+                <button class="filtro-tipo-btn ${currentFilterType === 'SHOWROOM' ? 'active' : ''}" onclick="setFilterType('SHOWROOM')">🖼️ SHOWROOM</button>
+                <button class="filtro-tipo-btn ${currentFilterType === 'ESTOQUE' ? 'active' : ''}" onclick="setFilterType('ESTOQUE')">📦 ESTOQUE</button>
+                <button class="filtro-tipo-btn ${currentFilterType === 'ASSISTENCIA' ? 'active' : ''}" onclick="setFilterType('ASSISTENCIA')">🔧 ASSISTENCIA</button>
+            </div>
+            
+            <div class="ordenacao-btns">
+                <button class="ordem-btn ${currentOrder === 'data' ? 'active' : ''}" onclick="setOrder('data')">📅 Data</button>
+                <button class="ordem-btn ${currentOrder === 'cliente' ? 'active' : ''}" onclick="setOrder('cliente')">👤 Cliente</button>
+                <button class="ordem-btn ${currentOrder === 'pedido' ? 'active' : ''}" onclick="setOrder('pedido')">🔢 Pedido</button>
+                <button class="ordem-btn ${currentOrder === 'status' ? 'active' : ''}" onclick="setOrder('status')">📌 Status</button>
+                <button class="ordem-btn" onclick="toggleOrderDirection()">${currentOrderDirection === 'asc' ? '⬆️ Crescente' : '⬇️ Decrescente'}</button>
+            </div>
+            
+            <details>
+                <summary style="cursor:pointer;padding:10px;background:#FAF0F0;border-radius:6px;font-weight:bold">➕ NOVO LANÇAMENTO</summary>
+                <div style="margin-top:15px">
+                    <div class="form-tabs">
+                        <button class="tab-btn active" onclick="mudarAba('tab1', event)">📋 Dados</button>
+                        <button class="tab-btn" onclick="mudarAba('tab2', event)">📅 Datas</button>
+                        <button class="tab-btn" onclick="mudarAba('tab3', event)">💰 Financeiro</button>
+                    </div>
+                    <div id="tab1" class="tab-content active">
+                        <div class="form-grid">
+                            <div class="form-group"><label class="required">Nº Pedido</label><input type="number" id="lan_pedido" onchange="preencherClienteAuto()"></div>
+                            <div class="form-group"><label>Data Pedido</label><input type="date" id="lan_data" readonly style="background:#f5f5f5"></div>
+                            <div class="form-group"><label>Mês/Ano</label><select id="lan_mes"><option value="">Selecione</option>${optionsMeses}</select></div>
+                            <div class="form-group"><label>Tipo</label><select id="lan_tipo"><option value="">Selecione</option>${optionsTipo}</select></div>
+                            <div class="form-group"><label>Cliente</label><input type="text" id="lan_cliente" readonly></div>
+                            <div class="form-group"><label>OC</label><input type="text" id="lan_oc" style="text-transform:uppercase"></div>
+                            <div class="form-group"><label>Fornecedor</label><select id="lan_fornecedor"><option value="">Selecione</option>${optionsForn}</select></div>
+                            <div class="form-group"><label class="required">Categoria</label><select id="lan_categoria" required><option value="">Selecione</option>${optionsCat}</select></div>
+                            <div class="form-group"><label>Itens</label><input type="number" id="lan_itens"></div>
+                            <div class="form-group"><label>Produtos</label><input type="text" id="lan_produtos" style="text-transform:uppercase"></div>
+                        </div>
+                    </div>
+                    <div id="tab2" class="tab-content">
+                        <div class="form-grid">
+                            <div class="form-group"><label>Data Pagamento</label><input type="date" id="lan_data_pagto"></div>
+                            <div class="form-group"><label>Prev. Faturamento</label><input type="date" id="lan_prev_fat" onchange="calcularDataChegada()"></div>
+                            <div class="form-group"><label>Novo Prazo</label><input type="date" id="lan_novo_prazo"></div>
+                            <div class="form-group"><label>Prev. Chegada</label><input type="date" id="lan_prev_chegada"></div>
+                            <div class="form-group"><label>Data Faturamento</label><input type="date" id="lan_data_fat"></div>
+                            <div class="form-group"><label>Data Chegada</label><input type="date" id="lan_chegada"></div>
+                            <div class="form-group"><label>Data Conferência</label><input type="date" id="lan_conferencia"></div>
+                            <div class="form-group"><label>Data Entrega</label><input type="date" id="lan_entrega"></div>
+                        </div>
+                    </div>
+                    <div id="tab3" class="tab-content">
+                        <div class="form-grid">
+                            <div class="form-group"><label>Valor</label><input type="text" id="lan_valor" placeholder="0,00" onblur="formatarValorInput(this)"></div>
+                            <div class="form-group"><label>Condição</label><select id="lan_condicao"><option value="">Selecione</option><option value="Em aberto">EM ABERTO</option><option value="Em produção">EM PRODUÇÃO</option><option value="Cancelado">CANCELADO</option><option value="Entregue">ENTREGUE</option><option value="Em Rota">EM ROTA</option><option value="Entregue em fábrica">ENTREGUE EM FÁBRICA</option><option value="Entregue - Pag. Pendente">ENTREGUE - PAG. PENDENTE</option><option value="Pedido Retido">PEDIDO RETIDO</option></select></div>
+                            <div class="form-group"><label>Status</label><select id="lan_status"><option value="">Selecione</option><option value="Faturado">FATURADO</option><option value="Ag. Faturamento">AG. FATURAMENTO</option><option value="Prorrogado">PRORROGADO</option><option value="Em aberto">EM ABERTO</option><option value="Entregue">ENTREGUE</option><option value="Atrasado">ATRASADO</option></select></div>
+                            <div class="form-group"><label>Nº NF</label><input type="text" id="lan_nf" style="text-transform:uppercase"></div>
+                            <div class="form-group"><label>Transportadora</label><input type="text" id="lan_transportadora" style="text-transform:uppercase"></div>
+                            <div class="form-group"><label>Observações</label>
+                                <textarea id="lan_observacoes" rows="2" maxlength="100" placeholder="Informações adicionais (máx 100 caracteres)" oninput="atualizarContadorCaracteres(this, 100)"></textarea>
+                                <div class="char-counter" id="obsCharCounter">0/100</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align:center;margin-top:20px"><button class="salvar" onclick="adicionarLancamento()">💾 SALVAR LANÇAMENTO</button></div>
+                </div>
+            </details>
+            
+            <div class="search-box"><input type="text" id="buscaLancamento" placeholder="🔍 Buscar por pedido, cliente, fornecedor..." onkeyup="filtrarLancamentos()"></div>
+            <div class="table-container"><table class="lancamentos-table" id="tabelaLancamentos"><thead>
+                <th>#</th><th>Pedido</th><th>Data</th><th>Mês</th><th>Tipo</th><th>Cliente</th><th>OC</th><th>Fornecedor</th><th>Categoria</th>
+                <th>Itens</th><th>Produtos</th><th>Valor</th><th>Data Pagto</th><th>Condição</th><th>Prev.Fat</th><th>Novo Prazo</th>
+                <th>Prev.Chegada</th><th>Status</th><th>Data Fat</th><th>Nº NF</th><th>Transportadora</th><th>Chegada</th><th>Conf</th>
+                <th>Entrega</th><th>Prazo</th><th>Usuário</th><th>Editado</th><th>Obs</th><th>NF</th><th>Ações</th>
+            </thead>
+                <tbody id="lancamentosBody"></tbody>
+                <tfoot id="lancamentosFooter"></tfoot>
+            </table></div>
+        </div>
+    `;
+}
+
+function calcularDataChegada() {
+    const dataFat = document.getElementById('lan_data_fat')?.value;
+    if (dataFat) {
+        const data = new Date(dataFat);
+        data.setDate(data.getDate() + 20);
+        const ano = data.getFullYear();
+        const mes = String(data.getMonth() + 1).padStart(2, '0');
+        const dia = String(data.getDate()).padStart(2, '0');
+        document.getElementById('lan_chegada').value = `${ano}-${mes}-${dia}`;
+    }
+}
+
+function renderLancamentos() {
+    const lancamentosFiltrados = getLancamentosFiltrados();
+    const totais = calcularTotais(lancamentosFiltrados);
+    const busca = document.getElementById('buscaLancamento')?.value.toLowerCase() || '';
+    
+    let dadosFiltrados = lancamentosFiltrados;
+    if (busca) {
+        dadosFiltrados = dadosFiltrados.filter(l => 
+            (l.pedido?.toString().includes(busca)) ||
+            (l.cliente?.toLowerCase().includes(busca)) ||
+            (l.fornecedor?.toLowerCase().includes(busca))
+        );
+    }
+    
+    const totaisFiltrados = calcularTotais(dadosFiltrados);
+    
+    const tbody = document.getElementById('lancamentosBody');
+    tbody.innerHTML = dadosFiltrados.map((l, idx) => {
+        const pm = calcularPrazoMedio(l.data_pagto, l.entrega);
+        const temAnexo = anexos.some(a => a.pedido == l.pedido);
+        const atrasado = isPedidoAtrasado(l);
+        const rowClass = atrasado ? 'atrasado-row' : '';
+        
+        return `<tr class="${rowClass}" data-id="${l.id}">
+            <td>${idx + 1}</td>
+            <td>${l.pedido || '-'}</td>
+            <td>${formatarData(l.data)}</td>
+            <td>${l.mes || '-'}</td>
+            <td>${l.tipo || '-'}</td>
+            <td>${l.cliente || '-'}</td>
+            <td>${l.oc || '-'}</td>
+            <td>${l.fornecedor || '-'}</td>
+            <td>${l.categoria || '-'}</td>
+            <td>${l.itens || '-'}</td>
+            <td>${l.produtos || '-'}</td>
+            <td>${formatarValor(l.valor)}</td>
+            <td>${formatarData(l.data_pagto)}</td>
+            <td>${l.condicao || '-'}
+                         <td>${l.condicao || '-'}</td>
+             <td>${formatarData(l.prev_fat)}</td>
+             <td>${formatarData(l.novo_prazo)}</td>
+             <td>${formatarData(l.prev_chegada)}</td>
+             <td>${getStatusBadge(l.status)}</td>
+             <td>${formatarData(l.data_fat)}</td>
+             <td>${l.nf || '-'}</td>
+             <td>${l.transportadora || '-'}</td>
+             <td>${formatarData(l.chegada)}</td>
+             <td>${formatarData(l.conferencia)}</td>
+             <td>${formatarData(l.entrega)}</td>
+             <td>${pm ? pm + 'd' : '-'}</td>
+             <td>${l.usuario || '-'}</td>
+             <td>${l.editadoPor ? l.editadoPor + ' ' + new Date(l.editadoEm).toLocaleDateString() : '-'}</td>
+             <td>${l.observacoes ? `<span class="tooltip-icon" data-tooltip="${l.observacoes.replace(/"/g, '&quot;')}">💬</span>` : '-'}</td>
+             <td>${temAnexo ? '📎' : '-'}</td>
+             <td>
+                <button class="small" data-tooltip="Editar lançamento" onclick="abrirModalEdicaoLancamento('${l.id}')">✏️</button>
+                <button class="small" data-tooltip="Duplicar lançamento (cria novo pedido)" onclick="duplicarLancamento('${l.id}')">📋</button>
+                <button class="small info" data-tooltip="Gerenciar anexos" onclick="abrirModalAnexos(${l.pedido})">📎</button>
+                <button class="small danger" data-tooltip="Excluir lançamento" onclick="excluirLancamento('${l.id}')">🗑️</button>
+             </td>
+           </tr>`;
+    }).join('');
+    
+    const tfoot = document.getElementById('lancamentosFooter');
+    tfoot.innerHTML = `<tr style="background:#FAF0F0; font-weight:bold;">
+        <td colspan="11" style="text-align:right;">TOTAL:</td>
+        <td>${formatarValor(totaisFiltrados.totalValor)}</td>
+        <td colspan="10"></td>
+        <td>${totaisFiltrados.totalItens} itens</td>
+        <td colspan="6"></td>
+        <td>${totaisFiltrados.totalPedidos} pedidos</td>
+        <td colspan="3"></td>
+     </tr>`;
+}
+
+function setFilterType(tipo) {
+    currentFilterType = tipo;
+    renderLancamentos();
+    const totais = calcularTotais(getLancamentosFiltrados());
+    const resumoDiv = document.querySelector('.resumo-rapido');
+    if (resumoDiv) {
+        resumoDiv.innerHTML = `
+            <span class="resumo-item">📊 <strong>${totais.totalPedidos}</strong> pedidos</span>
+            <span class="resumo-item">💰 <strong>${formatarValor(totais.totalValor)}</strong></span>
+            <span class="resumo-item">📦 <strong>${totais.totalItens}</strong> itens</span>
+            <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados</span>
+        `;
+    }
+    document.querySelectorAll('.filtro-tipo-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+function setOrder(order) {
+    currentOrder = order;
+    renderLancamentos();
+    document.querySelectorAll('.ordem-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+function toggleOrderDirection() {
+    currentOrderDirection = currentOrderDirection === 'asc' ? 'desc' : 'asc';
+    renderLancamentos();
+    const btn = document.querySelector('.ordenacao-btns button:last-child');
+    if (btn) btn.textContent = currentOrderDirection === 'asc' ? '⬆️ Crescente' : '⬇️ Decrescente';
+}
+
+function mudarAba(aba, event) {
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(aba).classList.add('active');
+    event.target.classList.add('active');
 }
 
 function preencherClienteAuto() {
@@ -995,8 +1188,12 @@ function preencherClienteAuto() {
 }
 
 async function adicionarLancamento() {
+    if (!document.getElementById('lan_categoria')?.value) { alert('Categoria obrigatória!'); return; }
     let valorRaw = document.getElementById('lan_valor')?.value || '0,00';
     let valorNumerico = converterValorParaNumero(valorRaw);
+    let observacoes = document.getElementById('lan_observacoes')?.value || '';
+    if (observacoes.length > 100) observacoes = observacoes.substring(0, 100);
+    
     let l = {
         pedido: document.getElementById('lan_pedido')?.value,
         data: document.getElementById('lan_data')?.value,
@@ -1010,9 +1207,18 @@ async function adicionarLancamento() {
         produtos: document.getElementById('lan_produtos')?.value?.toUpperCase(),
         valor: valorNumerico,
         data_pagto: document.getElementById('lan_data_pagto')?.value,
+        condicao: document.getElementById('lan_condicao')?.value,
+        prev_fat: document.getElementById('lan_prev_fat')?.value,
+        novo_prazo: document.getElementById('lan_novo_prazo')?.value,
+        prev_chegada: document.getElementById('lan_prev_chegada')?.value,
         status: document.getElementById('lan_status')?.value,
+        data_fat: document.getElementById('lan_data_fat')?.value,
+        nf: document.getElementById('lan_nf')?.value?.toUpperCase(),
+        transportadora: document.getElementById('lan_transportadora')?.value?.toUpperCase(),
+        chegada: document.getElementById('lan_chegada')?.value,
+        conferencia: document.getElementById('lan_conferencia')?.value,
         entrega: document.getElementById('lan_entrega')?.value,
-        observacoes: document.getElementById('lan_observacoes')?.value || '',
+        observacoes: observacoes,
         usuario: usuarioAtual,
         criado: new Date().toISOString()
     };
@@ -1021,41 +1227,6 @@ async function adicionarLancamento() {
     lancamentos.push({ id: docRef.id, ...l });
     await adicionarLog('ADICIONOU LANÇAMENTO', `Pedido ${l.pedido}`);
     mostrar('lancamentos');
-}
-
-function renderLancamentos() {
-    const tbody = document.getElementById('lancamentosBody');
-    if (!tbody) return;
-    const filtrados = getLancamentosFiltrados();
-    const totais = calcularTotais(filtrados);
-    const resumoDiv = document.querySelector('.resumo-rapido');
-    if (resumoDiv) {
-        resumoDiv.innerHTML = `<span>📊 <strong>${totais.totalPedidos}</strong> pedidos</span><span>💰 <strong>${formatarValor(totais.totalValor)}</strong></span><span>📦 <strong>${totais.totalItens}</strong> itens</span><span>⚠️ <strong>${totais.totalAtrasados}</strong> atrasados</span>`;
-    }
-    tbody.innerHTML = filtrados.map((l, idx) => `<tr><td>${l.pedido || '-'}</td><td>${formatarData(l.data)}</td><td>${escapeHtml(l.cliente || '-')}</td><td>${escapeHtml(l.fornecedor || '-')}</td><td>${formatarValor(l.valor)}</td><td>${getStatusBadge(l.status)}</td><td class="acoes-cell"><button class="small" onclick="abrirModalEdicaoLancamento('${l.id}')">✏️</button><button class="small danger" onclick="excluirLancamento('${l.id}')">🗑️</button></td></tr>`).join('');
-    const tfoot = document.getElementById('lancamentosFooter');
-    if (tfoot) tfoot.innerHTML = `<tr style="background:#FAF0F0;"><td colspan="5" style="text-align:right;">TOTAL:</td><td>${formatarValor(totais.totalValor)}</td><td></td></tr>`;
-}
-
-function setFilterType(tipo) {
-    currentFilterType = tipo;
-    renderLancamentos();
-    document.querySelectorAll('.filtro-tipo-btn').forEach(btn => btn.classList.remove('active'));
-    if (event && event.target) event.target.classList.add('active');
-}
-
-function setOrder(order) {
-    currentOrder = order;
-    renderLancamentos();
-    document.querySelectorAll('.ordem-btn').forEach(btn => btn.classList.remove('active'));
-    if (event && event.target) event.target.classList.add('active');
-}
-
-function toggleOrderDirection() {
-    currentOrderDirection = currentOrderDirection === 'asc' ? 'desc' : 'asc';
-    renderLancamentos();
-    const btn = document.querySelector('.ordenacao-btns button:last-child');
-    if (btn) btn.textContent = currentOrderDirection === 'asc' ? '⬆️ Crescente' : '⬇️ Decrescente';
 }
 
 async function excluirLancamento(id) {
@@ -1068,40 +1239,486 @@ async function excluirLancamento(id) {
     }
 }
 
+async function duplicarLancamento(id) {
+    if (confirm('Deseja duplicar este pedido? Será criado um novo pedido com número sequencial.')) {
+        const original = lancamentos.find(l => l.id === id);
+        if (!original) return;
+        
+        let novoPedido = parseInt(original.pedido) + 1;
+        const novo = { ...original };
+        delete novo.id;
+        novo.pedido = novoPedido;
+        novo.observacoes = original.observacoes ? `[CÓPIA] ${original.observacoes.substring(0, 90)}` : 'CÓPIA DO PEDIDO';
+        novo.criado = new Date().toISOString();
+        novo.usuario = usuarioAtual;
+        
+        const docRef = await db.collection('lancamentos').add(novo);
+        lancamentos.push({ id: docRef.id, ...novo });
+        await adicionarLog('DUPLICOU LANÇAMENTO', `Pedido ${original.pedido} → ${novoPedido}`);
+        mostrar('lancamentos');
+    }
+}
+
+function filtrarLancamentos() {
+    renderLancamentos();
+}
+
+function exportarLancamentosExcel() {
+    if (lancamentos.length === 0) { alert('Não há dados!'); return; }
+    const wsData = [['#','Pedido','Data','Mês','Tipo','Cliente','OC','Fornecedor','Categoria','Itens','Produtos','Valor','Data Pagto','Condição','Prev.Fat','Novo Prazo','Prev.Chegada','Status','Data Fat','Nº NF','Transportadora','Chegada','Conf','Entrega','Prazo','Usuário','Editado','Observações']];
+    const lancamentosFiltrados = getLancamentosFiltrados();
+    lancamentosFiltrados.forEach((l, idx) => { 
+        const pm = calcularPrazoMedio(l.data_pagto, l.entrega); 
+        wsData.push([
+            idx+1, l.pedido||'', l.data||'', l.mes||'', l.tipo||'', l.cliente||'', l.oc||'', l.fornecedor||'', 
+            l.categoria||'', l.itens||'', l.produtos||'', l.valor||'', l.data_pagto||'', l.condicao||'', 
+            l.prev_fat||'', l.novo_prazo||'', l.prev_chegada||'', l.status||'', l.data_fat||'', l.nf||'', 
+            l.transportadora||'', l.chegada||'', l.conferencia||'', l.entrega||'', pm?pm+'d':'', 
+            l.usuario||'', l.editadoPor||'', (l.observacoes||'').substring(0, 100)
+        ]); 
+    });
+    const wb = XLSX.utils.book_new(); 
+    const ws = XLSX.utils.aoa_to_sheet(wsData); 
+    XLSX.utils.book_append_sheet(wb, ws, 'Lançamentos'); 
+    XLSX.writeFile(wb, `lancamentos_${new Date().toISOString().slice(0,10)}.xlsx`);
+    alert('Arquivo exportado!');
+}
+
 function abrirModalEdicaoLancamento(id) {
     const l = lancamentos.find(l => l.id === id);
     const modal = document.getElementById('modalEditarLancamento');
     const content = document.getElementById('modalEditarLancamentoContent');
-    if (content) {
-        content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Pedido</label><input type="number" id="edit_lan_pedido" value="${l.pedido||''}"></div>
+    let optionsCat = categorias.map(c => `<option value="${c}" ${l.categoria===c?'selected':''}>${c}</option>`).join('');
+    let optionsForn = fornecedores.map(f => `<option value="${f.nome}" ${l.fornecedor===f.nome?'selected':''}>${f.nome}</option>`).join('');
+    let optionsTipo = tiposPedido.map(t => `<option value="${t}" ${l.tipo===t?'selected':''}>${t}</option>`).join('');
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Pedido</label><input type="number" id="edit_lan_pedido" value="${l.pedido||''}"></div>
         <div class="form-group"><label>Data</label><input type="date" id="edit_lan_data" value="${l.data||''}"></div>
-        <div class="form-group"><label>Cliente</label><input type="text" id="edit_lan_cliente" value="${escapeHtml(l.cliente||'')}"></div>
-        <div class="form-group"><label>Fornecedor</label><input type="text" id="edit_lan_fornecedor" value="${escapeHtml(l.fornecedor||'')}"></div>
+        <div class="form-group"><label>Mês</label><input type="text" id="edit_lan_mes" value="${l.mes||''}"></div>
+        <div class="form-group"><label>Tipo</label><select id="edit_lan_tipo"><option value="">Selecione</option>${optionsTipo}</select></div>
+        <div class="form-group"><label>Cliente</label><input type="text" id="edit_lan_cliente" value="${l.cliente||''}" readonly></div>
+        <div class="form-group"><label>OC</label><input type="text" id="edit_lan_oc" value="${l.oc||''}"></div>
+        <div class="form-group"><label>Fornecedor</label><select id="edit_lan_fornecedor"><option value="">Selecione</option>${optionsForn}</select></div>
+        <div class="form-group"><label>Categoria</label><select id="edit_lan_categoria"><option value="">Selecione</option>${optionsCat}</select></div>
+        <div class="form-group"><label>Itens</label><input type="number" id="edit_lan_itens" value="${l.itens||''}"></div>
+        <div class="form-group"><label>Produtos</label><input type="text" id="edit_lan_produtos" value="${l.produtos||''}"></div>
         <div class="form-group"><label>Valor</label><input type="text" id="edit_lan_valor" value="${formatarValor(l.valor)}" onblur="formatarValorInput(this)"></div>
-        <div class="form-group"><label>Status</label><select id="edit_lan_status"><option ${l.status==='EM ABERTO'?'selected':''}>EM ABERTO</option><option ${l.status==='ENTREGUE'?'selected':''}>ENTREGUE</option><option ${l.status==='ATRASADO'?'selected':''}>ATRASADO</option></select></div>
+        <div class="form-group"><label>Data Pagto</label><input type="date" id="edit_lan_data_pagto" value="${l.data_pagto||''}"></div>
+        <div class="form-group"><label>Condição</label><select id="edit_lan_condicao"><option value="">Selecione</option><option value="Em aberto" ${l.condicao==='Em aberto'?'selected':''}>EM ABERTO</option><option value="Em produção" ${l.condicao==='Em produção'?'selected':''}>EM PRODUÇÃO</option><option value="Cancelado" ${l.condicao==='Cancelado'?'selected':''}>CANCELADO</option><option value="Entregue" ${l.condicao==='Entregue'?'selected':''}>ENTREGUE</option><option value="Em Rota" ${l.condicao==='Em Rota'?'selected':''}>EM ROTA</option><option value="Entregue em fábrica" ${l.condicao==='Entregue em fábrica'?'selected':''}>ENTREGUE EM FÁBRICA</option><option value="Entregue - Pag. Pendente" ${l.condicao==='Entregue - Pag. Pendente'?'selected':''}>ENTREGUE - PAG. PENDENTE</option><option value="Pedido Retido" ${l.condicao==='Pedido Retido'?'selected':''}>PEDIDO RETIDO</option></select></div>
+        <div class="form-group"><label>Prev. Fat</label><input type="date" id="edit_lan_prev_fat" value="${l.prev_fat||''}"></div>
+        <div class="form-group"><label>Novo Prazo</label><input type="date" id="edit_lan_novo_prazo" value="${l.novo_prazo||''}"></div>
+        <div class="form-group"><label>Prev. Chegada</label><input type="date" id="edit_lan_prev_chegada" value="${l.prev_chegada||''}"></div>
+        <div class="form-group"><label>Status</label><select id="edit_lan_status"><option value="">Selecione</option><option value="Faturado" ${l.status==='Faturado'?'selected':''}>FATURADO</option><option value="Ag. Faturamento" ${l.status==='Ag. Faturamento'?'selected':''}>AG. FATURAMENTO</option><option value="Prorrogado" ${l.status==='Prorrogado'?'selected':''}>PRORROGADO</option><option value="Em aberto" ${l.status==='Em aberto'?'selected':''}>EM ABERTO</option><option value="Entregue" ${l.status==='Entregue'?'selected':''}>ENTREGUE</option><option value="Atrasado" ${l.status==='Atrasado'?'selected':''}>ATRASADO</option></select></div>
+        <div class="form-group"><label>Data Fat</label><input type="date" id="edit_lan_data_fat" value="${l.data_fat||''}"></div>
+        <div class="form-group"><label>Nº NF</label><input type="text" id="edit_lan_nf" value="${l.nf||''}"></div>
+        <div class="form-group"><label>Transportadora</label><input type="text" id="edit_lan_transportadora" value="${l.transportadora||''}"></div>
+        <div class="form-group"><label>Chegada</label><input type="date" id="edit_lan_chegada" value="${l.chegada||''}"></div>
+        <div class="form-group"><label>Conferência</label><input type="date" id="edit_lan_conferencia" value="${l.conferencia||''}"></div>
         <div class="form-group"><label>Entrega</label><input type="date" id="edit_lan_entrega" value="${l.entrega||''}"></div>
-        <div class="form-group"><label>Observações</label><textarea id="edit_lan_observacoes" rows="2">${escapeHtml(l.observacoes||'')}</textarea></div></div><div style="text-align:right"><button class="success" onclick="salvarEdicaoLancamento('${id}')">💾 SALVAR</button></div>`;
-        modal.classList.add('active');
-    }
+        <div class="form-group"><label>Observações</label>
+            <textarea id="edit_lan_observacoes" rows="2" maxlength="100" oninput="atualizarContadorCaracteres(this, 100)">${l.observacoes || ''}</textarea>
+            <div class="char-counter" id="editObsCharCounter">${(l.observacoes || '').length}/100</div>
+        </div>
+    </div><div style="text-align:right; margin-top:20px"><p>Editando como: ${usuarioAtual}</p><button class="success" onclick="salvarEdicaoLancamento('${id}')">💾 SALVAR</button></div>`;
+    
+    setTimeout(() => {
+        const editTextarea = document.getElementById('edit_lan_observacoes');
+        if (editTextarea) atualizarContadorCaracteres(editTextarea, 100);
+    }, 50);
+    
+    modal.classList.add('active');
 }
 
 async function salvarEdicaoLancamento(id) {
     const l = lancamentos.find(l => l.id === id);
     l.pedido = document.getElementById('edit_lan_pedido')?.value || l.pedido;
     l.data = document.getElementById('edit_lan_data')?.value || l.data;
+    l.mes = document.getElementById('edit_lan_mes')?.value || l.mes;
+    l.tipo = document.getElementById('edit_lan_tipo')?.value || l.tipo;
     l.cliente = document.getElementById('edit_lan_cliente')?.value || l.cliente;
+    l.oc = document.getElementById('edit_lan_oc')?.value?.toUpperCase() || l.oc;
     l.fornecedor = document.getElementById('edit_lan_fornecedor')?.value || l.fornecedor;
+    l.categoria = document.getElementById('edit_lan_categoria')?.value || l.categoria;
+    l.itens = parseInt(document.getElementById('edit_lan_itens')?.value) || 0;
+    l.produtos = document.getElementById('edit_lan_produtos')?.value?.toUpperCase() || l.produtos;
     let valorRaw = document.getElementById('edit_lan_valor')?.value || '0,00';
     l.valor = converterValorParaNumero(valorRaw);
+    l.data_pagto = document.getElementById('edit_lan_data_pagto')?.value || l.data_pagto;
+    l.condicao = document.getElementById('edit_lan_condicao')?.value || l.condicao;
+    l.prev_fat = document.getElementById('edit_lan_prev_fat')?.value || l.prev_fat;
+    l.novo_prazo = document.getElementById('edit_lan_novo_prazo')?.value || l.novo_prazo;
+    l.prev_chegada = document.getElementById('edit_lan_prev_chegada')?.value || l.prev_chegada;
     l.status = document.getElementById('edit_lan_status')?.value || l.status;
+    l.data_fat = document.getElementById('edit_lan_data_fat')?.value || l.data_fat;
+    l.nf = document.getElementById('edit_lan_nf')?.value?.toUpperCase() || l.nf;
+    l.transportadora = document.getElementById('edit_lan_transportadora')?.value?.toUpperCase() || l.transportadora;
+    l.chegada = document.getElementById('edit_lan_chegada')?.value || l.chegada;
+    l.conferencia = document.getElementById('edit_lan_conferencia')?.value || l.conferencia;
     l.entrega = document.getElementById('edit_lan_entrega')?.value || l.entrega;
-    l.observacoes = document.getElementById('edit_lan_observacoes')?.value || '';
+    l.observacoes = (document.getElementById('edit_lan_observacoes')?.value || '').substring(0, 100);
     l.editadoPor = usuarioAtual;
     l.editadoEm = new Date().toISOString();
     await db.collection('lancamentos').doc(id).update(l);
     await adicionarLog('EDITOU LANÇAMENTO', `Pedido ${l.pedido}`);
     fecharModal('modalEditarLancamento');
     mostrar('lancamentos');
+}
+
+// ============================================
+// ANEXOS
+// ============================================
+function abrirModalAnexos(pedido) {
+    const modal = document.getElementById('modalAnexos');
+    const content = document.getElementById('modalAnexosContent');
+    const anexosPedido = anexos.filter(a => a.pedido == pedido);
+    const lancamento = lancamentos.find(l => l.pedido == pedido);
+    content.innerHTML = `<h4>Pedido #${pedido} ${lancamento?.oc ? `- OC: ${lancamento.oc}` : ''}</h4><div class="anexos-area">${anexosPedido.length === 0 ? '<p>Nenhum anexo.</p>' : ''}${anexosPedido.map((a,i)=>`<div class="anexo-item"><div><strong>${a.nome}</strong><br><small>${new Date(a.data).toLocaleString()}</small></div><div><button class="small" data-tooltip="Baixar anexo" onclick="baixarAnexo(${i})">⬇️</button><button class="small danger" data-tooltip="Excluir anexo" onclick="excluirAnexo('${a.id}', ${pedido})">🗑️</button></div></div>`).join('')}</div><div class="upload-area" onclick="document.getElementById('fileInput').click()">📂 Anexar arquivo<input type="file" id="fileInput" style="display:none" onchange="anexarArquivo(${pedido})"></div>`;
+    modal.classList.add('active');
+}
+
+async function anexarArquivo(pedido) {
+    const file = document.getElementById('fileInput').files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const novo = { pedido, nome: file.name, tipo: file.type, data: new Date().toISOString(), conteudo: e.target.result, usuario: usuarioAtual };
+        const docRef = await db.collection('anexos').add(novo);
+        anexos.push({ id: docRef.id, ...novo });
+        await adicionarLog('ANEXOU ARQUIVO', file.name);
+        fecharModal('modalAnexos');
+        abrirModalAnexos(pedido);
+    };
+    reader.readAsDataURL(file);
+}
+
+function baixarAnexo(index) { const a = anexos[index]; const link = document.createElement('a'); link.href = a.conteudo; link.download = a.nome; link.click(); }
+async function excluirAnexo(id, pedido) { if (confirm('Excluir anexo?')) { await db.collection('anexos').doc(id).delete(); anexos = anexos.filter(a => a.id !== id); await adicionarLog('EXCLUIU ANEXO', ''); fecharModal('modalAnexos'); abrirModalAnexos(pedido); } }
+
+function telaAnexos() {
+    return topBar() + `
+        <div class="box">
+            <h2>📎 Anexos</h2>
+            <div class="filtros-grid">
+                <div class="filtro-item"><label>Buscar Pedido</label><input type="text" id="buscaAnexoPedido" placeholder="Nº Pedido" onkeyup="filtrarAnexos()"></div>
+                <div class="filtro-item"><label>Buscar OC</label><input type="text" id="buscaAnexoOC" placeholder="OC" onkeyup="filtrarAnexosPorOC()"></div>
+                <div class="filtro-actions"><button onclick="limparBuscaAnexos()">Limpar</button></div>
+            </div>
+            <div id="anexosLista">${gerarListaAnexos()}</div>
+        </div>
+    `;
+}
+
+function gerarListaAnexos() {
+    const anexosPorPedido = {};
+    anexos.forEach(a => { if (!anexosPorPedido[a.pedido]) anexosPorPedido[a.pedido] = []; anexosPorPedido[a.pedido].push(a); });
+    return Object.entries(anexosPorPedido).map(([p,as]) => { const lancamento = lancamentos.find(l => l.pedido == p); return `<div class="anexo-item" style="flex-direction:column;align-items:stretch" data-pedido="${p}" data-oc="${lancamento?.oc||''}"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><strong>Pedido #${p} ${lancamento?.oc?`- OC: ${lancamento.oc}`:''}</strong><button class="small" data-tooltip="Gerenciar anexos deste pedido" onclick="abrirModalAnexos(${p})">📎 Gerenciar</button></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:5px">${as.map(a=>`<div style="background:#FAF0F0;padding:5px;border-radius:4px"><small>${a.nome}</small><br><small>${new Date(a.data).toLocaleDateString()}</small></div>`).join('')}</div></div>`; }).join('') || '<p>Nenhum anexo encontrado.</p>';
+}
+
+function filtrarAnexos() {
+    const busca = document.getElementById('buscaAnexoPedido')?.value.toLowerCase() || '';
+    document.querySelectorAll('#anexosLista > div').forEach(d => d.style.display = d.dataset.pedido.includes(busca) ? '' : 'none');
+}
+function filtrarAnexosPorOC() {
+    const busca = document.getElementById('buscaAnexoOC')?.value.toLowerCase() || '';
+    document.querySelectorAll('#anexosLista > div').forEach(d => { const oc = (d.dataset.oc || '').toLowerCase(); d.style.display = oc.includes(busca) ? '' : 'none'; });
+}
+function limparBuscaAnexos() { document.getElementById('buscaAnexoPedido').value = ''; document.getElementById('buscaAnexoOC').value = ''; document.querySelectorAll('#anexosLista > div').forEach(d => d.style.display = ''); }
+
+// ============================================
+// RELATÓRIOS (resumido)
+// ============================================
+function telaRelatorios() {
+    return topBar() + `
+        <div class="box">
+            <h2>📊 Relatórios</h2>
+            <div class="filtros-grid">
+                <div class="filtro-item"><label>Período</label><select id="filtroPeriodo" onchange="alterarTipoPeriodoRelatorio()"><option value="personalizado">Personalizado</option><option value="hoje">Hoje</option><option value="7d">Últimos 7 dias</option><option value="30d">Últimos 30 dias</option><option value="mes">Este mês</option><option value="mespassado">Mês passado</option><option value="trimestre">Este trimestre</option><option value="semestre">Este semestre</option><option value="ano">Este ano</option></select></div>
+                <div class="filtro-item"><label>Data Início</label><input type="date" id="filtroDataInicio"></div>
+                <div class="filtro-item"><label>Data Fim</label><input type="date" id="filtroDataFim"></div>
+                <div class="filtro-item"><label>OC</label><input type="text" id="filtroOC" placeholder="Nº OC"></div>
+                <div class="filtro-item"><label>Pedido</label><input type="number" id="filtroPedido" placeholder="Nº Pedido"></div>
+                <div class="filtro-item"><label>Condição</label><select id="filtroCondicao"><option value="">Todas</option><option value="Em aberto">Em aberto</option><option value="Em produção">Em produção</option><option value="Cancelado">Cancelado</option><option value="Entregue">Entregue</option><option value="Em Rota">Em rota</option><option value="Pedido Retido">Pedido Retido</option></select></div>
+                <div class="filtro-actions"><button class="info" onclick="aplicarFiltrosRelatorio()">🔍 Filtrar</button><button class="success" onclick="exportarRelatoriosExcel()">📥 Excel</button><button onclick="gerarPDF()">🖨️ PDF</button></div>
+            </div>
+            <div id="conteudoRelatorios"></div>
+        </div>
+    `;
+}
+
+function alterarTipoPeriodoRelatorio() {
+    const tipo = document.getElementById('filtroPeriodo').value;
+    if (tipo === 'personalizado') return;
+    const hoje = new Date();
+    let inicio, fim;
+    switch(tipo) {
+        case 'hoje': inicio = new Date(); fim = new Date(); inicio.setHours(0,0,0,0); fim.setHours(23,59,59,999); break;
+        case '7d': fim = new Date(); inicio = new Date(); inicio.setDate(inicio.getDate() - 7); break;
+        case '30d': fim = new Date(); inicio = new Date(); inicio.setDate(inicio.getDate() - 30); break;
+        case 'mes': inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1); fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0); break;
+        case 'mespassado': inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1); fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0); break;
+        case 'trimestre': const trim = Math.floor(hoje.getMonth() / 3); inicio = new Date(hoje.getFullYear(), trim * 3, 1); fim = new Date(hoje.getFullYear(), trim * 3 + 3, 0); break;
+        case 'semestre': const sem = Math.floor(hoje.getMonth() / 6); inicio = new Date(hoje.getFullYear(), sem * 6, 1); fim = new Date(hoje.getFullYear(), sem * 6 + 6, 0); break;
+        case 'ano': inicio = new Date(hoje.getFullYear(), 0, 1); fim = new Date(hoje.getFullYear(), 11, 31); break;
+        default: return;
+    }
+    document.getElementById('filtroDataInicio').value = inicio.toISOString().split('T')[0];
+    document.getElementById('filtroDataFim').value = fim.toISOString().split('T')[0];
+}
+
+function aplicarFiltrosRelatorio() {
+    let dados = [...lancamentos];
+    const dataInicio = document.getElementById('filtroDataInicio')?.value;
+    const dataFim = document.getElementById('filtroDataFim')?.value;
+    if (dataInicio && dataFim) {
+        dados = dados.filter(l => l.data && new Date(l.data) >= new Date(dataInicio) && new Date(l.data) <= new Date(dataFim));
+    }
+    const filtroOC = document.getElementById('filtroOC')?.value; if (filtroOC) dados = dados.filter(l => l.oc && l.oc.toLowerCase().includes(filtroOC.toLowerCase()));
+    const filtroPedido = document.getElementById('filtroPedido')?.value; if (filtroPedido) dados = dados.filter(l => l.pedido == filtroPedido);
+    const filtroCondicao = document.getElementById('filtroCondicao')?.value; if (filtroCondicao) dados = dados.filter(l => l.condicao === filtroCondicao);
+    gerarRelatorios(dados);
+}
+
+function gerarRelatorios(dados) {
+    const total = dados.length;
+    const meses = {}; dados.forEach(l=>{ if(l.data){ let d=new Date(l.data); let m=d.toLocaleString('pt-BR',{month:'long',year:'numeric'}); meses[m]=(meses[m]||0)+1; } });
+    const status = {}; dados.forEach(l=>{ let s=l.status||'PENDENTE'; status[s]=(status[s]||0)+1; });
+    const cond = {}; dados.forEach(l=>{ let c=l.condicao||'SEM CONDIÇÃO'; cond[c]=(cond[c]||0)+1; });
+    const cat = {}; dados.forEach(l=>{ let c=l.categoria||'SEM CATEGORIA'; cat[c]=(cat[c]||0)+1; });
+    const clientesRank = {}; dados.forEach(l=>{ if(l.cliente) clientesRank[l.cliente]=(clientesRank[l.cliente]||0)+1; });
+    const topClientes = Object.entries(clientesRank).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const fornRank = {}; dados.forEach(l=>{ if(l.fornecedor) fornRank[l.fornecedor]=(fornRank[l.fornecedor]||0)+1; });
+    const topForn = Object.entries(fornRank).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    
+    document.getElementById('conteudoRelatorios').innerHTML = `
+        <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Total Itens</h4><div class="value">${dados.reduce((a,l)=>a+(l.itens||0),0)}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${dados.filter(l=>l.status==='ENTREGUE').length}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${dados.filter(l=>l.status==='EM ABERTO' || !l.status).length}</div></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0"><div class="chart-container"><h4>📅 Pedidos por Mês</h4> <table style="width:100%">${Object.entries(meses).map(([m,q])=>`<tr><td>${m}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div class="chart-container"><h4>📌 Pedidos por Status</h4> <table style="width:100%">${Object.entries(status).map(([s,q])=>`<tr><td>${s}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div class="chart-container"><h4>💰 Pedidos por Condição</h4> <table style="width:100%">${Object.entries(cond).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div class="chart-container"><h4>🏷️ Pedidos por Categoria</h4> <table style="width:100%">${Object.entries(cat).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div><\/div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px"><div class="chart-container"><h4>🏆 Top Clientes</h4> <table style="width:100%">${topClientes.map(([c,q])=>`<tr><td>${c}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div class="chart-container"><h4>🏭 Top Fornecedores</h4> <table style="width:100%">${topForn.map(([f,q])=>`<tr><td>${f}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div><\/div>
+    `;
+}
+
+function exportarRelatoriosExcel() {
+    if (lancamentos.length === 0) { alert('Não há dados!'); return; }
+    const wsData = [['Nº Pedido','Data','Cliente','OC','Fornecedor','Categoria','Itens','Status','Condição','Entrega','Observações']];
+    lancamentos.forEach(l => { wsData.push([l.pedido||'', formatarData(l.data), l.cliente||'', l.oc||'', l.fornecedor||'', l.categoria||'', l.itens||'', l.status||'', l.condicao||'', formatarData(l.entrega), (l.observacoes||'').substring(0,100)]); });
+    const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(wsData); XLSX.utils.book_append_sheet(wb, ws, 'Relatório'); XLSX.writeFile(wb, `relatorio_${new Date().toISOString().slice(0,10)}.xlsx`);
+    alert('Exportado!');
+}
+
+function gerarPDF() {
+    const elemento = document.getElementById('conteudoRelatorios');
+    if (!elemento) return;
+    html2canvas(elemento).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`relatorio_${new Date().toISOString().slice(0,10)}.pdf`);
+    });
+}
+
+// ============================================
+// DASHBOARD
+// ============================================
+function telaDashboard() {
+    return topBar() + `
+        <div class="box">
+            <h2>📈 Dashboard</h2>
+            <div class="filtros-grid">
+                <div class="filtro-item"><label>Período</label><select id="filtroPeriodoDashboard" onchange="alterarTipoPeriodoDashboard()"><option value="personalizado">Personalizado</option><option value="hoje">Hoje</option><option value="7d">Últimos 7 dias</option><option value="30d">Últimos 30 dias</option><option value="mes">Este mês</option><option value="mespassado">Mês passado</option><option value="trimestre">Este trimestre</option><option value="semestre">Este semestre</option><option value="ano">Este ano</option></select></div>
+                <div class="filtro-item"><label>Data Início</label><input type="date" id="filtroDataInicioDash"></div>
+                <div class="filtro-item"><label>Data Fim</label><input type="date" id="filtroDataFimDash"></div>
+                <div class="filtro-actions"><button class="info" onclick="aplicarFiltroDashboard()">🔍 Filtrar</button></div>
+            </div>
+            <div id="conteudoDashboard"></div>
+        </div>
+    `;
+}
+
+function alterarTipoPeriodoDashboard() {
+    const tipo = document.getElementById('filtroPeriodoDashboard').value;
+    if (tipo === 'personalizado') return;
+    const hoje = new Date();
+    let inicio, fim;
+    switch(tipo) {
+        case 'hoje': inicio = new Date(); fim = new Date(); inicio.setHours(0,0,0,0); fim.setHours(23,59,59,999); break;
+        case '7d': fim = new Date(); inicio = new Date(); inicio.setDate(inicio.getDate() - 7); break;
+        case '30d': fim = new Date(); inicio = new Date(); inicio.setDate(inicio.getDate() - 30); break;
+        case 'mes': inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1); fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0); break;
+        case 'mespassado': inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1); fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0); break;
+        case 'trimestre': const trim = Math.floor(hoje.getMonth() / 3); inicio = new Date(hoje.getFullYear(), trim * 3, 1); fim = new Date(hoje.getFullYear(), trim * 3 + 3, 0); break;
+        case 'semestre': const sem = Math.floor(hoje.getMonth() / 6); inicio = new Date(hoje.getFullYear(), sem * 6, 1); fim = new Date(hoje.getFullYear(), sem * 6 + 6, 0); break;
+        case 'ano': inicio = new Date(hoje.getFullYear(), 0, 1); fim = new Date(hoje.getFullYear(), 11, 31); break;
+        default: return;
+    }
+    document.getElementById('filtroDataInicioDash').value = inicio.toISOString().split('T')[0];
+    document.getElementById('filtroDataFimDash').value = fim.toISOString().split('T')[0];
+}
+
+function aplicarFiltroDashboard() {
+    let dados = [...lancamentos];
+    const dataInicio = document.getElementById('filtroDataInicioDash')?.value;
+    const dataFim = document.getElementById('filtroDataFimDash')?.value;
+    if (dataInicio && dataFim) {
+        dados = dados.filter(l => l.data && new Date(l.data) >= new Date(dataInicio) && new Date(l.data) <= new Date(dataFim));
+    }
+    gerarDashboard(dados);
+}
+
+function gerarDashboard(dados) {
+    const lembretes = gerarLembretes();
+    const total = dados.length;
+    const entregues = dados.filter(l => l.status === 'ENTREGUE').length;
+    const atrasados = dados.filter(l => l.status === 'ATRASADO').length;
+    const pendentes = dados.filter(l => l.status === 'EM ABERTO' || l.status === 'EM ROTA' || !l.status).length;
+    
+    let totalDiasPagamento = 0, countPagamento = 0, totalDiasEntrega = 0, countEntrega = 0;
+    dados.forEach(l => {
+        const tempoPag = calcularTempoPagamento(l.data, l.data_pagto);
+        if (tempoPag) { totalDiasPagamento += tempoPag; countPagamento++; }
+        if (l.data && l.entrega) { const dias = Math.round((new Date(l.entrega) - new Date(l.data)) / 86400000); if (dias >= 0) { totalDiasEntrega += dias; countEntrega++; } }
+    });
+    const tempoMedioPagamento = countPagamento > 0 ? (totalDiasPagamento / countPagamento).toFixed(1) : 0;
+    const tempoMedioEntrega = countEntrega > 0 ? (totalDiasEntrega / countEntrega).toFixed(1) : 0;
+    
+    const fornecedoresTempos = {};
+    dados.forEach(l => {
+        if (!l.fornecedor) return;
+        if (l.data && l.entrega) { const dias = Math.round((new Date(l.entrega) - new Date(l.data)) / 86400000); if (dias >= 0) { if (!fornecedoresTempos[l.fornecedor]) fornecedoresTempos[l.fornecedor] = { total: 0, count: 0 }; fornecedoresTempos[l.fornecedor].total += dias; fornecedoresTempos[l.fornecedor].count++; } }
+    });
+    const rankingFornecedores = Object.entries(fornecedoresTempos).map(([n,d]) => ({ fornecedor: n, pedidos: d.count, prazoMedio: (d.total / d.count).toFixed(1) })).sort((a,b)=>a.prazoMedio-b.prazoMedio);
+    
+    if (window.graficoStatus) window.graficoStatus.destroy();
+    if (window.graficoTipo) window.graficoTipo.destroy();
+    if (window.graficoCondicao) window.graficoCondicao.destroy();
+    
+    document.getElementById('conteudoDashboard').innerHTML = `
+        <div class="lembretes-bar">${lembretes.map(l=>`<span class="lembrete-item ${l.tipo}">${l.icon} ${l.msg}</span>`).join(' | ')}${lembretes.length===0?'✅ Nenhum lembrete':''}</div>
+        <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${entregues}</div></div><div class="kpi-card"><h4>Atrasados</h4><div class="value">${atrasados}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${pendentes}</div></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px"><div class="kpi-card"><h4>⏱️ Tempo Médio Pagamento</h4><div class="value">${tempoMedioPagamento} dias</div></div><div class="kpi-card"><h4>⏱️ Tempo Médio Entrega</h4><div class="value">${tempoMedioEntrega} dias</div></div></div>
+        <div class="charts-grid"><div class="chart-container"><canvas id="graficoStatus"></canvas></div><div class="chart-container"><canvas id="graficoTipo"></canvas></div><div class="chart-container"><canvas id="graficoCondicao"></canvas></div></div>
+        <h3>⏱️ Tempo Médio de Entrega por Fornecedor</h3><div class="table-container"><table class="auto-layout"><thead><tr><th>Fornecedor</th><th>Pedidos</th><th>Prazo Médio (dias)</th></tr></thead><tbody>${rankingFornecedores.map(f=>`<tr><td>${f.fornecedor}<\/td><td>${f.pedidos}<\/td><td>${f.prazoMedio}<\/td><\/tr>`).join('')}</tbody><\/table><\/div>
+    `;
+    
+    const statusCount = {}; dados.forEach(l => { let s = l.status || 'PENDENTE'; statusCount[s] = (statusCount[s] || 0) + 1; });
+    const ctx1 = document.getElementById('graficoStatus')?.getContext('2d'); if(ctx1) window.graficoStatus = new Chart(ctx1, { type: 'doughnut', data: { labels: Object.keys(statusCount), datasets: [{ data: Object.values(statusCount), backgroundColor: ['#5C2A2A','#8B5A5A','#B87A7A','#9e9e9e','#4caf50','#f44336'] }] }, options: { plugins: { title: { display: true, text: 'Pedidos por Status' } } } });
+    
+    const tipoCount = {}; dados.forEach(l => { let t = l.tipo || 'SEM TIPO'; tipoCount[t] = (tipoCount[t] || 0) + 1; });
+    const ctx2 = document.getElementById('graficoTipo')?.getContext('2d'); if(ctx2) window.graficoTipo = new Chart(ctx2, { type: 'bar', data: { labels: Object.keys(tipoCount), datasets: [{ label: 'Quantidade', data: Object.values(tipoCount), backgroundColor: '#8B5A5A' }] }, options: { plugins: { title: { display: true, text: 'Pedidos por Tipo' } } } });
+    
+    const condCount = {}; dados.forEach(l => { let c = l.condicao || 'SEM CONDIÇÃO'; condCount[c] = (condCount[c] || 0) + 1; });
+    const ctx3 = document.getElementById('graficoCondicao')?.getContext('2d'); if(ctx3) window.graficoCondicao = new Chart(ctx3, { type: 'bar', data: { labels: Object.keys(condCount), datasets: [{ label: 'Quantidade', data: Object.values(condCount), backgroundColor: '#8B5A5A' }] }, options: { plugins: { title: { display: true, text: 'Pedidos por Condição' } } } });
+}
+
+// ============================================
+// USUÁRIOS
+// ============================================
+function telaUsuarios() {
+    return topBar() + `
+        <div class="box">
+            <h2>👤 Gerenciar Usuários</h2>
+            <div class="form-grid"><div class="form-group"><label class="required">Novo Usuário</label><input type="text" id="novo_usuario"></div><div class="form-group"><label>Senha</label><input type="password" id="nova_senha" placeholder="Deixe em branco"></div><div class="form-group" style="justify-content:flex-end"><button class="success" onclick="adicionarUsuario()">➕ Adicionar</button></div></div>
+            <div class="table-container"><table class="auto-layout"><thead><tr><th>#</th><th>Usuário</th><th>Senha</th><th>Ações</th></tr></thead><tbody>
+                ${usuarios.map((u,i)=>`<tr><td>${i+1}<\/td><td>${u.nome}<\/td><td>${u.senha?'••••••':'Sem senha'}<\/td><td><button class="small" data-tooltip="Editar usuário" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️</button><button class="small danger" data-tooltip="Excluir usuário" onclick="excluirUsuario('${u.id}')">🗑️</button><\/td><\/tr>`).join('')}
+            </tbody><\/table><\/div>
+        </div>
+    `;
+}
+
+function abrirModalEdicaoUsuario(id) {
+    const u = usuarios.find(u => u.id === id);
+    const modal = document.getElementById('modalUsuarios');
+    const content = document.getElementById('modalUsuarioContent');
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nome</label><input type="text" id="edit_user_nome" value="${u.nome}"></div><div class="form-group"><label>Nova Senha</label><input type="password" id="edit_user_senha" placeholder="Deixe em branco"></div><div class="form-group"><label>Confirmar</label><input type="password" id="edit_user_confirm" placeholder="Digite novamente"></div></div><div style="text-align:right"><button class="success" onclick="salvarEdicaoUsuario('${id}')">💾 SALVAR</button></div>`;
+    modal.classList.add('active');
+}
+
+async function salvarEdicaoUsuario(id) {
+    const u = usuarios.find(u => u.id === id);
+    const novoNome = document.getElementById('edit_user_nome')?.value;
+    const novaSenha = document.getElementById('edit_user_senha')?.value;
+    const confirm = document.getElementById('edit_user_confirm')?.value;
+    if (!novoNome) { alert('Nome obrigatório!'); return; }
+    if (usuarios.some((user,i)=>user.id !== id && user.nome===novoNome)) { alert('Nome já existe!'); return; }
+    u.nome = novoNome;
+    if (novaSenha) { if (novaSenha !== confirm) { alert('Senhas não conferem!'); return; } u.senha = novaSenha; }
+    await db.collection('usuarios').doc(id).update(u);
+    await adicionarLog('EDITOU USUÁRIO', u.nome);
+    fecharModal('modalUsuarios');
+    mostrar('usuarios');
+}
+
+async function adicionarUsuario() {
+    let nome = document.getElementById('novo_usuario')?.value;
+    let senha = document.getElementById('nova_senha')?.value || '';
+    if (!nome) { alert('Digite um nome!'); return; }
+    if (usuarios.some(u=>u.nome===nome)) { alert('Nome já existe!'); return; }
+    const novo = { nome, senha };
+    const docRef = await db.collection('usuarios').add(novo);
+    usuarios.push({ id: docRef.id, ...novo });
+    await adicionarLog('ADICIONOU USUÁRIO', nome);
+    mostrar('usuarios');
+}
+
+async function excluirUsuario(id) {
+    if (usuarios.length <= 1) { alert('Não pode excluir o último!'); return; }
+    const u = usuarios.find(u => u.id === id);
+    if (u.nome === 'Admin') { alert('Não pode excluir o Admin!'); return; }
+    if (confirm(`Excluir ${u.nome}?`)) {
+        await db.collection('usuarios').doc(id).delete();
+        usuarios = usuarios.filter(u => u.id !== id);
+        if (usuarioAtual === u.nome) {
+            usuarioAtual = usuarios[0].nome;
+            usuarioPermissao = usuarioAtual === 'Admin' ? 'admin' : 'user';
+            document.getElementById('menuUsuarios').style.display = usuarioAtual === 'Admin' ? 'block' : 'none';
+            document.getElementById('menuLogs').style.display = usuarioAtual === 'Admin' ? 'block' : 'none';
+        }
+        await adicionarLog('EXCLUIU USUÁRIO', u.nome);
+        mostrar('usuarios');
+    }
+}
+
+// ============================================
+// LOGS
+// ============================================
+function telaLogs() {
+    return topBar() + `<div class="box"><h2>📋 Logs</h2><div class="log-viewer">${logs.slice().reverse().map(l=>`<div class="log-entry"><span class="log-time">[${new Date(l.data).toLocaleString()}]</span> <span class="log-user">${l.usuario}</span> <span class="log-action">${l.acao}</span>${l.detalhe?` - ${l.detalhe}`:''}</div>`).join('')}${logs.length===0?'<div>Nenhum log.</div>':''}</div><div class="mt-20"><button class="danger" onclick="limparLogs()">🗑️ Limpar Logs</button></div></div>`;
+}
+
+async function limparLogs() {
+    if (confirm('Limpar todos os logs?')) {
+        const snapshot = await db.collection('logs').get();
+        for (const doc of snapshot.docs) {
+            await db.collection('logs').doc(doc.id).delete();
+        }
+        logs = [];
+        await adicionarLog('LIMPOUS LOGS');
+        mostrar('logs');
+    }
+}
+
+// ============================================
+// FUNÇÃO PRINCIPAL
+// ============================================
+async function mostrar(tela) {
+    if (!usuarioAtual) { mostrarLogin(); return; }
+    const main = document.getElementById('main-content');
+    switch(tela) {
+        case 'clientes': main.innerHTML = telaClientes(); break;
+        case 'fornecedores': main.innerHTML = telaFornecedores(); break;
+        case 'lancamentos': main.innerHTML = telaLancamentos(); setTimeout(() => renderLancamentos(), 100); break;
+        case 'relatorios': main.innerHTML = telaRelatorios(); setTimeout(()=>aplicarFiltrosRelatorio(),100); break;
+        case 'dashboard': main.innerHTML = telaDashboard(); setTimeout(()=>aplicarFiltroDashboard(),100); break;
+        case 'anexos': main.innerHTML = telaAnexos(); break;
+        case 'usuarios': if (usuarioPermissao !== 'admin') { alert('Acesso negado!'); mostrar('dashboard'); return; } main.innerHTML = telaUsuarios(); break;
+        case 'logs': if (usuarioPermissao !== 'admin') { alert('Acesso negado!'); mostrar('dashboard'); return; } main.innerHTML = telaLogs(); break;
+        default: main.innerHTML = telaClientes();
+    }
+    await adicionarLog('VISUALIZOU', tela);
 }
 
 // ============================================
