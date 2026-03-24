@@ -391,19 +391,32 @@
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
         .close-modal { font-size: 20px; cursor: pointer; color: #999; }
         
-        /* Rodapé com versículo */
+        /* Rodapé fixo com versículo no canto inferior esquerdo */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 250px;
+            right: 0;
+            background: #f8f8f8;
+            border-top: 1px solid #e0e0e0;
+            padding: 6px 15px;
+            font-size: 10px;
+            color: #999;
+            text-align: center;
+            z-index: 10;
+        }
+        
         .footer-verse {
             position: fixed;
-            bottom: 5px;
+            bottom: 8px;
             left: 260px;
-            right: 0;
-            text-align: center;
             font-size: 9px;
-            color: #aaa;
+            color: #5C2A2A;
             font-style: italic;
-            padding: 4px;
+            opacity: 0.7;
             background: transparent;
-            z-index: 5;
+            z-index: 15;
+            pointer-events: none;
         }
         
         .hidden { display: none; }
@@ -440,14 +453,13 @@
 <div class="main" id="main-content"></div>
 
 <div class="footer" id="footer" style="display: none;">
-    <div style="position: fixed; bottom: 0; left: 250px; right: 0; background: #f8f8f8; border-top: 1px solid #e0e0e0; padding: 6px 15px; font-size: 10px; color: #999; text-align: center;">
-        <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
-            <div><span>Compras:</span> (91) 9137-8383 | <span>Suporte:</span> (91) 9192-6953</div>
-            <div>© 2026 BRETON BELÉM - Todos os direitos reservados</div>
-        </div>
+    <div class="footer-content">
+        <div><span>Compras:</span> (91) 9137-8383 | <span>Suporte:</span> (91) 9192-6953</div>
+        <div>© 2026 BRETON BELÉM - Todos os direitos reservados</div>
     </div>
-    <div class="footer-verse">Provérbios 16:3: "Confie ao Senhor as suas obras, e os seus planos serão bem-sucedidos."</div>
 </div>
+
+<div class="footer-verse" id="footerVerse" style="display: none;">Provérbios 16:3: "Confie ao Senhor as suas obras, e os seus planos serão bem-sucedidos."</div>
 
 <div class="modal" id="modalEditarFornecedor"><div class="modal-content"><div class="modal-header"><h3>✏️ Editar Fornecedor</h3><span class="close-modal" onclick="fecharModal('modalEditarFornecedor')">&times;</span></div><div id="modalEditarFornecedorContent"></div></div></div>
 <div class="modal" id="modalEditarCliente"><div class="modal-content"><div class="modal-header"><h3>✏️ Editar Cliente</h3><span class="close-modal" onclick="fecharModal('modalEditarCliente')">&times;</span></div><div id="modalEditarClienteContent"></div></div></div>
@@ -732,6 +744,7 @@ function calcularTotais(lista) {
 function mostrarLogin() {
     document.getElementById('sidebar').style.display = 'none';
     document.getElementById('footer').style.display = 'none';
+    document.getElementById('footerVerse').style.display = 'none';
     
     document.getElementById('main-content').innerHTML = `
         <div class="login-container">
@@ -762,6 +775,7 @@ async function fazerLogin() {
     document.getElementById('menuLogs').style.display = nome === 'Admin' ? 'block' : 'none';
     document.getElementById('sidebar').style.display = 'block';
     document.getElementById('footer').style.display = 'block';
+    document.getElementById('footerVerse').style.display = 'block';
     
     await adicionarLog('LOGIN', nome);
     mostrar('clientes');
@@ -772,6 +786,7 @@ function logout() {
     usuarioPermissao = null;
     document.getElementById('sidebar').style.display = 'none';
     document.getElementById('footer').style.display = 'none';
+    document.getElementById('footerVerse').style.display = 'none';
     mostrarLogin();
 }
 
@@ -792,8 +807,8 @@ function telaClientes() {
             </div>
             <div class="search-box"><input type="text" id="buscaCliente" placeholder="🔍 Buscar..." onkeyup="filtrarClientes()"></div>
             <div class="table-container"><table class="auto-layout" id="tabelaClientes"><thead>   <th>#</th><th>Pedido</th><th>Data</th><th>Cliente</th><th>CPF/CNPJ</th><th>Contato</th><th>Ações</th> </thead>
-                <tbody>${clientes.map((c,i)=>`<tr><td>${i+1}</td><td>${c.pedido}</td><td>${formatarData(c.data)}</td><td>${c.cliente}</td><td>${c.cpf_cnpj||'-'}</td><td>${c.contato||'-'}</td><td><button class="small" data-tooltip="Editar cliente" onclick="abrirModalEdicaoCliente('${c.id}')">✏️</button><button class="small danger" data-tooltip="Excluir cliente" onclick="excluirCliente('${c.id}')">🗑️</button></td></tr>`).join('')}</tbody>
-             </table></div>
+                <tbody>${clientes.map((c,i)=>`<tr><td>${i+1}<\/td><td>${c.pedido}<\/td><td>${formatarData(c.data)}<\/td><td>${c.cliente}<\/td><td>${c.cpf_cnpj||'-'}<\/td><td>${c.contato||'-'}<\/td><td><button class="small" data-tooltip="Editar cliente" onclick="abrirModalEdicaoCliente('${c.id}')">✏️</button><button class="small danger" data-tooltip="Excluir cliente" onclick="excluirCliente('${c.id}')">🗑️</button><\/td><\/tr>`).join('')}
+            </tbody>       </table>
         </div>
     `;
 }
@@ -861,8 +876,8 @@ function telaFornecedores() {
             </div>
             <div class="search-box"><input type="text" id="buscaFornecedor" placeholder="🔍 Buscar..." onkeyup="filtrarFornecedores()"></div>
             <div class="table-container"><table class="auto-layout" id="tabelaFornecedores"><thead>   <th>#</th><th>COD</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Condição</th><th>Coleção</th><th>Ações</th> </thead>
-                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}</td><td>${f.cod}</td><td>${f.nome}</td><td>${f.cpf_cnpj||'-'}</td><td>${f.condicao||'-'}</td><td>${f.colecao||'-'}</td><td><button class="small" data-tooltip="Editar fornecedor" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" data-tooltip="Excluir fornecedor" onclick="excluirFornecedor('${f.id}')">🗑️</button></td></tr>`).join('')}</tbody>
-             </table></div>
+                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}<\/td><td>${f.cod}<\/td><td>${f.nome}<\/td><td>${f.cpf_cnpj||'-'}<\/td><td>${f.condicao||'-'}<\/td><td>${f.colecao||'-'}<\/td><td><button class="small" data-tooltip="Editar fornecedor" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" data-tooltip="Excluir fornecedor" onclick="excluirFornecedor('${f.id}')">🗑️</button><\/td><\/tr>`).join('')}
+            </tbody>       </table>
         </div>
     `;
 }
@@ -1084,41 +1099,42 @@ function renderLancamentos() {
             <td>${l.produtos || '-'}</td>
             <td>${formatarValor(l.valor)}</td>
             <td>${formatarData(l.data_pagto)}</td>
-            <td>${l.condicao || '-'}</td>
-            <td>${formatarData(l.prev_fat)}</td>
-            <td>${formatarData(l.novo_prazo)}</td>
-            <td>${formatarData(l.prev_chegada)}</td>
-            <td>${getStatusBadge(l.status)}</td>
-            <td>${formatarData(l.data_fat)}</td>
-            <td>${l.nf || '-'}</td>
-            <td>${l.transportadora || '-'}</td>
-            <td>${formatarData(l.chegada)}</td>
-            <td>${formatarData(l.conferencia)}</td>
-            <td>${formatarData(l.entrega)}</td>
-            <td>${pm ? pm + 'd' : '-'}</td>
-            <td>${l.usuario || '-'}</td>
-            <td>${l.editadoPor ? l.editadoPor + ' ' + new Date(l.editadoEm).toLocaleDateString() : '-'}</td>
-            <td>${l.observacoes ? `<span class="tooltip-icon" data-tooltip="${l.observacoes.replace(/"/g, '&quot;')}">💬</span>` : '-'}</td>
-            <td>${temAnexo ? '📎' : '-'}</td>
-            <td>
+            <td>${l.condicao || '-'}
+                         <td>${l.condicao || '-'}</td>
+             <td>${formatarData(l.prev_fat)}</td>
+             <td>${formatarData(l.novo_prazo)}</td>
+             <td>${formatarData(l.prev_chegada)}</td>
+             <td>${getStatusBadge(l.status)}</td>
+             <td>${formatarData(l.data_fat)}</td>
+             <td>${l.nf || '-'}</td>
+             <td>${l.transportadora || '-'}</td>
+             <td>${formatarData(l.chegada)}</td>
+             <td>${formatarData(l.conferencia)}</td>
+             <td>${formatarData(l.entrega)}</td>
+             <td>${pm ? pm + 'd' : '-'}</td>
+             <td>${l.usuario || '-'}</td>
+             <td>${l.editadoPor ? l.editadoPor + ' ' + new Date(l.editadoEm).toLocaleDateString() : '-'}</td>
+             <td>${l.observacoes ? `<span class="tooltip-icon" data-tooltip="${l.observacoes.replace(/"/g, '&quot;')}">💬</span>` : '-'}</td>
+             <td>${temAnexo ? '📎' : '-'}</td>
+             <td>
                 <button class="small" data-tooltip="Editar lançamento" onclick="abrirModalEdicaoLancamento('${l.id}')">✏️</button>
                 <button class="small" data-tooltip="Duplicar lançamento (cria novo pedido)" onclick="duplicarLancamento('${l.id}')">📋</button>
                 <button class="small info" data-tooltip="Gerenciar anexos" onclick="abrirModalAnexos(${l.pedido})">📎</button>
                 <button class="small danger" data-tooltip="Excluir lançamento" onclick="excluirLancamento('${l.id}')">🗑️</button>
-            </td>
-         \)`;
+             </td>
+           </tr>`;
     }).join('');
     
     const tfoot = document.getElementById('lancamentosFooter');
     tfoot.innerHTML = `<tr style="background:#FAF0F0; font-weight:bold;">
-        <td colspan="11" style="text-align:right;">TOTAL: <\/td>
-        <td>${formatarValor(totaisFiltrados.totalValor)}<\/td>
-        <td colspan="10"><\/td>
-        <td>${totaisFiltrados.totalItens} itens<\/td>
-        <td colspan="6"><\/td>
-        <td>${totaisFiltrados.totalPedidos} pedidos<\/td>
-        <td colspan="3"><\/td>
-     \)`;
+        <td colspan="11" style="text-align:right;">TOTAL:</td>
+        <td>${formatarValor(totaisFiltrados.totalValor)}</td>
+        <td colspan="10"></td>
+        <td>${totaisFiltrados.totalItens} itens</td>
+        <td colspan="6"></td>
+        <td>${totaisFiltrados.totalPedidos} pedidos</td>
+        <td colspan="3"></td>
+     </tr>`;
 }
 
 function setFilterType(tipo) {
@@ -1304,7 +1320,6 @@ function abrirModalEdicaoLancamento(id) {
         </div>
     </div><div style="text-align:right; margin-top:20px"><p>Editando como: ${usuarioAtual}</p><button class="success" onclick="salvarEdicaoLancamento('${id}')">💾 SALVAR</button></div>`;
     
-    // Atualizar contador da edição
     setTimeout(() => {
         const editTextarea = document.getElementById('edit_lan_observacoes');
         if (editTextarea) atualizarContadorCaracteres(editTextarea, 100);
@@ -1409,7 +1424,7 @@ function filtrarAnexosPorOC() {
 function limparBuscaAnexos() { document.getElementById('buscaAnexoPedido').value = ''; document.getElementById('buscaAnexoOC').value = ''; document.querySelectorAll('#anexosLista > div').forEach(d => d.style.display = ''); }
 
 // ============================================
-// RELATÓRIOS (resumido para caber)
+// RELATÓRIOS (resumido)
 // ============================================
 function telaRelatorios() {
     return topBar() + `
@@ -1475,8 +1490,12 @@ function gerarRelatorios(dados) {
     
     document.getElementById('conteudoRelatorios').innerHTML = `
         <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Total Itens</h4><div class="value">${dados.reduce((a,l)=>a+(l.itens||0),0)}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${dados.filter(l=>l.status==='ENTREGUE').length}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${dados.filter(l=>l.status==='EM ABERTO' || !l.status).length}</div></div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0"><div class="chart-container"><h4>📅 Pedidos por Mês</h4> <table style="width:100%">${Object.entries(meses).map(([m,q])=>`<tr><td>${m}<\/td><td>${q}<\/td><\/tr>`).join('')}</table></div><div class="chart-container"><h4>📌 Pedidos por Status</h4> <table style="width:100%">${Object.entries(status).map(([s,q])=>`<tr><td>${s}<\/td><td>${q}<\/td><\/tr>`).join('')}</table></div><div class="chart-container"><h4>💰 Pedidos por Condição</h4> <table style="width:100%">${Object.entries(cond).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}</table></div><div class="chart-container"><h4>🏷️ Pedidos por Categoria</h4> <table style="width:100%">${Object.entries(cat).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}</table></div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px"><div class="chart-container"><h4>🏆 Top Clientes</h4> <table style="width:100%">${topClientes.map(([c,q])=>`<tr><td>${c}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}</table></div><div class="chart-container"><h4>🏭 Top Fornecedores</h4> <table style="width:100%">${topForn.map(([f,q])=>`<tr><td>${f}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}</table></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0"><div class="chart-container"><h4>📅 Pedidos por Mês</h4> <table style="width:100%">${Object.entries(meses).map(([m,q])=>`<tr><td>${m}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div class="chart-container"><h4>📌 Pedidos por Status</h4> <table style="width:100%">${Object.entries(status).map(([s,q])=>`<tr><td>${s}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div class="chart-container"><h4>💰 Pedidos por Condição</h4> <table style="width:100%">${Object.entries(cond).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div class="chart-container"><h4>🏷️ Pedidos por Categoria</h4> <table style="width:100%">${Object.entries(cat).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div><\/div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px"><div class="chart-container"><h4>🏆 Top Clientes</h4> <table style="width:100%">${topClientes.map(([c,q])=>`<tr><td>${c}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div class="chart-container"><h4>🏭 Top Fornecedores</h4> <table style="width:100%">${topForn.map(([f,q])=>`<tr><td>${f}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div><\/div>
     `;
 }
 
@@ -1503,7 +1522,7 @@ function gerarPDF() {
 }
 
 // ============================================
-// DASHBOARD (resumido)
+// DASHBOARD
 // ============================================
 function telaDashboard() {
     return topBar() + `
@@ -1582,7 +1601,7 @@ function gerarDashboard(dados) {
         <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${entregues}</div></div><div class="kpi-card"><h4>Atrasados</h4><div class="value">${atrasados}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${pendentes}</div></div></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px"><div class="kpi-card"><h4>⏱️ Tempo Médio Pagamento</h4><div class="value">${tempoMedioPagamento} dias</div></div><div class="kpi-card"><h4>⏱️ Tempo Médio Entrega</h4><div class="value">${tempoMedioEntrega} dias</div></div></div>
         <div class="charts-grid"><div class="chart-container"><canvas id="graficoStatus"></canvas></div><div class="chart-container"><canvas id="graficoTipo"></canvas></div><div class="chart-container"><canvas id="graficoCondicao"></canvas></div></div>
-        <h3>⏱️ Tempo Médio de Entrega por Fornecedor</h3><div class="table-container"><table class="auto-layout"><thead><tr><th>Fornecedor</th><th>Pedidos</th><th>Prazo Médio (dias)</th></tr></thead><tbody>${rankingFornecedores.map(f=>`<tr><td>${f.fornecedor}<\/td><td>${f.pedidos}<\/td><td>${f.prazoMedio}<\/td><\/tr>`).join('')}</tbody></table></div>
+        <h3>⏱️ Tempo Médio de Entrega por Fornecedor</h3><div class="table-container"><table class="auto-layout"><thead><tr><th>Fornecedor</th><th>Pedidos</th><th>Prazo Médio (dias)</th></tr></thead><tbody>${rankingFornecedores.map(f=>`<tr><td>${f.fornecedor}<\/td><td>${f.pedidos}<\/td><td>${f.prazoMedio}<\/td><\/tr>`).join('')}</tbody><\/table><\/div>
     `;
     
     const statusCount = {}; dados.forEach(l => { let s = l.status || 'PENDENTE'; statusCount[s] = (statusCount[s] || 0) + 1; });
@@ -1605,7 +1624,7 @@ function telaUsuarios() {
             <div class="form-grid"><div class="form-group"><label class="required">Novo Usuário</label><input type="text" id="novo_usuario"></div><div class="form-group"><label>Senha</label><input type="password" id="nova_senha" placeholder="Deixe em branco"></div><div class="form-group" style="justify-content:flex-end"><button class="success" onclick="adicionarUsuario()">➕ Adicionar</button></div></div>
             <div class="table-container"><table class="auto-layout"><thead><tr><th>#</th><th>Usuário</th><th>Senha</th><th>Ações</th></tr></thead><tbody>
                 ${usuarios.map((u,i)=>`<tr><td>${i+1}<\/td><td>${u.nome}<\/td><td>${u.senha?'••••••':'Sem senha'}<\/td><td><button class="small" data-tooltip="Editar usuário" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️</button><button class="small danger" data-tooltip="Excluir usuário" onclick="excluirUsuario('${u.id}')">🗑️</button><\/td><\/tr>`).join('')}
-            </tbody></table></div>
+            </tbody><\/table><\/div>
         </div>
     `;
 }
