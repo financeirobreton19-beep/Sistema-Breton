@@ -137,7 +137,7 @@
         button.salvar { background: #2e7d32; font-weight: bold; padding: 10px 20px; }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
         
-        /* CORREÇÃO DOS BOTÕES DE AÇÃO - ALINHADOS VERTICALMENTE DENTRO DA CÉLULA */
+        /* BOTÕES DE AÇÃO - ALINHADOS VERTICALMENTE */
         .acoes-cell {
             white-space: nowrap;
             display: flex;
@@ -198,9 +198,10 @@
         .status-badge.atrasado { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
         .status-badge.entregue { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
         .status-badge.em-rota { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+        .status-badge.cancelado { background: #eeeeee; color: #616161; border: 1px solid #e0e0e0; }
         .status-badge.pendente { background: #f5f5f5; color: #616161; border: 1px solid #e0e0e0; }
         
-        /* CORREÇÃO: Só destaca em vermelho se NÃO for ENTREGUE */
+        /* CORREÇÃO: Só destaca em vermelho se NÃO for ENTREGUE e data vencida ou próxima */
         tr.atrasado-row { background-color: #ffebee !important; }
         tr.atrasado-row:hover { background-color: #ffcdd2 !important; }
         
@@ -547,6 +548,17 @@ const categorias = [
 const tiposPedido = ['OC', 'SHOWROOM', 'ESTOQUE', 'ASSISTENCIA'];
 const mesesLista = ['Janeiro/2026', 'Fevereiro/2026', 'Março/2026', 'Abril/2026', 'Maio/2026', 'Junho/2026', 'Julho/2026', 'Agosto/2026', 'Setembro/2026', 'Outubro/2026', 'Novembro/2026', 'Dezembro/2026'];
 
+// STATUS EM ORDEM ALFABÉTICA
+const statusLista = [
+    'AG. FATURAMENTO',
+    'ATRASADO',
+    'CANCELADO',
+    'EM ABERTO',
+    'ENTREGUE',
+    'FATURADO',
+    'PRORROGADO'
+];
+
 // ============================================
 // FUNÇÃO QUE CALCULA PREV. CHEGADA = DATA FAT + 20 DIAS
 // ============================================
@@ -564,7 +576,7 @@ function calcularPrevisaoChegada() {
 }
 
 // ============================================
-// FUNÇÃO DE VALIDAÇÃO DE DATAS
+// FUNÇÃO DE VALIDAÇÃO DE DATAS (APENAS ENTREGA NÃO PODE SER ANTES DO PAGAMENTO)
 // ============================================
 function validarDatas(lancamento) {
     if (lancamento.data_pagto && lancamento.entrega) {
@@ -572,14 +584,6 @@ function validarDatas(lancamento) {
         const dataEntrega = new Date(lancamento.entrega);
         if (dataEntrega < dataPagto) {
             alert('⚠️ Atenção: Data de entrega não pode ser anterior à data de pagamento!');
-            return false;
-        }
-    }
-    if (lancamento.data_fat && lancamento.data_pagto) {
-        const dataFat = new Date(lancamento.data_fat);
-        const dataPagto = new Date(lancamento.data_pagto);
-        if (dataPagto < dataFat) {
-            alert('⚠️ Atenção: Data de pagamento não pode ser anterior ao faturamento!');
             return false;
         }
     }
@@ -602,14 +606,23 @@ function hideLoading(button, originalText) {
 }
 
 // ============================================
-// FUNÇÃO CORRIGIDA: SÓ DESTACA SE NÃO FOR ENTREGUE
+// FUNÇÃO CORRIGIDA: SÓ DESTACA SE NÃO FOR ENTREGUE E DATA VENCIDA OU PRÓXIMA (≤ 7 DIAS)
 // ============================================
 function isPedidoAtrasado(lancamento) {
+    // Se já foi entregue, NUNCA destaca
     if (lancamento.status === 'ENTREGUE') return false;
+    
+    // Se não tem data de entrega, não destaca
     if (!lancamento.entrega) return false;
+    
     const hoje = new Date();
     const dataEntrega = new Date(lancamento.entrega);
-    return dataEntrega < hoje;
+    
+    // Calcula quantos dias faltam (positivo = futuro, negativo = vencido)
+    const diffDias = Math.ceil((dataEntrega - hoje) / 86400000);
+    
+    // Destaca se: vencido (diffDias < 0) OU faltam 7 dias ou menos (diffDias <= 7)
+    return diffDias <= 7;
 }
 
 // ============================================
@@ -735,9 +748,23 @@ function calcularPrazoMedio(pagto, entrega) {
     return Math.round((new Date(entrega) - new Date(pagto)) / 86400000);
 }
 
+function calcularTempoPagamento(dataPedido, dataPagto) {
+    if (!dataPedido || !dataPagto) return null;
+    return Math.round((new Date(dataPagto) - new Date(dataPedido)) / 86400000);
+}
+
 function getStatusClass(status) {
     if (!status) return 'pendente';
-    const map = { 'FATURADO':'faturado', 'AG. FATURAMENTO':'ag-faturamento', 'PRORROGADO':'prorrogado', 'EM ABERTO':'em-aberto', 'ATRASADO':'atrasado', 'ENTREGUE':'entregue', 'EM ROTA':'em-rota', 'CANCELADO':'cancelado' };
+    const map = { 
+        'FATURADO':'faturado', 
+        'AG. FATURAMENTO':'ag-faturamento', 
+        'PRORROGADO':'prorrogado', 
+        'EM ABERTO':'em-aberto', 
+        'ATRASADO':'atrasado', 
+        'ENTREGUE':'entregue', 
+        'EM ROTA':'em-rota', 
+        'CANCELADO':'cancelado' 
+    };
     return map[status.toUpperCase()] || 'pendente';
 }
 
@@ -917,8 +944,8 @@ function telaClientes() {
             </div>
             <div class="search-box"><input type="text" id="buscaCliente" placeholder="🔍 Buscar..." onkeyup="filtrarClientes()"></div>
             <div class="table-container"><table class="auto-layout" id="tabelaClientes"><thead><th>#</th><th>Pedido</th><th>Data</th><th>Cliente</th><th>CPF/CNPJ</th><th>Contato</th><th>Ações</th></thead>
-                <tbody>${clientes.map((c,i)=>`<tr><td>${i+1}</td><td>${c.pedido}</td><td>${formatarData(c.data)}</td><td>${escapeHtml(c.cliente)}</td><td>${escapeHtml(c.cpf_cnpj||'-')}</td><td>${escapeHtml(c.contato||'-')}</td><td class="acoes-cell"><button class="small" data-tooltip="Editar cliente" onclick="abrirModalEdicaoCliente('${c.id}')">✏️</button><button class="small danger" data-tooltip="Excluir cliente" onclick="excluirCliente('${c.id}')">🗑️</button></td></tr>`).join('')}
-            </tbody></table></div>
+                <tbody>${clientes.map((c,i)=>`<tr><td>${i+1}<\/td><td>${c.pedido}<\/td><td>${formatarData(c.data)}<\/td><td>${escapeHtml(c.cliente)}<\/td><td>${escapeHtml(c.cpf_cnpj||'-')}<\/td><td>${escapeHtml(c.contato||'-')}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar cliente" onclick="abrirModalEdicaoCliente('${c.id}')">✏️</button><button class="small danger" data-tooltip="Excluir cliente" onclick="excluirCliente('${c.id}')">🗑️</button><\/td><\/tr>`).join('')}
+            </tbody><\/table><\/div>
         </div>
     `;
 }
@@ -1014,8 +1041,8 @@ function telaFornecedores() {
             </div>
             <div class="search-box"><input type="text" id="buscaFornecedor" placeholder="🔍 Buscar..." onkeyup="filtrarFornecedores()"></div>
             <div class="table-container"><table class="auto-layout" id="tabelaFornecedores"><thead><th>#</th><th>COD</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Condição</th><th>Coleção</th><th>Ações</th></thead>
-                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}</td><td>${f.cod}</td><td>${escapeHtml(f.nome)}</td><td>${escapeHtml(f.cpf_cnpj||'-')}</td><td>${escapeHtml(f.condicao||'-')}</td><td>${escapeHtml(f.colecao||'-')}</td><td class="acoes-cell"><button class="small" data-tooltip="Editar fornecedor" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" data-tooltip="Excluir fornecedor" onclick="excluirFornecedor('${f.id}')">🗑️</button></td></tr>`).join('')}
-            </tbody></table></div>
+                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}<\/td><td>${f.cod}<\/td><td>${escapeHtml(f.nome)}<\/td><td>${escapeHtml(f.cpf_cnpj||'-')}<\/td><td>${escapeHtml(f.condicao||'-')}<\/td><td>${escapeHtml(f.colecao||'-')}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar fornecedor" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" data-tooltip="Excluir fornecedor" onclick="excluirFornecedor('${f.id}')">🗑️</button><\/td><\/tr>`).join('')}
+            </tbody><\/table><\/div>
         </div>
     `;
 }
@@ -1113,13 +1140,14 @@ function atualizarContadorCaracteres(textarea, maxChars = 100) {
 }
 
 // ============================================
-// TELA DE LANÇAMENTOS (COMPLETA COM CORREÇÕES)
+// TELA DE LANÇAMENTOS (COMPLETA)
 // ============================================
 function telaLancamentos() {
     let optionsCat = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
     let optionsForn = fornecedores.map(f => `<option value="${escapeHtml(f.nome)}">${escapeHtml(f.nome)} (${f.cod})</option>`).join('');
     let optionsTipo = tiposPedido.map(t => `<option value="${t}">${t}</option>`).join('');
     let optionsMeses = mesesLista.map(m => `<option value="${m}">${m}</option>`).join('');
+    let optionsStatus = statusLista.map(s => `<option value="${s}">${s}</option>`).join('');
     
     const lancamentosFiltrados = getLancamentosFiltrados();
     const totais = calcularTotais(lancamentosFiltrados);
@@ -1190,7 +1218,7 @@ function telaLancamentos() {
                         <div class="form-grid">
                             <div class="form-group"><label>Valor</label><input type="text" id="lan_valor" placeholder="0,00" onblur="formatarValorInput(this)"></div>
                             <div class="form-group"><label>Condição</label><select id="lan_condicao"><option value="">Selecione</option><option value="Em aberto">EM ABERTO</option><option value="Em produção">EM PRODUÇÃO</option><option value="Cancelado">CANCELADO</option><option value="Entregue">ENTREGUE</option><option value="Em Rota">EM ROTA</option><option value="Entregue em fábrica">ENTREGUE EM FÁBRICA</option><option value="Entregue - Pag. Pendente">ENTREGUE - PAG. PENDENTE</option><option value="Pedido Retido">PEDIDO RETIDO</option></select></div>
-                            <div class="form-group"><label>Status</label><select id="lan_status"><option value="">Selecione</option><option value="Faturado">FATURADO</option><option value="Ag. Faturamento">AG. FATURAMENTO</option><option value="Prorrogado">PRORROGADO</option><option value="Em aberto">EM ABERTO</option><option value="Entregue">ENTREGUE</option><option value="Atrasado">ATRASADO</option></select></div>
+                            <div class="form-group"><label>Status</label><select id="lan_status"><option value="">Selecione</option>${optionsStatus}</select></div>
                             <div class="form-group"><label>Nº NF</label><input type="text" id="lan_nf" style="text-transform:uppercase"></div>
                             <div class="form-group"><label>Transportadora</label><input type="text" id="lan_transportadora" style="text-transform:uppercase"></div>
                             <div class="form-group"><label>Observações</label>
@@ -1478,6 +1506,7 @@ function abrirModalEdicaoLancamento(id) {
     let optionsCat = categorias.map(c => `<option value="${c}" ${l.categoria===c?'selected':''}>${c}</option>`).join('');
     let optionsForn = fornecedores.map(f => `<option value="${escapeHtml(f.nome)}" ${l.fornecedor===f.nome?'selected':''}>${escapeHtml(f.nome)}</option>`).join('');
     let optionsTipo = tiposPedido.map(t => `<option value="${t}" ${l.tipo===t?'selected':''}>${t}</option>`).join('');
+    let optionsStatus = statusLista.map(s => `<option value="${s}" ${l.status===s?'selected':''}>${s}</option>`).join('');
     
     content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Pedido</label><input type="number" id="edit_lan_pedido" value="${l.pedido||''}"></div>
         <div class="form-group"><label>Data</label><input type="date" id="edit_lan_data" value="${l.data||''}"></div>
@@ -1495,7 +1524,7 @@ function abrirModalEdicaoLancamento(id) {
         <div class="form-group"><label>Prev. Fat</label><input type="date" id="edit_lan_prev_fat" value="${l.prev_fat||''}"></div>
         <div class="form-group"><label>Novo Prazo</label><input type="date" id="edit_lan_novo_prazo" value="${l.novo_prazo||''}"></div>
         <div class="form-group"><label>Prev. Chegada</label><input type="date" id="edit_lan_prev_chegada" value="${l.prev_chegada||''}" readonly style="background:#f5f5f5"></div>
-        <div class="form-group"><label>Status</label><select id="edit_lan_status"><option value="">Selecione</option><option value="Faturado" ${l.status==='Faturado'?'selected':''}>FATURADO</option><option value="Ag. Faturamento" ${l.status==='Ag. Faturamento'?'selected':''}>AG. FATURAMENTO</option><option value="Prorrogado" ${l.status==='Prorrogado'?'selected':''}>PRORROGADO</option><option value="Em aberto" ${l.status==='Em aberto'?'selected':''}>EM ABERTO</option><option value="Entregue" ${l.status==='Entregue'?'selected':''}>ENTREGUE</option><option value="Atrasado" ${l.status==='Atrasado'?'selected':''}>ATRASADO</option></select></div>
+        <div class="form-group"><label>Status</label><select id="edit_lan_status">${optionsStatus}</select></div>
         <div class="form-group"><label>Data Fat</label><input type="date" id="edit_lan_data_fat" value="${l.data_fat||''}" onchange="calcularPrevisaoChegadaEdicao()"></div>
         <div class="form-group"><label>Nº NF</label><input type="text" id="edit_lan_nf" value="${l.nf||''}"></div>
         <div class="form-group"><label>Transportadora</label><input type="text" id="edit_lan_transportadora" value="${l.transportadora||''}"></div>
@@ -1583,7 +1612,7 @@ async function salvarEdicaoLancamento(id) {
 }
 
 // ============================================
-// ANEXOS
+// ANEXOS (mantido)
 // ============================================
 function abrirModalAnexos(pedido) {
     const modal = getElement('modalAnexos');
@@ -1775,9 +1804,6 @@ function gerarPDF() {
     });
 }
 
-// ============================================
-// DASHBOARD
-// ============================================
 function telaDashboard() {
     return topBar() + `
         <div class="box">
@@ -1868,15 +1894,12 @@ function gerarDashboard(dados) {
     const ctx3 = document.getElementById('graficoCondicao')?.getContext('2d'); if(ctx3) window.graficoCondicao = new Chart(ctx3, { type: 'bar', data: { labels: Object.keys(condCount), datasets: [{ label: 'Quantidade', data: Object.values(condCount), backgroundColor: '#8B5A5A' }] }, options: { plugins: { title: { display: true, text: 'Pedidos por Condição' } } } });
 }
 
-// ============================================
-// USUÁRIOS
-// ============================================
 function telaUsuarios() {
     return topBar() + `
         <div class="box">
             <h2>👤 Gerenciar Usuários</h2>
             <div class="form-grid"><div class="form-group"><label class="required">Novo Usuário</label><input type="text" id="novo_usuario"></div><div class="form-group"><label>Senha</label><input type="password" id="nova_senha" placeholder="Deixe em branco"></div><div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarUsuario" onclick="adicionarUsuario()">➕ Adicionar</button></div></div>
-            <div class="table-container"><table class="auto-layout"><thead><th>#</th><th>Usuário</th><th>Senha</th><th>Ações</th></thead><tbody>
+            <div class="table-container"><table class="auto-layout"><thead><tr><th>#</th><th>Usuário</th><th>Senha</th><th>Ações</th></tr></thead><tbody>
                 ${usuarios.map((u,i)=>`<tr><td>${i+1}<\/td><td>${escapeHtml(u.nome)}<\/td><td>${u.senha?'••••••':'Sem senha'}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar usuário" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️</button><button class="small danger" data-tooltip="Excluir usuário" onclick="excluirUsuario('${u.id}')">🗑️</button><\/td><\/tr>`).join('')}
             </tbody><\/table><\/div>
         </div>
@@ -1966,9 +1989,6 @@ async function excluirUsuario(id) {
     }
 }
 
-// ============================================
-// LOGS
-// ============================================
 function telaLogs() {
     return topBar() + `<div class="box"><h2>📋 Logs</h2><div class="log-viewer">${logs.slice().reverse().map(l=>`<div class="log-entry"><span class="log-time">[${new Date(l.data).toLocaleString()}]</span> <span class="log-user">${escapeHtml(l.usuario)}</span> <span class="log-action">${escapeHtml(l.acao)}</span>${l.detalhe?` - ${escapeHtml(l.detalhe)}`:''}</div>`).join('')}${logs.length===0?'<div>Nenhum log.</div>':''}</div><div class="mt-20"><button class="danger" onclick="limparLogs()">🗑️ Limpar Logs</button></div></div>`;
 }
