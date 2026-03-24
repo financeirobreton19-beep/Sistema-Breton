@@ -59,6 +59,8 @@
             flex: 1;
             padding: 20px;
             min-height: 100vh;
+            position: relative;
+            padding-bottom: 70px;
         }
         
         .top-bar {
@@ -134,6 +136,31 @@
         button.excel { background: #1e6f3f; font-weight: bold; }
         button.salvar { background: #2e7d32; font-weight: bold; padding: 10px 20px; }
         
+        /* Tooltip */
+        [data-tooltip] {
+            position: relative;
+            cursor: pointer;
+        }
+        [data-tooltip]:before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 5px 10px;
+            background: #333;
+            color: white;
+            font-size: 11px;
+            border-radius: 4px;
+            white-space: nowrap;
+            display: none;
+            z-index: 100;
+            margin-bottom: 5px;
+        }
+        [data-tooltip]:hover:before {
+            display: block;
+        }
+        
         .table-container { overflow-x: auto; margin-top: 15px; border: 1px solid #ddd; border-radius: 6px; background: white; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th { background: #5C2A2A; color: white; padding: 10px 8px; font-weight: 500; font-size: 12px; text-align: left; white-space: nowrap; }
@@ -163,12 +190,12 @@
         
         .resumo-rapido {
             background: #FAF0F0;
-            padding: 10px 15px;
-            border-radius: 8px;
+            padding: 8px 15px;
+            border-radius: 20px;
             margin-bottom: 15px;
-            display: flex;
+            display: inline-flex;
             gap: 20px;
-            font-size: 13px;
+            font-size: 12px;
             border: 1px solid #ddd;
             flex-wrap: wrap;
         }
@@ -179,6 +206,7 @@
         }
         .resumo-item strong { color: #5C2A2A; }
         
+        /* Filtros suaves estilo tags */
         .filtros-rapidos {
             display: flex;
             gap: 8px;
@@ -186,30 +214,48 @@
             flex-wrap: wrap;
         }
         .filtro-tipo-btn {
-            background: #f0f0f0;
-            color: #333;
-            padding: 5px 12px;
+            background: #f5f5f5;
+            color: #666;
+            padding: 4px 12px;
             font-size: 12px;
+            border-radius: 20px;
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filtro-tipo-btn:hover {
+            background: #e0e0e0;
         }
         .filtro-tipo-btn.active {
             background: #8B5A5A;
             color: white;
+            border-color: #8B5A5A;
         }
         
+        /* Ordenação suave */
         .ordenacao-btns {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             margin-bottom: 15px;
             flex-wrap: wrap;
         }
         .ordem-btn {
-            background: #f0f0f0;
-            color: #333;
-            font-size: 12px;
+            background: #f5f5f5;
+            color: #666;
+            padding: 4px 10px;
+            font-size: 11px;
+            border-radius: 16px;
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .ordem-btn:hover {
+            background: #e0e0e0;
         }
         .ordem-btn.active {
             background: #8B5A5A;
             color: white;
+            border-color: #8B5A5A;
         }
         
         .tooltip-icon {
@@ -345,9 +391,32 @@
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
         .close-modal { font-size: 20px; cursor: pointer; color: #999; }
         
+        /* Rodapé com versículo */
+        .footer-verse {
+            position: fixed;
+            bottom: 5px;
+            left: 260px;
+            right: 0;
+            text-align: center;
+            font-size: 9px;
+            color: #aaa;
+            font-style: italic;
+            padding: 4px;
+            background: transparent;
+            z-index: 5;
+        }
+        
         .hidden { display: none; }
         .mt-20 { margin-top: 20px; }
         .text-center { text-align: center; }
+        .char-counter {
+            font-size: 10px;
+            color: #999;
+            text-align: right;
+            margin-top: 2px;
+        }
+        .char-counter.warning { color: #f57c00; }
+        .char-counter.danger { color: #d32f2f; }
     </style>
 </head>
 <body>
@@ -371,12 +440,13 @@
 <div class="main" id="main-content"></div>
 
 <div class="footer" id="footer" style="display: none;">
-    <div style="position: fixed; bottom: 0; left: 250px; right: 0; background: #f8f8f8; border-top: 1px solid #e0e0e0; padding: 8px 15px; font-size: 10px; color: #999; text-align: center;">
+    <div style="position: fixed; bottom: 0; left: 250px; right: 0; background: #f8f8f8; border-top: 1px solid #e0e0e0; padding: 6px 15px; font-size: 10px; color: #999; text-align: center;">
         <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
             <div><span>Compras:</span> (91) 9137-8383 | <span>Suporte:</span> (91) 9192-6953</div>
             <div>© 2026 BRETON BELÉM - Todos os direitos reservados</div>
         </div>
     </div>
+    <div class="footer-verse">Provérbios 16:3: "Confie ao Senhor as suas obras, e os seus planos serão bem-sucedidos."</div>
 </div>
 
 <div class="modal" id="modalEditarFornecedor"><div class="modal-content"><div class="modal-header"><h3>✏️ Editar Fornecedor</h3><span class="close-modal" onclick="fecharModal('modalEditarFornecedor')">&times;</span></div><div id="modalEditarFornecedorContent"></div></div></div>
@@ -414,8 +484,8 @@ let logs = [];
 let usuarioAtual = null;
 let usuarioPermissao = null;
 let currentFilterType = "TODOS";
-let currentOrder = "data"; // data, cliente, pedido, status
-let currentOrderDirection = "desc"; // asc, desc
+let currentOrder = "data";
+let currentOrderDirection = "desc";
 
 const categorias = [
     "ACESSORIO", "ADORNOS", "ALMOFADA", "ALMOFADAS", "APARADOR", "APOIO P/ MESA",
@@ -721,9 +791,9 @@ function telaClientes() {
                 <div class="form-group" style="justify-content:flex-end"><button class="success" onclick="adicionarCliente()">➕ Adicionar</button></div>
             </div>
             <div class="search-box"><input type="text" id="buscaCliente" placeholder="🔍 Buscar..." onkeyup="filtrarClientes()"></div>
-            <div class="table-container"><table class="auto-layout" id="tabelaClientes"><thead> <tr><th>#</th><th>Pedido</th><th>Data</th><th>Cliente</th><th>CPF/CNPJ</th><th>Contato</th><th>Ações</th></tr> </thead>
-                <tbody>${clientes.map((c,i)=>`<tr><td>${i+1}</td><td>${c.pedido}</td><td>${formatarData(c.data)}</td><td>${c.cliente}</td><td>${c.cpf_cnpj||'-'}</td><td>${c.contato||'-'}</td><td><button class="small" onclick="abrirModalEdicaoCliente('${c.id}')">✏️</button><button class="small danger" onclick="excluirCliente('${c.id}')">🗑️</button></td></tr>`).join('')}</tbody>
-              </table></div>
+            <div class="table-container"><table class="auto-layout" id="tabelaClientes"><thead>   <th>#</th><th>Pedido</th><th>Data</th><th>Cliente</th><th>CPF/CNPJ</th><th>Contato</th><th>Ações</th> </thead>
+                <tbody>${clientes.map((c,i)=>`<tr><td>${i+1}</td><td>${c.pedido}</td><td>${formatarData(c.data)}</td><td>${c.cliente}</td><td>${c.cpf_cnpj||'-'}</td><td>${c.contato||'-'}</td><td><button class="small" data-tooltip="Editar cliente" onclick="abrirModalEdicaoCliente('${c.id}')">✏️</button><button class="small danger" data-tooltip="Excluir cliente" onclick="excluirCliente('${c.id}')">🗑️</button></td></tr>`).join('')}</tbody>
+             </table></div>
         </div>
     `;
 }
@@ -790,9 +860,9 @@ function telaFornecedores() {
                 <div class="form-group" style="justify-content:flex-end"><button class="success" onclick="adicionarFornecedor()">➕ Adicionar</button></div>
             </div>
             <div class="search-box"><input type="text" id="buscaFornecedor" placeholder="🔍 Buscar..." onkeyup="filtrarFornecedores()"></div>
-            <div class="table-container"><table class="auto-layout" id="tabelaFornecedores"><thead><tr><th>#</th><th>COD</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Condição</th><th>Coleção</th><th>Ações</th></tr></thead>
-                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}</td><td>${f.cod}</td><td>${f.nome}</td><td>${f.cpf_cnpj||'-'}</td><td>${f.condicao||'-'}</td><td>${f.colecao||'-'}</td><td><button class="small" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" onclick="excluirFornecedor('${f.id}')">🗑️</button></td></tr>`).join('')}</tbody>
-              </table></div>
+            <div class="table-container"><table class="auto-layout" id="tabelaFornecedores"><thead>   <th>#</th><th>COD</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Condição</th><th>Coleção</th><th>Ações</th> </thead>
+                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}</td><td>${f.cod}</td><td>${f.nome}</td><td>${f.cpf_cnpj||'-'}</td><td>${f.condicao||'-'}</td><td>${f.colecao||'-'}</td><td><button class="small" data-tooltip="Editar fornecedor" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" data-tooltip="Excluir fornecedor" onclick="excluirFornecedor('${f.id}')">🗑️</button></td></tr>`).join('')}</tbody>
+             </table></div>
         </div>
     `;
 }
@@ -844,7 +914,25 @@ async function salvarEdicaoFornecedor(id) {
 }
 
 // ============================================
-// TELA DE LANÇAMENTOS (COMPLETA COM TODAS AS MELHORIAS)
+// FUNÇÃO PARA ATUALIZAR CONTADOR DE CARACTERES
+// ============================================
+function atualizarContadorCaracteres(textarea, maxChars = 100) {
+    const length = textarea.value.length;
+    const counter = document.getElementById('obsCharCounter');
+    if (counter) {
+        counter.textContent = `${length}/${maxChars}`;
+        counter.classList.remove('warning', 'danger');
+        if (length > maxChars * 0.8) counter.classList.add('warning');
+        if (length >= maxChars) counter.classList.add('danger');
+    }
+    if (length > maxChars) {
+        textarea.value = textarea.value.substring(0, maxChars);
+        atualizarContadorCaracteres(textarea, maxChars);
+    }
+}
+
+// ============================================
+// TELA DE LANÇAMENTOS (COMPLETA)
 // ============================================
 function telaLancamentos() {
     let optionsCat = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
@@ -858,10 +946,6 @@ function telaLancamentos() {
     return topBar() + `
         <div class="box">
             <h2>📝 Lançamentos</h2>
-            <div style="background:#FAF0F0;padding:10px;border-radius:6px;margin-bottom:15px;display:flex;justify-content:space-between;align-items:center">
-                <span><strong>Usuário:</strong> ${usuarioAtual}</span>
-                <button class="excel" onclick="exportarLancamentosExcel()">📥 EXPORTAR EXCEL</button>
-            </div>
             
             <div class="resumo-rapido">
                 <span class="resumo-item">📊 <strong>${totais.totalPedidos}</strong> pedidos</span>
@@ -927,7 +1011,10 @@ function telaLancamentos() {
                             <div class="form-group"><label>Status</label><select id="lan_status"><option value="">Selecione</option><option value="Faturado">FATURADO</option><option value="Ag. Faturamento">AG. FATURAMENTO</option><option value="Prorrogado">PRORROGADO</option><option value="Em aberto">EM ABERTO</option><option value="Entregue">ENTREGUE</option><option value="Atrasado">ATRASADO</option></select></div>
                             <div class="form-group"><label>Nº NF</label><input type="text" id="lan_nf" style="text-transform:uppercase"></div>
                             <div class="form-group"><label>Transportadora</label><input type="text" id="lan_transportadora" style="text-transform:uppercase"></div>
-                            <div class="form-group"><label>Observações</label><textarea id="lan_observacoes" rows="2" placeholder="Informações adicionais..."></textarea></div>
+                            <div class="form-group"><label>Observações</label>
+                                <textarea id="lan_observacoes" rows="2" maxlength="100" placeholder="Informações adicionais (máx 100 caracteres)" oninput="atualizarContadorCaracteres(this, 100)"></textarea>
+                                <div class="char-counter" id="obsCharCounter">0/100</div>
+                            </div>
                         </div>
                     </div>
                     <div style="text-align:center;margin-top:20px"><button class="salvar" onclick="adicionarLancamento()">💾 SALVAR LANÇAMENTO</button></div>
@@ -935,15 +1022,15 @@ function telaLancamentos() {
             </details>
             
             <div class="search-box"><input type="text" id="buscaLancamento" placeholder="🔍 Buscar por pedido, cliente, fornecedor..." onkeyup="filtrarLancamentos()"></div>
-            <div class="table-container"><table class="lancamentos-table" id="tabelaLancamentos"><thead><tr>
+            <div class="table-container"><table class="lancamentos-table" id="tabelaLancamentos"><thead>
                 <th>#</th><th>Pedido</th><th>Data</th><th>Mês</th><th>Tipo</th><th>Cliente</th><th>OC</th><th>Fornecedor</th><th>Categoria</th>
                 <th>Itens</th><th>Produtos</th><th>Valor</th><th>Data Pagto</th><th>Condição</th><th>Prev.Fat</th><th>Novo Prazo</th>
                 <th>Prev.Chegada</th><th>Status</th><th>Data Fat</th><th>Nº NF</th><th>Transportadora</th><th>Chegada</th><th>Conf</th>
                 <th>Entrega</th><th>Prazo</th><th>Usuário</th><th>Editado</th><th>Obs</th><th>NF</th><th>Ações</th>
-            </tr></thead>
+            </thead>
                 <tbody id="lancamentosBody"></tbody>
                 <tfoot id="lancamentosFooter"></tfoot>
-              </table></div>
+            </table></div>
         </div>
     `;
 }
@@ -981,7 +1068,6 @@ function renderLancamentos() {
         const pm = calcularPrazoMedio(l.data_pagto, l.entrega);
         const temAnexo = anexos.some(a => a.pedido == l.pedido);
         const atrasado = isPedidoAtrasado(l);
-        const statusClass = getStatusClass(l.status);
         const rowClass = atrasado ? 'atrasado-row' : '';
         
         return `<tr class="${rowClass}" data-id="${l.id}">
@@ -1012,39 +1098,42 @@ function renderLancamentos() {
             <td>${pm ? pm + 'd' : '-'}</td>
             <td>${l.usuario || '-'}</td>
             <td>${l.editadoPor ? l.editadoPor + ' ' + new Date(l.editadoEm).toLocaleDateString() : '-'}</td>
-            <td>${l.observacoes ? `<span class="tooltip-icon" title="${l.observacoes.replace(/"/g, '&quot;')}">💬</span>` : '-'}</td>
+            <td>${l.observacoes ? `<span class="tooltip-icon" data-tooltip="${l.observacoes.replace(/"/g, '&quot;')}">💬</span>` : '-'}</td>
             <td>${temAnexo ? '📎' : '-'}</td>
             <td>
-                <button class="small" onclick="abrirModalEdicaoLancamento('${l.id}')">✏️</button>
-                <button class="small" onclick="duplicarLancamento('${l.id}')">📋</button>
-                <button class="small info" onclick="abrirModalAnexos(${l.pedido})">📎</button>
-                <button class="small danger" onclick="excluirLancamento('${l.id}')">🗑️</button>
+                <button class="small" data-tooltip="Editar lançamento" onclick="abrirModalEdicaoLancamento('${l.id}')">✏️</button>
+                <button class="small" data-tooltip="Duplicar lançamento (cria novo pedido)" onclick="duplicarLancamento('${l.id}')">📋</button>
+                <button class="small info" data-tooltip="Gerenciar anexos" onclick="abrirModalAnexos(${l.pedido})">📎</button>
+                <button class="small danger" data-tooltip="Excluir lançamento" onclick="excluirLancamento('${l.id}')">🗑️</button>
             </td>
-        </tr>`;
+         \)`;
     }).join('');
     
     const tfoot = document.getElementById('lancamentosFooter');
     tfoot.innerHTML = `<tr style="background:#FAF0F0; font-weight:bold;">
-        <td colspan="11" style="text-align:right;">TOTAL:</td>
-        <td>${formatarValor(totaisFiltrados.totalValor)}</td>
-        <td colspan="10"></td>
-        <td>${totaisFiltrados.totalItens} itens</td>
-        <td colspan="6"></td>
-        <td>${totaisFiltrados.totalPedidos} pedidos</td>
-        <td colspan="3"></td>
-    </tr>`;
+        <td colspan="11" style="text-align:right;">TOTAL: <\/td>
+        <td>${formatarValor(totaisFiltrados.totalValor)}<\/td>
+        <td colspan="10"><\/td>
+        <td>${totaisFiltrados.totalItens} itens<\/td>
+        <td colspan="6"><\/td>
+        <td>${totaisFiltrados.totalPedidos} pedidos<\/td>
+        <td colspan="3"><\/td>
+     \)`;
 }
 
 function setFilterType(tipo) {
     currentFilterType = tipo;
     renderLancamentos();
     const totais = calcularTotais(getLancamentosFiltrados());
-    document.querySelector('.resumo-rapido').innerHTML = `
-        <span class="resumo-item">📊 <strong>${totais.totalPedidos}</strong> pedidos</span>
-        <span class="resumo-item">💰 <strong>${formatarValor(totais.totalValor)}</strong></span>
-        <span class="resumo-item">📦 <strong>${totais.totalItens}</strong> itens</span>
-        <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados</span>
-    `;
+    const resumoDiv = document.querySelector('.resumo-rapido');
+    if (resumoDiv) {
+        resumoDiv.innerHTML = `
+            <span class="resumo-item">📊 <strong>${totais.totalPedidos}</strong> pedidos</span>
+            <span class="resumo-item">💰 <strong>${formatarValor(totais.totalValor)}</strong></span>
+            <span class="resumo-item">📦 <strong>${totais.totalItens}</strong> itens</span>
+            <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados</span>
+        `;
+    }
     document.querySelectorAll('.filtro-tipo-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
 }
@@ -1060,7 +1149,7 @@ function toggleOrderDirection() {
     currentOrderDirection = currentOrderDirection === 'asc' ? 'desc' : 'asc';
     renderLancamentos();
     const btn = document.querySelector('.ordenacao-btns button:last-child');
-    btn.textContent = currentOrderDirection === 'asc' ? '⬆️ Crescente' : '⬇️ Decrescente';
+    if (btn) btn.textContent = currentOrderDirection === 'asc' ? '⬆️ Crescente' : '⬇️ Decrescente';
 }
 
 function mudarAba(aba, event) {
@@ -1086,6 +1175,8 @@ async function adicionarLancamento() {
     if (!document.getElementById('lan_categoria')?.value) { alert('Categoria obrigatória!'); return; }
     let valorRaw = document.getElementById('lan_valor')?.value || '0,00';
     let valorNumerico = converterValorParaNumero(valorRaw);
+    let observacoes = document.getElementById('lan_observacoes')?.value || '';
+    if (observacoes.length > 100) observacoes = observacoes.substring(0, 100);
     
     let l = {
         pedido: document.getElementById('lan_pedido')?.value,
@@ -1111,7 +1202,7 @@ async function adicionarLancamento() {
         chegada: document.getElementById('lan_chegada')?.value,
         conferencia: document.getElementById('lan_conferencia')?.value,
         entrega: document.getElementById('lan_entrega')?.value,
-        observacoes: document.getElementById('lan_observacoes')?.value,
+        observacoes: observacoes,
         usuario: usuarioAtual,
         criado: new Date().toISOString()
     };
@@ -1133,20 +1224,23 @@ async function excluirLancamento(id) {
 }
 
 async function duplicarLancamento(id) {
-    const original = lancamentos.find(l => l.id === id);
-    if (!original) return;
-    
-    const novo = { ...original };
-    delete novo.id;
-    novo.pedido = (parseInt(original.pedido) + 1).toString();
-    novo.observacoes = original.observacoes ? `[CÓPIA] ${original.observacoes}` : 'CÓPIA DO PEDIDO';
-    novo.criado = new Date().toISOString();
-    novo.usuario = usuarioAtual;
-    
-    const docRef = await db.collection('lancamentos').add(novo);
-    lancamentos.push({ id: docRef.id, ...novo });
-    await adicionarLog('DUPLICOU LANÇAMENTO', `Pedido ${original.pedido} → ${novo.pedido}`);
-    mostrar('lancamentos');
+    if (confirm('Deseja duplicar este pedido? Será criado um novo pedido com número sequencial.')) {
+        const original = lancamentos.find(l => l.id === id);
+        if (!original) return;
+        
+        let novoPedido = parseInt(original.pedido) + 1;
+        const novo = { ...original };
+        delete novo.id;
+        novo.pedido = novoPedido;
+        novo.observacoes = original.observacoes ? `[CÓPIA] ${original.observacoes.substring(0, 90)}` : 'CÓPIA DO PEDIDO';
+        novo.criado = new Date().toISOString();
+        novo.usuario = usuarioAtual;
+        
+        const docRef = await db.collection('lancamentos').add(novo);
+        lancamentos.push({ id: docRef.id, ...novo });
+        await adicionarLog('DUPLICOU LANÇAMENTO', `Pedido ${original.pedido} → ${novoPedido}`);
+        mostrar('lancamentos');
+    }
 }
 
 function filtrarLancamentos() {
@@ -1164,7 +1258,7 @@ function exportarLancamentosExcel() {
             l.categoria||'', l.itens||'', l.produtos||'', l.valor||'', l.data_pagto||'', l.condicao||'', 
             l.prev_fat||'', l.novo_prazo||'', l.prev_chegada||'', l.status||'', l.data_fat||'', l.nf||'', 
             l.transportadora||'', l.chegada||'', l.conferencia||'', l.entrega||'', pm?pm+'d':'', 
-            l.usuario||'', l.editadoPor||'', l.observacoes||''
+            l.usuario||'', l.editadoPor||'', (l.observacoes||'').substring(0, 100)
         ]); 
     });
     const wb = XLSX.utils.book_new(); 
@@ -1204,8 +1298,18 @@ function abrirModalEdicaoLancamento(id) {
         <div class="form-group"><label>Chegada</label><input type="date" id="edit_lan_chegada" value="${l.chegada||''}"></div>
         <div class="form-group"><label>Conferência</label><input type="date" id="edit_lan_conferencia" value="${l.conferencia||''}"></div>
         <div class="form-group"><label>Entrega</label><input type="date" id="edit_lan_entrega" value="${l.entrega||''}"></div>
-        <div class="form-group"><label>Observações</label><textarea id="edit_lan_observacoes" rows="2">${l.observacoes || ''}</textarea></div>
+        <div class="form-group"><label>Observações</label>
+            <textarea id="edit_lan_observacoes" rows="2" maxlength="100" oninput="atualizarContadorCaracteres(this, 100)">${l.observacoes || ''}</textarea>
+            <div class="char-counter" id="editObsCharCounter">${(l.observacoes || '').length}/100</div>
+        </div>
     </div><div style="text-align:right; margin-top:20px"><p>Editando como: ${usuarioAtual}</p><button class="success" onclick="salvarEdicaoLancamento('${id}')">💾 SALVAR</button></div>`;
+    
+    // Atualizar contador da edição
+    setTimeout(() => {
+        const editTextarea = document.getElementById('edit_lan_observacoes');
+        if (editTextarea) atualizarContadorCaracteres(editTextarea, 100);
+    }, 50);
+    
     modal.classList.add('active');
 }
 
@@ -1235,7 +1339,7 @@ async function salvarEdicaoLancamento(id) {
     l.chegada = document.getElementById('edit_lan_chegada')?.value || l.chegada;
     l.conferencia = document.getElementById('edit_lan_conferencia')?.value || l.conferencia;
     l.entrega = document.getElementById('edit_lan_entrega')?.value || l.entrega;
-    l.observacoes = document.getElementById('edit_lan_observacoes')?.value || '';
+    l.observacoes = (document.getElementById('edit_lan_observacoes')?.value || '').substring(0, 100);
     l.editadoPor = usuarioAtual;
     l.editadoEm = new Date().toISOString();
     await db.collection('lancamentos').doc(id).update(l);
@@ -1252,7 +1356,7 @@ function abrirModalAnexos(pedido) {
     const content = document.getElementById('modalAnexosContent');
     const anexosPedido = anexos.filter(a => a.pedido == pedido);
     const lancamento = lancamentos.find(l => l.pedido == pedido);
-    content.innerHTML = `<h4>Pedido #${pedido} ${lancamento?.oc ? `- OC: ${lancamento.oc}` : ''}</h4><div class="anexos-area">${anexosPedido.length === 0 ? '<p>Nenhum anexo.</p>' : ''}${anexosPedido.map((a,i)=>`<div class="anexo-item"><div><strong>${a.nome}</strong><br><small>${new Date(a.data).toLocaleString()}</small></div><div><button class="small" onclick="baixarAnexo(${i})">⬇️</button><button class="small danger" onclick="excluirAnexo('${a.id}', ${pedido})">🗑️</button></div></div>`).join('')}</div><div class="upload-area" onclick="document.getElementById('fileInput').click()">📂 Anexar arquivo<input type="file" id="fileInput" style="display:none" onchange="anexarArquivo(${pedido})"></div>`;
+    content.innerHTML = `<h4>Pedido #${pedido} ${lancamento?.oc ? `- OC: ${lancamento.oc}` : ''}</h4><div class="anexos-area">${anexosPedido.length === 0 ? '<p>Nenhum anexo.</p>' : ''}${anexosPedido.map((a,i)=>`<div class="anexo-item"><div><strong>${a.nome}</strong><br><small>${new Date(a.data).toLocaleString()}</small></div><div><button class="small" data-tooltip="Baixar anexo" onclick="baixarAnexo(${i})">⬇️</button><button class="small danger" data-tooltip="Excluir anexo" onclick="excluirAnexo('${a.id}', ${pedido})">🗑️</button></div></div>`).join('')}</div><div class="upload-area" onclick="document.getElementById('fileInput').click()">📂 Anexar arquivo<input type="file" id="fileInput" style="display:none" onchange="anexarArquivo(${pedido})"></div>`;
     modal.classList.add('active');
 }
 
@@ -1291,7 +1395,7 @@ function telaAnexos() {
 function gerarListaAnexos() {
     const anexosPorPedido = {};
     anexos.forEach(a => { if (!anexosPorPedido[a.pedido]) anexosPorPedido[a.pedido] = []; anexosPorPedido[a.pedido].push(a); });
-    return Object.entries(anexosPorPedido).map(([p,as]) => { const lancamento = lancamentos.find(l => l.pedido == p); return `<div class="anexo-item" style="flex-direction:column;align-items:stretch" data-pedido="${p}" data-oc="${lancamento?.oc||''}"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><strong>Pedido #${p} ${lancamento?.oc?`- OC: ${lancamento.oc}`:''}</strong><button class="small" onclick="abrirModalAnexos(${p})">📎 Gerenciar</button></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:5px">${as.map(a=>`<div style="background:#FAF0F0;padding:5px;border-radius:4px"><small>${a.nome}</small><br><small>${new Date(a.data).toLocaleDateString()}</small></div>`).join('')}</div></div>`; }).join('') || '<p>Nenhum anexo encontrado.</p>';
+    return Object.entries(anexosPorPedido).map(([p,as]) => { const lancamento = lancamentos.find(l => l.pedido == p); return `<div class="anexo-item" style="flex-direction:column;align-items:stretch" data-pedido="${p}" data-oc="${lancamento?.oc||''}"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><strong>Pedido #${p} ${lancamento?.oc?`- OC: ${lancamento.oc}`:''}</strong><button class="small" data-tooltip="Gerenciar anexos deste pedido" onclick="abrirModalAnexos(${p})">📎 Gerenciar</button></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:5px">${as.map(a=>`<div style="background:#FAF0F0;padding:5px;border-radius:4px"><small>${a.nome}</small><br><small>${new Date(a.data).toLocaleDateString()}</small></div>`).join('')}</div></div>`; }).join('') || '<p>Nenhum anexo encontrado.</p>';
 }
 
 function filtrarAnexos() {
@@ -1305,7 +1409,7 @@ function filtrarAnexosPorOC() {
 function limparBuscaAnexos() { document.getElementById('buscaAnexoPedido').value = ''; document.getElementById('buscaAnexoOC').value = ''; document.querySelectorAll('#anexosLista > div').forEach(d => d.style.display = ''); }
 
 // ============================================
-// RELATÓRIOS
+// RELATÓRIOS (resumido para caber)
 // ============================================
 function telaRelatorios() {
     return topBar() + `
@@ -1371,15 +1475,15 @@ function gerarRelatorios(dados) {
     
     document.getElementById('conteudoRelatorios').innerHTML = `
         <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Total Itens</h4><div class="value">${dados.reduce((a,l)=>a+(l.itens||0),0)}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${dados.filter(l=>l.status==='ENTREGUE').length}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${dados.filter(l=>l.status==='EM ABERTO' || !l.status).length}</div></div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0"><div class="chart-container"><h4>📅 Pedidos por Mês</h4> <table style="width:100%">${Object.entries(meses).map(([m,q])=>`<tr><td>${m}</td><td>${q}</td></tr>`).join('')}</table></div><div class="chart-container"><h4>📌 Pedidos por Status</h4> <table style="width:100%">${Object.entries(status).map(([s,q])=>`<tr><td>${s}</td><td>${q}</td></tr>`).join('')}</table></div><div class="chart-container"><h4>💰 Pedidos por Condição</h4> <table style="width:100%">${Object.entries(cond).map(([c,q])=>`<tr><td>${c}</td><td>${q}</td></tr>`).join('')}</table></div><div class="chart-container"><h4>🏷️ Pedidos por Categoria</h4> <table style="width:100%">${Object.entries(cat).map(([c,q])=>`<tr><td>${c}</td><td>${q}</td></tr>`).join('')}</table></div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px"><div class="chart-container"><h4>🏆 Top Clientes</h4> <table style="width:100%">${topClientes.map(([c,q])=>`<tr><td>${c}</td><td>${q} pedidos</td></tr>`).join('')}</table></div><div class="chart-container"><h4>🏭 Top Fornecedores</h4> <table style="width:100%">${topForn.map(([f,q])=>`<tr><td>${f}</td><td>${q} pedidos</td></tr>`).join('')}</table></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0"><div class="chart-container"><h4>📅 Pedidos por Mês</h4> <table style="width:100%">${Object.entries(meses).map(([m,q])=>`<tr><td>${m}<\/td><td>${q}<\/td><\/tr>`).join('')}</table></div><div class="chart-container"><h4>📌 Pedidos por Status</h4> <table style="width:100%">${Object.entries(status).map(([s,q])=>`<tr><td>${s}<\/td><td>${q}<\/td><\/tr>`).join('')}</table></div><div class="chart-container"><h4>💰 Pedidos por Condição</h4> <table style="width:100%">${Object.entries(cond).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}</table></div><div class="chart-container"><h4>🏷️ Pedidos por Categoria</h4> <table style="width:100%">${Object.entries(cat).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}</table></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px"><div class="chart-container"><h4>🏆 Top Clientes</h4> <table style="width:100%">${topClientes.map(([c,q])=>`<tr><td>${c}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}</table></div><div class="chart-container"><h4>🏭 Top Fornecedores</h4> <table style="width:100%">${topForn.map(([f,q])=>`<tr><td>${f}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}</table></div></div>
     `;
 }
 
 function exportarRelatoriosExcel() {
     if (lancamentos.length === 0) { alert('Não há dados!'); return; }
     const wsData = [['Nº Pedido','Data','Cliente','OC','Fornecedor','Categoria','Itens','Status','Condição','Entrega','Observações']];
-    lancamentos.forEach(l => { wsData.push([l.pedido||'', formatarData(l.data), l.cliente||'', l.oc||'', l.fornecedor||'', l.categoria||'', l.itens||'', l.status||'', l.condicao||'', formatarData(l.entrega), l.observacoes||'']); });
+    lancamentos.forEach(l => { wsData.push([l.pedido||'', formatarData(l.data), l.cliente||'', l.oc||'', l.fornecedor||'', l.categoria||'', l.itens||'', l.status||'', l.condicao||'', formatarData(l.entrega), (l.observacoes||'').substring(0,100)]); });
     const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(wsData); XLSX.utils.book_append_sheet(wb, ws, 'Relatório'); XLSX.writeFile(wb, `relatorio_${new Date().toISOString().slice(0,10)}.xlsx`);
     alert('Exportado!');
 }
@@ -1399,7 +1503,7 @@ function gerarPDF() {
 }
 
 // ============================================
-// DASHBOARD
+// DASHBOARD (resumido)
 // ============================================
 function telaDashboard() {
     return topBar() + `
@@ -1478,7 +1582,7 @@ function gerarDashboard(dados) {
         <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${entregues}</div></div><div class="kpi-card"><h4>Atrasados</h4><div class="value">${atrasados}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${pendentes}</div></div></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px"><div class="kpi-card"><h4>⏱️ Tempo Médio Pagamento</h4><div class="value">${tempoMedioPagamento} dias</div></div><div class="kpi-card"><h4>⏱️ Tempo Médio Entrega</h4><div class="value">${tempoMedioEntrega} dias</div></div></div>
         <div class="charts-grid"><div class="chart-container"><canvas id="graficoStatus"></canvas></div><div class="chart-container"><canvas id="graficoTipo"></canvas></div><div class="chart-container"><canvas id="graficoCondicao"></canvas></div></div>
-        <h3>⏱️ Tempo Médio de Entrega por Fornecedor</h3><div class="table-container"><table class="auto-layout"><thead>   <tr><th>Fornecedor</th><th>Pedidos</th><th>Prazo Médio (dias)</th></tr></thead><tbody>${rankingFornecedores.map(f=>`<tr><td>${f.fornecedor}</td><td>${f.pedidos}</td><td>${f.prazoMedio}</td></tr>`).join('')}</tbody></table></div>
+        <h3>⏱️ Tempo Médio de Entrega por Fornecedor</h3><div class="table-container"><table class="auto-layout"><thead><tr><th>Fornecedor</th><th>Pedidos</th><th>Prazo Médio (dias)</th></tr></thead><tbody>${rankingFornecedores.map(f=>`<tr><td>${f.fornecedor}<\/td><td>${f.pedidos}<\/td><td>${f.prazoMedio}<\/td><\/tr>`).join('')}</tbody></table></div>
     `;
     
     const statusCount = {}; dados.forEach(l => { let s = l.status || 'PENDENTE'; statusCount[s] = (statusCount[s] || 0) + 1; });
@@ -1499,8 +1603,8 @@ function telaUsuarios() {
         <div class="box">
             <h2>👤 Gerenciar Usuários</h2>
             <div class="form-grid"><div class="form-group"><label class="required">Novo Usuário</label><input type="text" id="novo_usuario"></div><div class="form-group"><label>Senha</label><input type="password" id="nova_senha" placeholder="Deixe em branco"></div><div class="form-group" style="justify-content:flex-end"><button class="success" onclick="adicionarUsuario()">➕ Adicionar</button></div></div>
-            <div class="table-container"><table class="auto-layout"><thead>   <tr><th>#</th><th>Usuário</th><th>Senha</th><th>Ações</th></tr></thead><tbody>
-                ${usuarios.map((u,i)=>`<tr><td>${i+1}</td><td>${u.nome}</td><td>${u.senha?'••••••':'Sem senha'}</td><td><button class="small" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️</button><button class="small danger" onclick="excluirUsuario('${u.id}')">🗑️</button></td></tr>`).join('')}
+            <div class="table-container"><table class="auto-layout"><thead><tr><th>#</th><th>Usuário</th><th>Senha</th><th>Ações</th></tr></thead><tbody>
+                ${usuarios.map((u,i)=>`<tr><td>${i+1}<\/td><td>${u.nome}<\/td><td>${u.senha?'••••••':'Sem senha'}<\/td><td><button class="small" data-tooltip="Editar usuário" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️</button><button class="small danger" data-tooltip="Excluir usuário" onclick="excluirUsuario('${u.id}')">🗑️</button><\/td><\/tr>`).join('')}
             </tbody></table></div>
         </div>
     `;
