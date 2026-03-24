@@ -137,7 +137,7 @@
         button.salvar { background: #2e7d32; font-weight: bold; padding: 10px 20px; }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
         
-        /* CORREÇÃO DOS BOTÕES DE AÇÃO - ALINHADOS VERTICALMENTE */
+        /* CORREÇÃO DOS BOTÕES DE AÇÃO - ALINHADOS VERTICALMENTE DENTRO DA CÉLULA */
         .acoes-cell {
             white-space: nowrap;
             display: flex;
@@ -383,7 +383,7 @@
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
         .close-modal { font-size: 20px; cursor: pointer; color: #999; }
         
-        /* RODAPÉ CORRIGIDO - APENAS BRETON E DIREITOS RESERVADOS */
+        /* RODAPÉ CORRIGIDO */
         .footer {
             position: fixed;
             bottom: 0;
@@ -469,7 +469,6 @@
 
 <div class="main" id="main-content"></div>
 
-<!-- RODAPÉ CORRIGIDO -->
 <div class="footer" id="footer" style="display: none;">
     <div>© 2025 Breton Belém - Todos os direitos reservados</div>
 </div>
@@ -499,7 +498,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // ============================================
-// CACHE DE ELEMENTOS DOM (MELHORIA DE PERFORMANCE)
+// CACHE DE ELEMENTOS DOM
 // ============================================
 const DOMCache = {};
 function getElement(id) {
@@ -510,7 +509,7 @@ function getElement(id) {
 }
 
 // ============================================
-// FUNÇÃO DE SANITIZAÇÃO (SEGURANÇA)
+// FUNÇÃO DE SANITIZAÇÃO
 // ============================================
 function escapeHtml(text) {
     if (!text) return '';
@@ -549,7 +548,23 @@ const tiposPedido = ['OC', 'SHOWROOM', 'ESTOQUE', 'ASSISTENCIA'];
 const mesesLista = ['Janeiro/2026', 'Fevereiro/2026', 'Março/2026', 'Abril/2026', 'Maio/2026', 'Junho/2026', 'Julho/2026', 'Agosto/2026', 'Setembro/2026', 'Outubro/2026', 'Novembro/2026', 'Dezembro/2026'];
 
 // ============================================
-// FUNÇÕES DE VALIDAÇÃO DE DATAS (MELHORIA)
+// FUNÇÃO QUE CALCULA PREV. CHEGADA = DATA FAT + 20 DIAS
+// ============================================
+function calcularPrevisaoChegada() {
+    const dataFat = document.getElementById('lan_data_fat')?.value;
+    if (dataFat) {
+        const data = new Date(dataFat);
+        data.setDate(data.getDate() + 20);
+        const ano = data.getFullYear();
+        const mes = String(data.getMonth() + 1).padStart(2, '0');
+        const dia = String(data.getDate()).padStart(2, '0');
+        const prevChegadaInput = document.getElementById('lan_prev_chegada');
+        if (prevChegadaInput) prevChegadaInput.value = `${ano}-${mes}-${dia}`;
+    }
+}
+
+// ============================================
+// FUNÇÃO DE VALIDAÇÃO DE DATAS
 // ============================================
 function validarDatas(lancamento) {
     if (lancamento.data_pagto && lancamento.entrega) {
@@ -572,7 +587,7 @@ function validarDatas(lancamento) {
 }
 
 // ============================================
-// FUNÇÃO DE LOADING (MELHORIA UX)
+// FUNÇÃO DE LOADING
 // ============================================
 function showLoading(button, text = 'Salvando...') {
     const originalText = button.innerHTML;
@@ -590,21 +605,15 @@ function hideLoading(button, originalText) {
 // FUNÇÃO CORRIGIDA: SÓ DESTACA SE NÃO FOR ENTREGUE
 // ============================================
 function isPedidoAtrasado(lancamento) {
-    // Se já foi entregue, NÃO está atrasado
     if (lancamento.status === 'ENTREGUE') return false;
-    
-    // Se não tem data de entrega, não tem como calcular
     if (!lancamento.entrega) return false;
-    
     const hoje = new Date();
     const dataEntrega = new Date(lancamento.entrega);
-    
-    // Retorna true se a data de entrega for menor que hoje (vencida)
     return dataEntrega < hoje;
 }
 
 // ============================================
-// FUNÇÕES DO FIREBASE COM TRATAMENTO DE ERROS
+// FUNÇÕES DO FIREBASE
 // ============================================
 async function carregarDados() {
     try {
@@ -648,8 +657,8 @@ async function carregarDados() {
         
         if (lancamentos.length === 0) {
             const lancamentosIniciais = [
-                { pedido: 1035, data: '2026-01-07', mes: 'Janeiro/2026', tipo: 'OC', cliente: 'PAULA REGINA CASTRO MARTINS', oc: 'OC001', fornecedor: 'FEFER', categoria: 'SOFA', itens: 2, produtos: 'SOFA RETRÁTIL', valor: 3500.00, data_pagto: '2026-01-10', condicao: 'Em aberto', prev_fat: '2026-01-15', novo_prazo: '', prev_chegada: '2026-02-01', status: 'EM ROTA', data_fat: '', nf: 'NF001', transportadora: 'TRANSPORTADORA A', chegada: '', conferencia: '', entrega: '2026-02-05', usuario: 'Admin', criado: new Date().toISOString(), observacoes: '' },
-                { pedido: 1038, data: '2026-01-05', mes: 'Janeiro/2026', tipo: 'OC', cliente: 'BARBARA EMILY LIMA GOUVEIA', oc: 'OC002', fornecedor: 'BRETON MÓVEIS', categoria: 'CADEIRA', itens: 4, produtos: 'CADEIRA DE JANTAR', valor: 1200.00, data_pagto: '2026-01-08', condicao: 'Em aberto', prev_fat: '2026-01-10', novo_prazo: '', prev_chegada: '2026-01-20', status: 'ENTREGUE', data_fat: '2026-01-09', nf: 'NF002', transportadora: 'TRANSPORTADORA B', chegada: '2026-01-19', conferencia: '2026-01-19', entrega: '2026-01-20', usuario: 'Admin', criado: new Date().toISOString(), observacoes: '' }
+                { pedido: 1035, data: '2026-01-07', mes: 'Janeiro/2026', tipo: 'OC', cliente: 'PAULA REGINA CASTRO MARTINS', oc: 'OC001', fornecedor: 'FEFER', categoria: 'SOFA', itens: 2, produtos: 'SOFA RETRÁTIL', valor: 3500.00, data_pagto: '2026-01-10', condicao: 'Em aberto', prev_fat: '2026-01-15', novo_prazo: '', prev_chegada: '2026-02-01', status: 'EM ROTA', data_fat: '', nf: 'NF001', transportadora: 'TRANSPORTADORA A', chegada: '', conferencia: '', entrega: '2026-02-05', prazo_final: '', usuario: 'Admin', criado: new Date().toISOString(), observacoes: '' },
+                { pedido: 1038, data: '2026-01-05', mes: 'Janeiro/2026', tipo: 'OC', cliente: 'BARBARA EMILY LIMA GOUVEIA', oc: 'OC002', fornecedor: 'BRETON MÓVEIS', categoria: 'CADEIRA', itens: 4, produtos: 'CADEIRA DE JANTAR', valor: 1200.00, data_pagto: '2026-01-08', condicao: 'Em aberto', prev_fat: '2026-01-10', novo_prazo: '', prev_chegada: '2026-01-20', status: 'ENTREGUE', data_fat: '2026-01-09', nf: 'NF002', transportadora: 'TRANSPORTADORA B', chegada: '2026-01-19', conferencia: '2026-01-19', entrega: '2026-01-20', prazo_final: '', usuario: 'Admin', criado: new Date().toISOString(), observacoes: '' }
             ];
             for (const l of lancamentosIniciais) {
                 await db.collection('lancamentos').add(l);
@@ -724,11 +733,6 @@ function buscarClientePorPedido(pedido) { return clientes.find(c => c.pedido == 
 function calcularPrazoMedio(pagto, entrega) {
     if (!pagto || !entrega) return null;
     return Math.round((new Date(entrega) - new Date(pagto)) / 86400000);
-}
-
-function calcularTempoPagamento(dataPedido, dataPagto) {
-    if (!dataPedido || !dataPagto) return null;
-    return Math.round((new Date(dataPagto) - new Date(dataPedido)) / 86400000);
 }
 
 function getStatusClass(status) {
@@ -913,8 +917,8 @@ function telaClientes() {
             </div>
             <div class="search-box"><input type="text" id="buscaCliente" placeholder="🔍 Buscar..." onkeyup="filtrarClientes()"></div>
             <div class="table-container"><table class="auto-layout" id="tabelaClientes"><thead><th>#</th><th>Pedido</th><th>Data</th><th>Cliente</th><th>CPF/CNPJ</th><th>Contato</th><th>Ações</th></thead>
-                <tbody>${clientes.map((c,i)=>`<tr><td>${i+1}<\/td><td>${c.pedido}<\/td><td>${formatarData(c.data)}<\/td><td>${escapeHtml(c.cliente)}<\/td><td>${escapeHtml(c.cpf_cnpj||'-')}<\/td><td>${escapeHtml(c.contato||'-')}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar cliente" onclick="abrirModalEdicaoCliente('${c.id}')">✏️</button><button class="small danger" data-tooltip="Excluir cliente" onclick="excluirCliente('${c.id}')">🗑️</button><\/td><\/tr>`).join('')}
-            </tbody><\/table><\/div>
+                <tbody>${clientes.map((c,i)=>`<tr><td>${i+1}</td><td>${c.pedido}</td><td>${formatarData(c.data)}</td><td>${escapeHtml(c.cliente)}</td><td>${escapeHtml(c.cpf_cnpj||'-')}</td><td>${escapeHtml(c.contato||'-')}</td><td class="acoes-cell"><button class="small" data-tooltip="Editar cliente" onclick="abrirModalEdicaoCliente('${c.id}')">✏️</button><button class="small danger" data-tooltip="Excluir cliente" onclick="excluirCliente('${c.id}')">🗑️</button></td></tr>`).join('')}
+            </tbody></table></div>
         </div>
     `;
 }
@@ -1010,8 +1014,8 @@ function telaFornecedores() {
             </div>
             <div class="search-box"><input type="text" id="buscaFornecedor" placeholder="🔍 Buscar..." onkeyup="filtrarFornecedores()"></div>
             <div class="table-container"><table class="auto-layout" id="tabelaFornecedores"><thead><th>#</th><th>COD</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Condição</th><th>Coleção</th><th>Ações</th></thead>
-                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}<\/td><td>${f.cod}<\/td><td>${escapeHtml(f.nome)}<\/td><td>${escapeHtml(f.cpf_cnpj||'-')}<\/td><td>${escapeHtml(f.condicao||'-')}<\/td><td>${escapeHtml(f.colecao||'-')}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar fornecedor" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" data-tooltip="Excluir fornecedor" onclick="excluirFornecedor('${f.id}')">🗑️</button><\/td><\/tr>`).join('')}
-            </tbody><\/table><\/div>
+                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}</td><td>${f.cod}</td><td>${escapeHtml(f.nome)}</td><td>${escapeHtml(f.cpf_cnpj||'-')}</td><td>${escapeHtml(f.condicao||'-')}</td><td>${escapeHtml(f.colecao||'-')}</td><td class="acoes-cell"><button class="small" data-tooltip="Editar fornecedor" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" data-tooltip="Excluir fornecedor" onclick="excluirFornecedor('${f.id}')">🗑️</button></td></tr>`).join('')}
+            </tbody></table></div>
         </div>
     `;
 }
@@ -1109,7 +1113,7 @@ function atualizarContadorCaracteres(textarea, maxChars = 100) {
 }
 
 // ============================================
-// TELA DE LANÇAMENTOS (COMPLETA)
+// TELA DE LANÇAMENTOS (COMPLETA COM CORREÇÕES)
 // ============================================
 function telaLancamentos() {
     let optionsCat = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
@@ -1172,13 +1176,14 @@ function telaLancamentos() {
                     <div id="tab2" class="tab-content">
                         <div class="form-grid">
                             <div class="form-group"><label>Data Pagamento</label><input type="date" id="lan_data_pagto"></div>
-                            <div class="form-group"><label>Prev. Faturamento</label><input type="date" id="lan_prev_fat" onchange="calcularDataChegada()"></div>
+                            <div class="form-group"><label>Prev. Faturamento</label><input type="date" id="lan_prev_fat"></div>
                             <div class="form-group"><label>Novo Prazo</label><input type="date" id="lan_novo_prazo"></div>
-                            <div class="form-group"><label>Prev. Chegada</label><input type="date" id="lan_prev_chegada"></div>
-                            <div class="form-group"><label>Data Faturamento</label><input type="date" id="lan_data_fat"></div>
+                            <div class="form-group"><label>Prev. Chegada</label><input type="date" id="lan_prev_chegada" readonly style="background:#f5f5f5"></div>
+                            <div class="form-group"><label>Data Faturamento</label><input type="date" id="lan_data_fat" onchange="calcularPrevisaoChegada()"></div>
                             <div class="form-group"><label>Data Chegada</label><input type="date" id="lan_chegada"></div>
                             <div class="form-group"><label>Data Conferência</label><input type="date" id="lan_conferencia"></div>
                             <div class="form-group"><label>Data Entrega</label><input type="date" id="lan_entrega"></div>
+                            <div class="form-group"><label>Prazo Final</label><input type="date" id="lan_prazo_final" placeholder="Data manual"></div>
                         </div>
                     </div>
                     <div id="tab3" class="tab-content">
@@ -1203,26 +1208,13 @@ function telaLancamentos() {
                 <th>#</th><th>Pedido</th><th>Data</th><th>Mês</th><th>Tipo</th><th>Cliente</th><th>OC</th><th>Fornecedor</th><th>Categoria</th>
                 <th>Itens</th><th>Produtos</th><th>Valor</th><th>Data Pagto</th><th>Condição</th><th>Prev.Fat</th><th>Novo Prazo</th>
                 <th>Prev.Chegada</th><th>Status</th><th>Data Fat</th><th>Nº NF</th><th>Transportadora</th><th>Chegada</th><th>Conf</th>
-                <th>Entrega</th><th>Prazo</th><th>Usuário</th><th>Editado</th><th>Obs</th><th>Ações</th>
+                <th>Entrega</th><th>Prazo Final</th><th>Usuário</th><th>Editado</th><th>Obs</th><th>Ações</th>
             </thead>
                 <tbody id="lancamentosBody"></tbody>
                 <tfoot id="lancamentosFooter"></tfoot>
              </div>
         </div>
     `;
-}
-
-function calcularDataChegada() {
-    const dataFat = document.getElementById('lan_data_fat')?.value;
-    if (dataFat) {
-        const data = new Date(dataFat);
-        data.setDate(data.getDate() + 20);
-        const ano = data.getFullYear();
-        const mes = String(data.getMonth() + 1).padStart(2, '0');
-        const dia = String(data.getDate()).padStart(2, '0');
-        const chegadaInput = document.getElementById('lan_chegada');
-        if (chegadaInput) chegadaInput.value = `${ano}-${mes}-${dia}`;
-    }
 }
 
 function renderLancamentos() {
@@ -1244,47 +1236,46 @@ function renderLancamentos() {
     if (!tbody) return;
     
     tbody.innerHTML = dadosFiltrados.map((l, idx) => {
-        const pm = calcularPrazoMedio(l.data_pagto, l.entrega);
         const temAnexo = anexos.some(a => a.pedido == l.pedido);
         const atrasado = isPedidoAtrasado(l);
         const rowClass = atrasado ? 'atrasado-row' : '';
         
         return `<tr class="${rowClass}" data-id="${l.id}">
             <td class="center">${idx + 1}<\/td>
-             <td>${l.pedido || '-'}<\/td>
-             <td>${formatarData(l.data)}<\/td>
-             <td>${l.mes || '-'}<\/td>
-             <td>${l.tipo || '-'}<\/td>
-             <td>${escapeHtml(l.cliente || '-')}<\/td>
-             <td>${l.oc || '-'}<\/td>
-             <td>${escapeHtml(l.fornecedor || '-')}<\/td>
-             <td>${l.categoria || '-'}<\/td>
-             <td>${l.itens || '-'}<\/td>
-             <td>${l.produtos || '-'}<\/td>
-             <td>${formatarValor(l.valor)}<\/td>
-             <td>${formatarData(l.data_pagto)}<\/td>
-             <td>${l.condicao || '-'}<\/td>
-             <td>${formatarData(l.prev_fat)}<\/td>
-             <td>${formatarData(l.novo_prazo)}<\/td>
-             <td>${formatarData(l.prev_chegada)}<\/td>
-             <td>${getStatusBadge(l.status)}<\/td>
-             <td>${formatarData(l.data_fat)}<\/td>
-             <td>${l.nf || '-'}<\/td>
-             <td>${l.transportadora || '-'}<\/td>
-             <td>${formatarData(l.chegada)}<\/td>
-             <td>${formatarData(l.conferencia)}<\/td>
-             <td>${formatarData(l.entrega)}<\/td>
-             <td>${pm ? pm + 'd' : '-'}<\/td>
-             <td>${l.usuario || '-'}<\/td>
-             <td>${l.editadoPor ? l.editadoPor + ' ' + new Date(l.editadoEm).toLocaleDateString() : '-'}<\/td>
-             <td>${l.observacoes ? `<span class="tooltip-icon" data-tooltip="${escapeHtml(l.observacoes.replace(/"/g, '&quot;'))}">💬</span>` : '-'}<\/td>
+            <td>${l.pedido || '-'}<\/td>
+            <td>${formatarData(l.data)}<\/td>
+            <td>${l.mes || '-'}<\/td>
+            <td>${l.tipo || '-'}<\/td>
+            <td>${escapeHtml(l.cliente || '-')}<\/td>
+            <td>${l.oc || '-'}<\/td>
+            <td>${escapeHtml(l.fornecedor || '-')}<\/td>
+            <td>${l.categoria || '-'}<\/td>
+            <td>${l.itens || '-'}<\/td>
+            <td>${l.produtos || '-'}<\/td>
+            <td>${formatarValor(l.valor)}<\/td>
+            <td>${formatarData(l.data_pagto)}<\/td>
+            <td>${l.condicao || '-'}<\/td>
+            <td>${formatarData(l.prev_fat)}<\/td>
+            <td>${formatarData(l.novo_prazo)}<\/td>
+            <td>${formatarData(l.prev_chegada)}<\/td>
+            <td>${getStatusBadge(l.status)}<\/td>
+            <td>${formatarData(l.data_fat)}<\/td>
+            <td>${l.nf || '-'}<\/td>
+            <td>${l.transportadora || '-'}<\/td>
+            <td>${formatarData(l.chegada)}<\/td>
+            <td>${formatarData(l.conferencia)}<\/td>
+            <td>${formatarData(l.entrega)}<\/td>
+            <td>${formatarData(l.prazo_final) || '-'}<\/td>
+            <td>${l.usuario || '-'}<\/td>
+            <td>${l.editadoPor ? l.editadoPor + ' ' + new Date(l.editadoEm).toLocaleDateString() : '-'}<\/td>
+            <td>${l.observacoes ? `<span class="tooltip-icon" data-tooltip="${escapeHtml(l.observacoes.replace(/"/g, '&quot;'))}">💬</span>` : '-'}<\/td>
             <td class="acoes-cell">
                 <button class="small" data-tooltip="Editar lançamento" onclick="abrirModalEdicaoLancamento('${l.id}')">✏️</button>
                 <button class="small" data-tooltip="Duplicar lançamento" onclick="duplicarLancamento('${l.id}')">📋</button>
                 <button class="small info" data-tooltip="Gerenciar anexos" onclick="abrirModalAnexos(${l.pedido})">📎</button>
                 <button class="small danger" data-tooltip="Excluir lançamento" onclick="excluirLancamento('${l.id}')">🗑️</button>
-             <\/td>
-         <\/tr>`;
+            <\/td>
+        <\/tr>`;
     }).join('');
     
     const tfoot = document.getElementById('lancamentosFooter');
@@ -1297,7 +1288,7 @@ function renderLancamentos() {
             <td colspan="5"><\/td>
             <td>${totaisFiltrados.totalPedidos} pedidos<\/td>
             <td colspan="4"><\/td>
-         <\/tr>`;
+        <\/tr>`;
     }
 }
 
@@ -1390,6 +1381,7 @@ async function adicionarLancamento() {
             chegada: document.getElementById('lan_chegada')?.value,
             conferencia: document.getElementById('lan_conferencia')?.value,
             entrega: document.getElementById('lan_entrega')?.value,
+            prazo_final: document.getElementById('lan_prazo_final')?.value,
             observacoes: observacoes,
             usuario: usuarioAtual,
             criado: new Date().toISOString()
@@ -1397,7 +1389,6 @@ async function adicionarLancamento() {
         
         if (!l.pedido) { alert('Pedido obrigatório!'); return; }
         
-        // Validação de datas (MELHORIA)
         if (!validarDatas(l)) return;
         
         const docRef = await db.collection('lancamentos').add(l);
@@ -1459,15 +1450,14 @@ function filtrarLancamentos() {
 
 function exportarLancamentosExcel() {
     if (lancamentos.length === 0) { alert('Não há dados!'); return; }
-    const wsData = [['#','Pedido','Data','Mês','Tipo','Cliente','OC','Fornecedor','Categoria','Itens','Produtos','Valor','Data Pagto','Condição','Prev.Fat','Novo Prazo','Prev.Chegada','Status','Data Fat','Nº NF','Transportadora','Chegada','Conf','Entrega','Prazo','Usuário','Editado','Observações']];
+    const wsData = [['#','Pedido','Data','Mês','Tipo','Cliente','OC','Fornecedor','Categoria','Itens','Produtos','Valor','Data Pagto','Condição','Prev.Fat','Novo Prazo','Prev.Chegada','Status','Data Fat','Nº NF','Transportadora','Chegada','Conf','Entrega','Prazo Final','Usuário','Editado','Observações']];
     const lancamentosFiltrados = getLancamentosFiltrados();
     lancamentosFiltrados.forEach((l, idx) => { 
-        const pm = calcularPrazoMedio(l.data_pagto, l.entrega); 
         wsData.push([
             idx+1, l.pedido||'', l.data||'', l.mes||'', l.tipo||'', l.cliente||'', l.oc||'', l.fornecedor||'', 
             l.categoria||'', l.itens||'', l.produtos||'', l.valor||'', l.data_pagto||'', l.condicao||'', 
             l.prev_fat||'', l.novo_prazo||'', l.prev_chegada||'', l.status||'', l.data_fat||'', l.nf||'', 
-            l.transportadora||'', l.chegada||'', l.conferencia||'', l.entrega||'', pm?pm+'d':'', 
+            l.transportadora||'', l.chegada||'', l.conferencia||'', l.entrega||'', l.prazo_final||'', 
             l.usuario||'', l.editadoPor||'', (l.observacoes||'').substring(0, 100)
         ]); 
     });
@@ -1504,14 +1494,15 @@ function abrirModalEdicaoLancamento(id) {
         <div class="form-group"><label>Condição</label><select id="edit_lan_condicao"><option value="">Selecione</option><option value="Em aberto" ${l.condicao==='Em aberto'?'selected':''}>EM ABERTO</option><option value="Em produção" ${l.condicao==='Em produção'?'selected':''}>EM PRODUÇÃO</option><option value="Cancelado" ${l.condicao==='Cancelado'?'selected':''}>CANCELADO</option><option value="Entregue" ${l.condicao==='Entregue'?'selected':''}>ENTREGUE</option><option value="Em Rota" ${l.condicao==='Em Rota'?'selected':''}>EM ROTA</option><option value="Entregue em fábrica" ${l.condicao==='Entregue em fábrica'?'selected':''}>ENTREGUE EM FÁBRICA</option><option value="Entregue - Pag. Pendente" ${l.condicao==='Entregue - Pag. Pendente'?'selected':''}>ENTREGUE - PAG. PENDENTE</option><option value="Pedido Retido" ${l.condicao==='Pedido Retido'?'selected':''}>PEDIDO RETIDO</option></select></div>
         <div class="form-group"><label>Prev. Fat</label><input type="date" id="edit_lan_prev_fat" value="${l.prev_fat||''}"></div>
         <div class="form-group"><label>Novo Prazo</label><input type="date" id="edit_lan_novo_prazo" value="${l.novo_prazo||''}"></div>
-        <div class="form-group"><label>Prev. Chegada</label><input type="date" id="edit_lan_prev_chegada" value="${l.prev_chegada||''}"></div>
+        <div class="form-group"><label>Prev. Chegada</label><input type="date" id="edit_lan_prev_chegada" value="${l.prev_chegada||''}" readonly style="background:#f5f5f5"></div>
         <div class="form-group"><label>Status</label><select id="edit_lan_status"><option value="">Selecione</option><option value="Faturado" ${l.status==='Faturado'?'selected':''}>FATURADO</option><option value="Ag. Faturamento" ${l.status==='Ag. Faturamento'?'selected':''}>AG. FATURAMENTO</option><option value="Prorrogado" ${l.status==='Prorrogado'?'selected':''}>PRORROGADO</option><option value="Em aberto" ${l.status==='Em aberto'?'selected':''}>EM ABERTO</option><option value="Entregue" ${l.status==='Entregue'?'selected':''}>ENTREGUE</option><option value="Atrasado" ${l.status==='Atrasado'?'selected':''}>ATRASADO</option></select></div>
-        <div class="form-group"><label>Data Fat</label><input type="date" id="edit_lan_data_fat" value="${l.data_fat||''}"></div>
+        <div class="form-group"><label>Data Fat</label><input type="date" id="edit_lan_data_fat" value="${l.data_fat||''}" onchange="calcularPrevisaoChegadaEdicao()"></div>
         <div class="form-group"><label>Nº NF</label><input type="text" id="edit_lan_nf" value="${l.nf||''}"></div>
         <div class="form-group"><label>Transportadora</label><input type="text" id="edit_lan_transportadora" value="${l.transportadora||''}"></div>
         <div class="form-group"><label>Chegada</label><input type="date" id="edit_lan_chegada" value="${l.chegada||''}"></div>
         <div class="form-group"><label>Conferência</label><input type="date" id="edit_lan_conferencia" value="${l.conferencia||''}"></div>
         <div class="form-group"><label>Entrega</label><input type="date" id="edit_lan_entrega" value="${l.entrega||''}"></div>
+        <div class="form-group"><label>Prazo Final</label><input type="date" id="edit_lan_prazo_final" value="${l.prazo_final||''}"></div>
         <div class="form-group"><label>Observações</label>
             <textarea id="edit_lan_observacoes" rows="2" maxlength="100" oninput="atualizarContadorCaracteres(this, 100)">${escapeHtml(l.observacoes || '')}</textarea>
             <div class="char-counter" id="editObsCharCounter">${(l.observacoes || '').length}/100</div>
@@ -1524,6 +1515,19 @@ function abrirModalEdicaoLancamento(id) {
     }, 50);
     
     modal.classList.add('active');
+}
+
+function calcularPrevisaoChegadaEdicao() {
+    const dataFat = document.getElementById('edit_lan_data_fat')?.value;
+    if (dataFat) {
+        const data = new Date(dataFat);
+        data.setDate(data.getDate() + 20);
+        const ano = data.getFullYear();
+        const mes = String(data.getMonth() + 1).padStart(2, '0');
+        const dia = String(data.getDate()).padStart(2, '0');
+        const prevChegadaInput = document.getElementById('edit_lan_prev_chegada');
+        if (prevChegadaInput) prevChegadaInput.value = `${ano}-${mes}-${dia}`;
+    }
 }
 
 async function salvarEdicaoLancamento(id) {
@@ -1559,11 +1563,11 @@ async function salvarEdicaoLancamento(id) {
         l.chegada = document.getElementById('edit_lan_chegada')?.value || l.chegada;
         l.conferencia = document.getElementById('edit_lan_conferencia')?.value || l.conferencia;
         l.entrega = document.getElementById('edit_lan_entrega')?.value || l.entrega;
+        l.prazo_final = document.getElementById('edit_lan_prazo_final')?.value || l.prazo_final;
         l.observacoes = (document.getElementById('edit_lan_observacoes')?.value || '').substring(0, 100);
         l.editadoPor = usuarioAtual;
         l.editadoEm = new Date().toISOString();
         
-        // Validação de datas (MELHORIA)
         if (!validarDatas(l)) return;
         
         await db.collection('lancamentos').doc(id).update(l);
@@ -1579,7 +1583,7 @@ async function salvarEdicaoLancamento(id) {
 }
 
 // ============================================
-// ANEXOS (com tratamento de erros)
+// ANEXOS
 // ============================================
 function abrirModalAnexos(pedido) {
     const modal = getElement('modalAnexos');
@@ -1674,7 +1678,7 @@ function filtrarAnexosPorOC() {
 function limparBuscaAnexos() { document.getElementById('buscaAnexoPedido').value = ''; document.getElementById('buscaAnexoOC').value = ''; document.querySelectorAll('#anexosLista > div').forEach(d => d.style.display = ''); }
 
 // ============================================
-// RELATÓRIOS (resumido)
+// RELATÓRIOS, DASHBOARD, USUÁRIOS E LOGS (MANTIDOS)
 // ============================================
 function telaRelatorios() {
     return topBar() + `
@@ -1772,7 +1776,7 @@ function gerarPDF() {
 }
 
 // ============================================
-// DASHBOARD (resumido)
+// DASHBOARD
 // ============================================
 function telaDashboard() {
     return topBar() + `
@@ -1865,7 +1869,7 @@ function gerarDashboard(dados) {
 }
 
 // ============================================
-// USUÁRIOS (resumido)
+// USUÁRIOS
 // ============================================
 function telaUsuarios() {
     return topBar() + `
