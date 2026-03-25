@@ -608,10 +608,13 @@ function hideLoading(button, originalText) {
 // CORREÇÃO FINAL: DESTACA SE STATUS NÃO FOR ENTREGUE E DATA VENCIDA OU PRÓXIMA (≤ 7 DIAS)
 // ============================================
 function isPedidoAtrasado(lancamento) {
-    // 1. Se o status for ENTREGUE, NUNCA destaca
-    if (lancamento.status === 'ENTREGUE') return false;
+    // Normaliza o status: converte para maiúsculo e remove espaços extras
+    const status = (lancamento.status || '').toUpperCase().trim();
     
-    // 2. Se não tem data de entrega, não destaca
+    // Se for ENTREGUE, nunca destaca
+    if (status === 'ENTREGUE') return false;
+    
+    // Se não tem data de entrega, não destaca
     if (!lancamento.entrega) return false;
     
     const hoje = new Date();
@@ -1302,7 +1305,7 @@ function renderLancamentos() {
                 <button class="small info" data-tooltip="Gerenciar anexos" onclick="abrirModalAnexos(${l.pedido})">📎</button>
                 <button class="small danger" data-tooltip="Excluir lançamento" onclick="excluirLancamento('${l.id}')">🗑️</button>
             </td>
-        </tr>`;
+         </tr>`;
     }).join('');
     
     const tfoot = document.getElementById('lancamentosFooter');
@@ -1315,7 +1318,7 @@ function renderLancamentos() {
             <td colspan="5"></td>
             <td>${totaisFiltrados.totalPedidos} pedidos</td>
             <td colspan="4"></td>
-        </tr>`;
+         </tr>`;
     }
 }
 
