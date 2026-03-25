@@ -445,6 +445,44 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        
+        /* Estilos para o painel de filtros avançados */
+        .filtros-avancados {
+            background: #FAF0F0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .filtros-avancados.visible {
+            display: block;
+        }
+        .btn-toggle-filtros {
+            background: #8B5A5A;
+            margin-bottom: 10px;
+        }
+        
+        /* Miniatura de anexos */
+        .anexo-thumb {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .anexo-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .anexo-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
@@ -532,6 +570,16 @@ let currentFilterType = "TODOS";
 let currentOrder = "data";
 let currentOrderDirection = "desc";
 
+// Filtros avançados
+let filtroStatus = "";
+let filtroCategoria = "";
+let filtroFornecedor = "";
+let filtroDataInicio = "";
+let filtroDataFim = "";
+
+// Estado para confirmação de saída em modais
+let modalFormModified = false;
+
 const categorias = [
     "ACESSORIO", "ADORNOS", "ALMOFADA", "ALMOFADAS", "APARADOR", "APOIO P/ MESA",
     "ASSISTENCIA", "BALANÇO", "BANCO", "BANQUETA", "BANQUETAS", "BASE DE MESA",
@@ -602,7 +650,7 @@ function hideLoading(button, originalText) {
 }
 
 // ============================================
-// CORREÇÃO FINAL: DESTACA SE STATUS NÃO FOR ENTREGUE E DATA VENCIDA OU PRÓXIMA (≤ 7 DIAS)
+// CORREÇÃO: DESTACA SE STATUS NÃO FOR ENTREGUE E DATA VENCIDA OU PRÓXIMA (≤ 7 DIAS)
 // ============================================
 function isPedidoAtrasado(lancamento) {
     // Normaliza o status: converte para maiúsculo e remove espaços extras
@@ -647,7 +695,6 @@ async function carregarDados() {
             if (data.status) {
                 const normalized = data.status.toUpperCase().trim();
                 if (normalized !== data.status) {
-                    // Atualiza no Firestore para garantir consistência futura
                     await db.collection('lancamentos').doc(doc.id).update({ status: normalized });
                     data.status = normalized;
                 }
@@ -858,8 +905,30 @@ function aplicarFiltroTipo(lista) {
     return lista.filter(l => l.tipo === currentFilterType);
 }
 
+function aplicarFiltrosAvancados(lista) {
+    let filtrada = lista;
+    if (filtroStatus) {
+        filtrada = filtrada.filter(l => (l.status || '').toUpperCase() === filtroStatus.toUpperCase());
+    }
+    if (filtroCategoria) {
+        filtrada = filtrada.filter(l => l.categoria === filtroCategoria);
+    }
+    if (filtroFornecedor) {
+        filtrada = filtrada.filter(l => l.fornecedor === filtroFornecedor);
+    }
+    if (filtroDataInicio && filtroDataFim) {
+        filtrada = filtrada.filter(l => {
+            if (!l.data) return false;
+            const data = new Date(l.data);
+            return data >= new Date(filtroDataInicio) && data <= new Date(filtroDataFim);
+        });
+    }
+    return filtrada;
+}
+
 function getLancamentosFiltrados() {
     let filtrados = aplicarFiltroTipo(lancamentos);
+    filtrados = aplicarFiltrosAvancados(filtrados);
     filtrados = aplicarOrdenacao(filtrados);
     return filtrados;
 }
@@ -869,7 +938,23 @@ function calcularTotais(lista) {
     const totalValor = lista.reduce((acc, l) => acc + (l.valor || 0), 0);
     const totalItens = lista.reduce((acc, l) => acc + (l.itens || 0), 0);
     const totalAtrasados = lista.filter(l => isPedidoAtrasado(l)).length;
-    return { totalPedidos, totalValor, totalItens, totalAtrasados };
+    const ticketMedio = totalPedidos > 0 ? totalValor / totalPedidos : 0;
+    return { totalPedidos, totalValor, totalItens, totalAtrasados, ticketMedio };
+}
+
+// ============================================
+// PERSISTÊNCIA DE ORDENAÇÃO
+// ============================================
+function salvarOrdenacao() {
+    localStorage.setItem('breton_order', currentOrder);
+    localStorage.setItem('breton_order_direction', currentOrderDirection);
+}
+
+function carregarOrdenacao() {
+    const savedOrder = localStorage.getItem('breton_order');
+    const savedDirection = localStorage.getItem('breton_order_direction');
+    if (savedOrder) currentOrder = savedOrder;
+    if (savedDirection) currentOrderDirection = savedDirection;
 }
 
 // ============================================
@@ -941,7 +1026,7 @@ function logout() {
 }
 
 // ============================================
-// TELA DE CLIENTES
+// TELA DE CLIENTES COM VALIDAÇÃO DE PEDIDO ÚNICO
 // ============================================
 function telaClientes() {
     return topBar() + `
@@ -971,6 +1056,11 @@ async function adicionarCliente() {
     try {
         let p = document.getElementById('cli_pedido')?.value, d = document.getElementById('cli_data')?.value, n = document.getElementById('cli_nome')?.value;
         if (!p||!d||!n) { alert('Preencha pedido, data e nome!'); return; }
+        // Validação de pedido único
+        if (clientes.some(c => c.pedido == p)) {
+            alert(`❌ Já existe um cliente com o pedido número ${p}. Cada pedido deve ser único.`);
+            return;
+        }
         const novo = { pedido:parseInt(p), data:d, cliente:n.toUpperCase(), cpf_cnpj:document.getElementById('cli_cpf')?.value||'', contato:document.getElementById('cli_contato')?.value||'' };
         const docRef = await db.collection('clientes').add(novo);
         clientes.push({ id: docRef.id, ...novo });
@@ -1011,6 +1101,22 @@ function abrirModalEdicaoCliente(id) {
     if (!modal || !content) return;
     content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nº Pedido</label><input type="number" id="edit_cli_pedido" value="${c.pedido}"></div><div class="form-group"><label>Data</label><input type="date" id="edit_cli_data" value="${c.data}"></div><div class="form-group"><label>Cliente</label><input type="text" id="edit_cli_nome" value="${escapeHtml(c.cliente)}" style="text-transform:uppercase"></div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_cli_cpf" value="${escapeHtml(c.cpf_cnpj||'')}"></div><div class="form-group"><label>Contato</label><input type="text" id="edit_cli_contato" value="${escapeHtml(c.contato||'')}"></div></div><div style="text-align:right; margin-top:20px"><button class="success" id="btnSalvarCliente" onclick="salvarEdicaoCliente('${id}')">💾 SALVAR</button></div>`;
     modal.classList.add('active');
+    
+    // Marcar que o modal está sendo editado
+    modalFormModified = false;
+    const inputs = content.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('input', () => { modalFormModified = true; });
+    });
+    // Ao tentar fechar o modal, se houver modificações, pergunta
+    const closeBtn = modal.querySelector('.close-modal');
+    const originalClose = closeBtn.onclick;
+    closeBtn.onclick = (e) => {
+        if (modalFormModified && !confirm('Há alterações não salvas. Deseja sair?')) {
+            return;
+        }
+        fecharModal('modalEditarCliente');
+    };
 }
 
 async function salvarEdicaoCliente(id) {
@@ -1020,7 +1126,13 @@ async function salvarEdicaoCliente(id) {
     
     try {
         const c = clientes.find(c => c.id === id);
-        c.pedido = parseInt(document.getElementById('edit_cli_pedido')?.value) || c.pedido;
+        const novoPedido = parseInt(document.getElementById('edit_cli_pedido')?.value);
+        // Verifica se o novo pedido já existe em outro cliente
+        if (clientes.some(cli => cli.id !== id && cli.pedido === novoPedido)) {
+            alert(`❌ O pedido ${novoPedido} já está cadastrado para outro cliente.`);
+            return;
+        }
+        c.pedido = novoPedido;
         c.data = document.getElementById('edit_cli_data')?.value || c.data;
         c.cliente = document.getElementById('edit_cli_nome')?.value?.toUpperCase() || c.cliente;
         c.cpf_cnpj = document.getElementById('edit_cli_cpf')?.value || '';
@@ -1038,7 +1150,7 @@ async function salvarEdicaoCliente(id) {
 }
 
 // ============================================
-// TELA DE FORNECEDORES
+// TELA DE FORNECEDORES COM VALIDAÇÃO DE NOME E CNPJ ÚNICOS
 // ============================================
 function telaFornecedores() {
     return topBar() + `
@@ -1060,6 +1172,11 @@ function telaFornecedores() {
     `;
 }
 
+function normalizarCNPJ(cnpj) {
+    if (!cnpj) return '';
+    return cnpj.replace(/[^\d]/g, '');
+}
+
 async function adicionarFornecedor() {
     const btn = document.getElementById('btnAdicionarFornecedor');
     if (!btn) return;
@@ -1068,8 +1185,22 @@ async function adicionarFornecedor() {
     try {
         let nome = document.getElementById('for_nome')?.value;
         if (!nome) { alert('Nome obrigatório!'); return; }
-        nome = nome.toUpperCase();
-        const novo = { cod: document.getElementById('for_cod')?.value || gerarProximoCodFornecedor(), nome, cpf_cnpj: document.getElementById('for_cpf')?.value || '', condicao: document.getElementById('for_condicao')?.value || '', colecao: (document.getElementById('for_colecao')?.value || '').toUpperCase() };
+        nome = nome.toUpperCase().trim();
+        const cnpjRaw = document.getElementById('for_cpf')?.value || '';
+        const cnpjNorm = normalizarCNPJ(cnpjRaw);
+        
+        // Verifica duplicidade de nome (ignorando maiúsculas)
+        if (fornecedores.some(f => f.nome.toUpperCase() === nome)) {
+            alert(`❌ Já existe um fornecedor com o nome "${nome}".`);
+            return;
+        }
+        // Verifica duplicidade de CNPJ (se preenchido)
+        if (cnpjNorm && fornecedores.some(f => normalizarCNPJ(f.cpf_cnpj) === cnpjNorm)) {
+            alert(`❌ Já existe um fornecedor com o CNPJ ${cnpjRaw}.`);
+            return;
+        }
+        
+        const novo = { cod: document.getElementById('for_cod')?.value || gerarProximoCodFornecedor(), nome, cpf_cnpj: cnpjRaw, condicao: document.getElementById('for_condicao')?.value || '', colecao: (document.getElementById('for_colecao')?.value || '').toUpperCase() };
         const docRef = await db.collection('fornecedores').add(novo);
         fornecedores.push({ id: docRef.id, ...novo });
         await adicionarLog('ADICIONOU FORNECEDOR', nome);
@@ -1109,6 +1240,20 @@ function abrirModalEdicaoFornecedor(id) {
     if (!modal || !content) return;
     content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Código</label><input type="text" id="edit_for_cod" value="${f.cod}" readonly></div><div class="form-group"><label>Fornecedor</label><input type="text" id="edit_for_nome" value="${escapeHtml(f.nome)}" style="text-transform:uppercase"></div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_for_cpf" value="${escapeHtml(f.cpf_cnpj||'')}"></div><div class="form-group"><label>Condição</label><select id="edit_for_condicao"><option value="">Selecione</option><option value="FATURADO" ${f.condicao==='FATURADO'?'selected':''}>FATURADO</option><option value="28D" ${f.condicao==='28D'?'selected':''}>28D</option><option value="ENTRADA + ENTREGA" ${f.condicao==='ENTRADA + ENTREGA'?'selected':''}>ENTRADA + ENTREGA</option><option value="ANTECIPADO" ${f.condicao==='ANTECIPADO'?'selected':''}>ANTECIPADO</option></select></div><div class="form-group"><label>Coleção</label><input type="text" id="edit_for_colecao" value="${escapeHtml(f.colecao||'')}" style="text-transform:uppercase"></div></div><div style="text-align:right; margin-top:20px"><button class="success" id="btnSalvarFornecedor" onclick="salvarEdicaoFornecedor('${id}')">💾 SALVAR</button></div>`;
     modal.classList.add('active');
+    
+    modalFormModified = false;
+    const inputs = content.querySelectorAll('input, select');
+    inputs.forEach(input => {
+        input.addEventListener('input', () => { modalFormModified = true; });
+    });
+    const closeBtn = modal.querySelector('.close-modal');
+    const originalClose = closeBtn.onclick;
+    closeBtn.onclick = (e) => {
+        if (modalFormModified && !confirm('Há alterações não salvas. Deseja sair?')) {
+            return;
+        }
+        fecharModal('modalEditarFornecedor');
+    };
 }
 
 async function salvarEdicaoFornecedor(id) {
@@ -1118,8 +1263,23 @@ async function salvarEdicaoFornecedor(id) {
     
     try {
         const f = fornecedores.find(f => f.id === id);
-        f.nome = document.getElementById('edit_for_nome')?.value?.toUpperCase() || f.nome;
-        f.cpf_cnpj = document.getElementById('edit_for_cpf')?.value || '';
+        const novoNome = document.getElementById('edit_for_nome')?.value?.toUpperCase().trim() || f.nome;
+        const novoCnpj = document.getElementById('edit_for_cpf')?.value || '';
+        const novoCnpjNorm = normalizarCNPJ(novoCnpj);
+        
+        // Valida duplicidade de nome (ignorando o próprio)
+        if (fornecedores.some(f2 => f2.id !== id && f2.nome.toUpperCase() === novoNome)) {
+            alert(`❌ Já existe um fornecedor com o nome "${novoNome}".`);
+            return;
+        }
+        // Valida duplicidade de CNPJ (se preenchido)
+        if (novoCnpjNorm && fornecedores.some(f2 => f2.id !== id && normalizarCNPJ(f2.cpf_cnpj) === novoCnpjNorm)) {
+            alert(`❌ Já existe um fornecedor com o CNPJ ${novoCnpj}.`);
+            return;
+        }
+        
+        f.nome = novoNome;
+        f.cpf_cnpj = novoCnpj;
         f.condicao = document.getElementById('edit_for_condicao')?.value || '';
         f.colecao = document.getElementById('edit_for_colecao')?.value?.toUpperCase() || '';
         await db.collection('fornecedores').doc(id).update(f);
@@ -1153,7 +1313,7 @@ function atualizarContadorCaracteres(textarea, maxChars = 100) {
 }
 
 // ============================================
-// TELA DE LANÇAMENTOS (COMPLETA)
+// TELA DE LANÇAMENTOS COM FILTROS AVANÇADOS E EXPORTAÇÃO COM FILTROS
 // ============================================
 function telaLancamentos() {
     let optionsCat = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
@@ -1174,6 +1334,7 @@ function telaLancamentos() {
                 <span class="resumo-item">💰 <strong>${formatarValor(totais.totalValor)}</strong></span>
                 <span class="resumo-item">📦 <strong>${totais.totalItens}</strong> itens</span>
                 <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados</span>
+                <span class="resumo-item">🎫 <strong>${formatarValor(totais.ticketMedio)}</strong> ticket médio</span>
             </div>
             
             <div class="filtros-rapidos">
@@ -1182,6 +1343,18 @@ function telaLancamentos() {
                 <button class="filtro-tipo-btn ${currentFilterType === 'SHOWROOM' ? 'active' : ''}" onclick="setFilterType('SHOWROOM')">🖼️ SHOWROOM</button>
                 <button class="filtro-tipo-btn ${currentFilterType === 'ESTOQUE' ? 'active' : ''}" onclick="setFilterType('ESTOQUE')">📦 ESTOQUE</button>
                 <button class="filtro-tipo-btn ${currentFilterType === 'ASSISTENCIA' ? 'active' : ''}" onclick="setFilterType('ASSISTENCIA')">🔧 ASSISTENCIA</button>
+                <button class="btn-toggle-filtros" onclick="toggleFiltrosAvancados()">🔍 Filtros avançados</button>
+            </div>
+            
+            <div id="filtrosAvancados" class="filtros-avancados">
+                <div class="filtros-grid">
+                    <div class="filtro-item"><label>Status</label><select id="filtroStatusSelect"><option value="">Todos</option>${statusLista.map(s => `<option value="${s}">${s}</option>`).join('')}</select></div>
+                    <div class="filtro-item"><label>Categoria</label><select id="filtroCategoriaSelect"><option value="">Todas</option>${categorias.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+                    <div class="filtro-item"><label>Fornecedor</label><select id="filtroFornecedorSelect"><option value="">Todos</option>${fornecedores.map(f => `<option value="${escapeHtml(f.nome)}">${escapeHtml(f.nome)}</option>`).join('')}</select></div>
+                    <div class="filtro-item"><label>Data Início</label><input type="date" id="filtroDataInicioInput"></div>
+                    <div class="filtro-item"><label>Data Fim</label><input type="date" id="filtroDataFimInput"></div>
+                    <div class="filtro-actions"><button class="info" onclick="aplicarFiltrosAvancadosUI()">Aplicar</button><button onclick="limparFiltrosAvancados()">Limpar</button></div>
+                </div>
             </div>
             
             <div class="ordenacao-btns">
@@ -1190,6 +1363,7 @@ function telaLancamentos() {
                 <button class="ordem-btn ${currentOrder === 'pedido' ? 'active' : ''}" onclick="setOrder('pedido')">🔢 Pedido</button>
                 <button class="ordem-btn ${currentOrder === 'status' ? 'active' : ''}" onclick="setOrder('status')">📌 Status</button>
                 <button class="ordem-btn" onclick="toggleOrderDirection()">${currentOrderDirection === 'asc' ? '⬆️ Crescente' : '⬇️ Decrescente'}</button>
+                <button class="excel" onclick="exportarLancamentosExcel()">📊 Exportar Excel</button>
             </div>
             
             <details>
@@ -1253,9 +1427,60 @@ function telaLancamentos() {
             </thead>
                 <tbody id="lancamentosBody"></tbody>
                 <tfoot id="lancamentosFooter"></tfoot>
-             </table></div>
+             </div>
         </div>
     `;
+}
+
+function toggleFiltrosAvancados() {
+    const div = document.getElementById('filtrosAvancados');
+    if (div) div.classList.toggle('visible');
+}
+
+function aplicarFiltrosAvancadosUI() {
+    filtroStatus = document.getElementById('filtroStatusSelect')?.value || '';
+    filtroCategoria = document.getElementById('filtroCategoriaSelect')?.value || '';
+    filtroFornecedor = document.getElementById('filtroFornecedorSelect')?.value || '';
+    filtroDataInicio = document.getElementById('filtroDataInicioInput')?.value || '';
+    filtroDataFim = document.getElementById('filtroDataFimInput')?.value || '';
+    renderLancamentos();
+    // Atualiza o resumo rápido
+    const totais = calcularTotais(getLancamentosFiltrados());
+    const resumoDiv = document.querySelector('.resumo-rapido');
+    if (resumoDiv) {
+        resumoDiv.innerHTML = `
+            <span class="resumo-item">📊 <strong>${totais.totalPedidos}</strong> pedidos</span>
+            <span class="resumo-item">💰 <strong>${formatarValor(totais.totalValor)}</strong></span>
+            <span class="resumo-item">📦 <strong>${totais.totalItens}</strong> itens</span>
+            <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados</span>
+            <span class="resumo-item">🎫 <strong>${formatarValor(totais.ticketMedio)}</strong> ticket médio</span>
+        `;
+    }
+}
+
+function limparFiltrosAvancados() {
+    document.getElementById('filtroStatusSelect').value = '';
+    document.getElementById('filtroCategoriaSelect').value = '';
+    document.getElementById('filtroFornecedorSelect').value = '';
+    document.getElementById('filtroDataInicioInput').value = '';
+    document.getElementById('filtroDataFimInput').value = '';
+    filtroStatus = '';
+    filtroCategoria = '';
+    filtroFornecedor = '';
+    filtroDataInicio = '';
+    filtroDataFim = '';
+    renderLancamentos();
+    const totais = calcularTotais(getLancamentosFiltrados());
+    const resumoDiv = document.querySelector('.resumo-rapido');
+    if (resumoDiv) {
+        resumoDiv.innerHTML = `
+            <span class="resumo-item">📊 <strong>${totais.totalPedidos}</strong> pedidos</span>
+            <span class="resumo-item">💰 <strong>${formatarValor(totais.totalValor)}</strong></span>
+            <span class="resumo-item">📦 <strong>${totais.totalItens}</strong> itens</span>
+            <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados</span>
+            <span class="resumo-item">🎫 <strong>${formatarValor(totais.ticketMedio)}</strong> ticket médio</span>
+        `;
+    }
 }
 
 function renderLancamentos() {
@@ -1343,6 +1568,7 @@ function setFilterType(tipo) {
             <span class="resumo-item">💰 <strong>${formatarValor(totais.totalValor)}</strong></span>
             <span class="resumo-item">📦 <strong>${totais.totalItens}</strong> itens</span>
             <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados</span>
+            <span class="resumo-item">🎫 <strong>${formatarValor(totais.ticketMedio)}</strong> ticket médio</span>
         `;
     }
     document.querySelectorAll('.filtro-tipo-btn').forEach(btn => btn.classList.remove('active'));
@@ -1351,6 +1577,7 @@ function setFilterType(tipo) {
 
 function setOrder(order) {
     currentOrder = order;
+    salvarOrdenacao();
     renderLancamentos();
     document.querySelectorAll('.ordem-btn').forEach(btn => btn.classList.remove('active'));
     if (event && event.target) event.target.classList.add('active');
@@ -1358,6 +1585,7 @@ function setOrder(order) {
 
 function toggleOrderDirection() {
     currentOrderDirection = currentOrderDirection === 'asc' ? 'desc' : 'asc';
+    salvarOrdenacao();
     renderLancamentos();
     const btn = document.querySelector('.ordenacao-btns button:last-child');
     if (btn) btn.textContent = currentOrderDirection === 'asc' ? '⬆️ Crescente' : '⬇️ Decrescente';
@@ -1489,10 +1717,20 @@ function filtrarLancamentos() {
 }
 
 function exportarLancamentosExcel() {
-    if (lancamentos.length === 0) { alert('Não há dados!'); return; }
+    // Usa os dados filtrados (incluindo filtros avançados e busca)
+    const dados = getLancamentosFiltrados();
+    const busca = document.getElementById('buscaLancamento')?.value.toLowerCase() || '';
+    let dadosFiltrados = dados;
+    if (busca) {
+        dadosFiltrados = dadosFiltrados.filter(l => 
+            (l.pedido?.toString().includes(busca)) ||
+            (l.cliente?.toLowerCase().includes(busca)) ||
+            (l.fornecedor?.toLowerCase().includes(busca))
+        );
+    }
+    if (dadosFiltrados.length === 0) { alert('Não há dados para exportar com os filtros atuais!'); return; }
     const wsData = [['#','Pedido','Data','Mês','Tipo','Cliente','OC','Fornecedor','Categoria','Itens','Produtos','Valor','Data Pagto','Condição','Prev.Fat','Novo Prazo','Prev.Chegada','Status','Data Fat','Nº NF','Transportadora','Chegada','Conf','Entrega','Prazo Final','Usuário','Editado','Observações']];
-    const lancamentosFiltrados = getLancamentosFiltrados();
-    lancamentosFiltrados.forEach((l, idx) => { 
+    dadosFiltrados.forEach((l, idx) => { 
         wsData.push([
             idx+1, l.pedido||'', l.data||'', l.mes||'', l.tipo||'', l.cliente||'', l.oc||'', l.fornecedor||'', 
             l.categoria||'', l.itens||'', l.produtos||'', l.valor||'', l.data_pagto||'', l.condicao||'', 
@@ -1556,6 +1794,21 @@ function abrirModalEdicaoLancamento(id) {
     }, 50);
     
     modal.classList.add('active');
+    
+    // Confirmação antes de sair
+    modalFormModified = false;
+    const inputs = content.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('input', () => { modalFormModified = true; });
+    });
+    const closeBtn = modal.querySelector('.close-modal');
+    const originalClose = closeBtn.onclick;
+    closeBtn.onclick = (e) => {
+        if (modalFormModified && !confirm('Há alterações não salvas. Deseja sair?')) {
+            return;
+        }
+        fecharModal('modalEditarLancamento');
+    };
 }
 
 function calcularPrevisaoChegadaEdicao() {
@@ -1624,7 +1877,7 @@ async function salvarEdicaoLancamento(id) {
 }
 
 // ============================================
-// ANEXOS, RELATÓRIOS, DASHBOARD, USUÁRIOS E LOGS (MANTIDOS)
+// ANEXOS COM MINIATURAS DE IMAGEM
 // ============================================
 function abrirModalAnexos(pedido) {
     const modal = getElement('modalAnexos');
@@ -1636,7 +1889,18 @@ function abrirModalAnexos(pedido) {
     content.innerHTML = `<h4>Pedido #${pedido} ${lancamento?.oc ? `- OC: ${escapeHtml(lancamento.oc)}` : ''}</h4>
         <div class="anexos-area">
             ${anexosPedido.length === 0 ? '<p>Nenhum anexo.</p>' : ''}
-            ${anexosPedido.map((a,i)=>`<div class="anexo-item"><div><strong>${escapeHtml(a.nome)}</strong><br><small>${new Date(a.data).toLocaleString()}</small></div><div><button class="small" data-tooltip="Baixar anexo" onclick="baixarAnexo('${a.id}')">⬇️</button><button class="small danger" data-tooltip="Excluir anexo" onclick="excluirAnexo('${a.id}', ${pedido})">🗑️</button></div></div>`).join('')}
+            ${anexosPedido.map((a,i)=>`
+                <div class="anexo-item">
+                    <div class="anexo-info">
+                        ${a.tipo && a.tipo.startsWith('image/') ? `<img src="${a.conteudo}" class="anexo-thumb" onclick="window.open('${a.conteudo}')" title="Clique para ampliar">` : ''}
+                        <div><strong>${escapeHtml(a.nome)}</strong><br><small>${new Date(a.data).toLocaleString()}</small></div>
+                    </div>
+                    <div>
+                        <button class="small" data-tooltip="Baixar anexo" onclick="baixarAnexo('${a.id}')">⬇️</button>
+                        <button class="small danger" data-tooltip="Excluir anexo" onclick="excluirAnexo('${a.id}', ${pedido})">🗑️</button>
+                    </div>
+                </div>
+            `).join('')}
         </div>
         <div class="upload-area" onclick="document.getElementById('fileInput').click()">📂 Anexar arquivo</div>
         <input type="file" id="fileInput" style="display:none" onchange="anexarArquivo(${pedido})">`;
@@ -1705,7 +1969,7 @@ function telaAnexos() {
 function gerarListaAnexos() {
     const anexosPorPedido = {};
     anexos.forEach(a => { if (!anexosPorPedido[a.pedido]) anexosPorPedido[a.pedido] = []; anexosPorPedido[a.pedido].push(a); });
-    return Object.entries(anexosPorPedido).map(([p,as]) => { const lancamento = lancamentos.find(l => l.pedido == p); return `<div class="anexo-item" style="flex-direction:column;align-items:stretch" data-pedido="${p}" data-oc="${lancamento?.oc||''}"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><strong>Pedido #${p} ${lancamento?.oc?`- OC: ${escapeHtml(lancamento.oc)}`:''}</strong><button class="small" data-tooltip="Gerenciar anexos deste pedido" onclick="abrirModalAnexos(${p})">📎 Gerenciar</button></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:5px">${as.map(a=>`<div style="background:#FAF0F0;padding:5px;border-radius:4px"><small>${escapeHtml(a.nome)}</small><br><small>${new Date(a.data).toLocaleDateString()}</small></div>`).join('')}</div></div>`; }).join('') || '<p>Nenhum anexo encontrado.</p>';
+    return Object.entries(anexosPorPedido).map(([p,as]) => { const lancamento = lancamentos.find(l => l.pedido == p); return `<div class="anexo-item" style="flex-direction:column;align-items:stretch" data-pedido="${p}" data-oc="${lancamento?.oc||''}"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><strong>Pedido #${p} ${lancamento?.oc?`- OC: ${escapeHtml(lancamento.oc)}`:''}</strong><button class="small" data-tooltip="Gerenciar anexos deste pedido" onclick="abrirModalAnexos(${p})">📎 Gerenciar</button></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:5px">${as.map(a=>`<div style="background:#FAF0F0;padding:5px;border-radius:4px;display:flex;align-items:center;gap:10px">${a.tipo && a.tipo.startsWith('image/') ? `<img src="${a.conteudo}" style="width:40px;height:40px;object-fit:cover;border-radius:4px" onclick="window.open('${a.conteudo}')">` : ''}<div><small>${escapeHtml(a.nome)}</small><br><small>${new Date(a.data).toLocaleDateString()}</small></div></div>`).join('')}</div></div>`; }).join('') || '<p>Nenhum anexo encontrado.</p>';
 }
 
 function filtrarAnexos() {
@@ -1718,6 +1982,9 @@ function filtrarAnexosPorOC() {
 }
 function limparBuscaAnexos() { document.getElementById('buscaAnexoPedido').value = ''; document.getElementById('buscaAnexoOC').value = ''; document.querySelectorAll('#anexosLista > div').forEach(d => d.style.display = ''); }
 
+// ============================================
+// RELATÓRIOS E DASHBOARD COM MELHORIAS
+// ============================================
 function telaRelatorios() {
     return topBar() + `
         <div class="box">
@@ -1813,6 +2080,9 @@ function gerarPDF() {
     });
 }
 
+// ============================================
+// DASHBOARD COM GRÁFICO DE EVOLUÇÃO MENSAL E TOP CATEGORIAS
+// ============================================
 function telaDashboard() {
     return topBar() + `
         <div class="box">
@@ -1864,6 +2134,8 @@ function gerarDashboard(dados) {
     const entregues = dados.filter(l => l.status === 'ENTREGUE').length;
     const atrasados = dados.filter(l => l.status === 'ATRASADO').length;
     const pendentes = dados.filter(l => l.status === 'EM ABERTO' || l.status === 'EM ROTA' || !l.status).length;
+    const valorTotal = dados.reduce((acc,l)=>acc+(l.valor||0),0);
+    const ticketMedio = total > 0 ? valorTotal / total : 0;
     
     let totalDiasPagamento = 0, countPagamento = 0, totalDiasEntrega = 0, countEntrega = 0;
     dados.forEach(l => {
@@ -1881,26 +2153,51 @@ function gerarDashboard(dados) {
     });
     const rankingFornecedores = Object.entries(fornecedoresTempos).map(([n,d]) => ({ fornecedor: n, pedidos: d.count, prazoMedio: (d.total / d.count).toFixed(1) })).sort((a,b)=>a.prazoMedio-b.prazoMedio);
     
+    // Gráfico de evolução mensal (valores)
+    const mesesMap = {};
+    dados.forEach(l => {
+        if (l.data && l.valor) {
+            const data = new Date(l.data);
+            const mesAno = `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}`;
+            if (!mesesMap[mesAno]) mesesMap[mesAno] = 0;
+            mesesMap[mesAno] += l.valor;
+        }
+    });
+    const labelsMeses = Object.keys(mesesMap).sort();
+    const valoresMeses = labelsMeses.map(m => mesesMap[m]);
+    
+    // Top categorias
+    const categoriasCount = {};
+    dados.forEach(l => {
+        if (l.categoria) {
+            categoriasCount[l.categoria] = (categoriasCount[l.categoria] || 0) + 1;
+        }
+    });
+    const topCategorias = Object.entries(categoriasCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    
     if (window.graficoStatus) window.graficoStatus.destroy();
     if (window.graficoTipo) window.graficoTipo.destroy();
-    if (window.graficoCondicao) window.graficoCondicao.destroy();
+    if (window.graficoMensal) window.graficoMensal.destroy();
+    if (window.graficoTopCat) window.graficoTopCat.destroy();
     
     document.getElementById('conteudoDashboard').innerHTML = `
         <div class="lembretes-bar">${lembretes.map(l=>`<span class="lembrete-item ${l.tipo}">${l.icon} ${l.msg}</span>`).join(' | ')}${lembretes.length===0?'✅ Nenhum lembrete':''}</div>
-        <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${entregues}</div></div><div class="kpi-card"><h4>Atrasados</h4><div class="value">${atrasados}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${pendentes}</div></div></div>
+        <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Valor Total</h4><div class="value">${formatarValor(valorTotal)}</div></div><div class="kpi-card"><h4>Ticket Médio</h4><div class="value">${formatarValor(ticketMedio)}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${entregues}</div></div><div class="kpi-card"><h4>Atrasados</h4><div class="value">${atrasados}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${pendentes}</div></div></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px"><div class="kpi-card"><h4>⏱️ Tempo Médio Pagamento</h4><div class="value">${tempoMedioPagamento} dias</div></div><div class="kpi-card"><h4>⏱️ Tempo Médio Entrega</h4><div class="value">${tempoMedioEntrega} dias</div></div></div>
-        <div class="charts-grid"><div class="chart-container"><canvas id="graficoStatus"></canvas></div><div class="chart-container"><canvas id="graficoTipo"></canvas></div><div class="chart-container"><canvas id="graficoCondicao"></canvas></div></div>
-        <h3>⏱️ Tempo Médio de Entrega por Fornecedor</h3><div class="table-container"><table class="auto-layout"><thead><tr><th>Fornecedor</th><th>Pedidos</th><th>Prazo Médio (dias)</th></tr></thead><tbody>${rankingFornecedores.map(f=>`<tr><td>${f.fornecedor}</td><td>${f.pedidos}</td><td>${f.prazoMedio}</td></tr>`).join('')}</tbody></table></div>
+        <div class="charts-grid">
+            <div class="chart-container"><canvas id="graficoStatus"></canvas></div>
+            <div class="chart-container"><canvas id="graficoMensal"></canvas></div>
+            <div class="chart-container"><canvas id="graficoTopCat"></canvas></div>
+        </div>
+        <h3>⏱️ Tempo Médio de Entrega por Fornecedor</h3><div class="table-container"><table class="auto-layout"><thead><th>Fornecedor</th><th>Pedidos</th><th>Prazo Médio (dias)</th></thead><tbody>${rankingFornecedores.map(f=>`<tr><td>${f.fornecedor}</td><td>${f.pedidos}</td><td>${f.prazoMedio}</td></tr>`).join('')}</tbody></table></div>
     `;
     
     const statusCount = {}; dados.forEach(l => { let s = l.status || 'PENDENTE'; statusCount[s] = (statusCount[s] || 0) + 1; });
     const ctx1 = document.getElementById('graficoStatus')?.getContext('2d'); if(ctx1) window.graficoStatus = new Chart(ctx1, { type: 'doughnut', data: { labels: Object.keys(statusCount), datasets: [{ data: Object.values(statusCount), backgroundColor: ['#5C2A2A','#8B5A5A','#B87A7A','#9e9e9e','#4caf50','#f44336'] }] }, options: { plugins: { title: { display: true, text: 'Pedidos por Status' } } } });
     
-    const tipoCount = {}; dados.forEach(l => { let t = l.tipo || 'SEM TIPO'; tipoCount[t] = (tipoCount[t] || 0) + 1; });
-    const ctx2 = document.getElementById('graficoTipo')?.getContext('2d'); if(ctx2) window.graficoTipo = new Chart(ctx2, { type: 'bar', data: { labels: Object.keys(tipoCount), datasets: [{ label: 'Quantidade', data: Object.values(tipoCount), backgroundColor: '#8B5A5A' }] }, options: { plugins: { title: { display: true, text: 'Pedidos por Tipo' } } } });
+    const ctx2 = document.getElementById('graficoMensal')?.getContext('2d'); if(ctx2) window.graficoMensal = new Chart(ctx2, { type: 'line', data: { labels: labelsMeses.map(m => m.substring(5)+'/'+m.substring(0,4)), datasets: [{ label: 'Valor Total (R$)', data: valoresMeses, borderColor: '#5C2A2A', backgroundColor: 'rgba(92,42,42,0.1)', fill: true }] }, options: { plugins: { title: { display: true, text: 'Evolução Mensal de Vendas' } } } });
     
-    const condCount = {}; dados.forEach(l => { let c = l.condicao || 'SEM CONDIÇÃO'; condCount[c] = (condCount[c] || 0) + 1; });
-    const ctx3 = document.getElementById('graficoCondicao')?.getContext('2d'); if(ctx3) window.graficoCondicao = new Chart(ctx3, { type: 'bar', data: { labels: Object.keys(condCount), datasets: [{ label: 'Quantidade', data: Object.values(condCount), backgroundColor: '#8B5A5A' }] }, options: { plugins: { title: { display: true, text: 'Pedidos por Condição' } } } });
+    const ctx3 = document.getElementById('graficoTopCat')?.getContext('2d'); if(ctx3) window.graficoTopCat = new Chart(ctx3, { type: 'bar', data: { labels: topCategorias.map(c=>c[0]), datasets: [{ label: 'Quantidade de Pedidos', data: topCategorias.map(c=>c[1]), backgroundColor: '#8B5A5A' }] }, options: { plugins: { title: { display: true, text: 'Top Categorias' } } } });
 }
 
 function telaUsuarios() {
@@ -1908,7 +2205,7 @@ function telaUsuarios() {
         <div class="box">
             <h2>👤 Gerenciar Usuários</h2>
             <div class="form-grid"><div class="form-group"><label class="required">Novo Usuário</label><input type="text" id="novo_usuario"></div><div class="form-group"><label>Senha</label><input type="password" id="nova_senha" placeholder="Deixe em branco"></div><div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarUsuario" onclick="adicionarUsuario()">➕ Adicionar</button></div></div>
-            <div class="table-container"><table class="auto-layout"><thead><tr><th>#</th><th>Usuário</th><th>Senha</th><th>Ações</th></tr></thead><tbody>
+            <div class="table-container"><table class="auto-layout"><thead><th>#</th><th>Usuário</th><th>Senha</th><th>Ações</th></thead><tbody>
                 ${usuarios.map((u,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(u.nome)}</td><td>${u.senha?'••••••':'Sem senha'}</td><td class="acoes-cell"><button class="small" data-tooltip="Editar usuário" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️</button><button class="small danger" data-tooltip="Excluir usuário" onclick="excluirUsuario('${u.id}')">🗑️</button></td></tr>`).join('')}
             </tbody></table></div>
         </div>
@@ -1922,6 +2219,19 @@ function abrirModalEdicaoUsuario(id) {
     if (!modal || !content) return;
     content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nome</label><input type="text" id="edit_user_nome" value="${escapeHtml(u.nome)}"></div><div class="form-group"><label>Nova Senha</label><input type="password" id="edit_user_senha" placeholder="Deixe em branco"></div><div class="form-group"><label>Confirmar</label><input type="password" id="edit_user_confirm" placeholder="Digite novamente"></div></div><div style="text-align:right"><button class="success" id="btnSalvarUsuario" onclick="salvarEdicaoUsuario('${id}')">💾 SALVAR</button></div>`;
     modal.classList.add('active');
+    
+    modalFormModified = false;
+    const inputs = content.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('input', () => { modalFormModified = true; });
+    });
+    const closeBtn = modal.querySelector('.close-modal');
+    closeBtn.onclick = (e) => {
+        if (modalFormModified && !confirm('Há alterações não salvas. Deseja sair?')) {
+            return;
+        }
+        fecharModal('modalUsuarios');
+    };
 }
 
 async function salvarEdicaoUsuario(id) {
@@ -2044,6 +2354,7 @@ async function mostrar(tela) {
 // ============================================
 // INICIALIZAÇÃO
 // ============================================
+carregarOrdenacao();
 carregarDados().then(() => {
     mostrarLogin();
 });
