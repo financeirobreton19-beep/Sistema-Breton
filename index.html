@@ -137,11 +137,11 @@
         button.salvar { background: #2e7d32; font-weight: bold; padding: 10px 20px; }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
         
-        /* BOTÕES DE AÇÃO - ALINHADOS VERTICALMENTE */
+        /* CORREÇÃO DOS BOTÕES DE AÇÃO - DENTRO DA CÉLULA, ALINHADOS */
         .acoes-cell {
             white-space: nowrap;
             display: flex;
-            gap: 5px;
+            gap: 6px;
             align-items: center;
             justify-content: flex-start;
         }
@@ -201,7 +201,7 @@
         .status-badge.cancelado { background: #eeeeee; color: #616161; border: 1px solid #e0e0e0; }
         .status-badge.pendente { background: #f5f5f5; color: #616161; border: 1px solid #e0e0e0; }
         
-        /* CORREÇÃO: Só destaca em vermelho se status NÃO for ENTREGUE */
+        /* CORREÇÃO FINAL: DESTAQUE VERMELHO */
         tr.atrasado-row { background-color: #ffebee !important; }
         tr.atrasado-row:hover { background-color: #ffcdd2 !important; }
         
@@ -384,7 +384,6 @@
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
         .close-modal { font-size: 20px; cursor: pointer; color: #999; }
         
-        /* RODAPÉ CORRIGIDO */
         .footer {
             position: fixed;
             bottom: 0;
@@ -606,13 +605,13 @@ function hideLoading(button, originalText) {
 }
 
 // ============================================
-// FUNÇÃO CORRIGIDA: SÓ DESTACA SE NÃO FOR ENTREGUE E DATA VENCIDA OU PRÓXIMA (≤ 7 DIAS)
+// CORREÇÃO FINAL: DESTACA SE STATUS NÃO FOR ENTREGUE E DATA VENCIDA OU PRÓXIMA (≤ 7 DIAS)
 // ============================================
 function isPedidoAtrasado(lancamento) {
-    // REGRA FINAL: Só destaca se status NÃO for ENTREGUE
+    // 1. Se o status for ENTREGUE, NUNCA destaca
     if (lancamento.status === 'ENTREGUE') return false;
     
-    // Se não tem data de entrega, não destaca
+    // 2. Se não tem data de entrega, não destaca
     if (!lancamento.entrega) return false;
     
     const hoje = new Date();
@@ -1269,54 +1268,54 @@ function renderLancamentos() {
         const rowClass = atrasado ? 'atrasado-row' : '';
         
         return `<tr class="${rowClass}" data-id="${l.id}">
-            <td class="center">${idx + 1}<\/td>
-            <td>${l.pedido || '-'}<\/td>
-            <td>${formatarData(l.data)}<\/td>
-            <td>${l.mes || '-'}<\/td>
-            <td>${l.tipo || '-'}<\/td>
-            <td>${escapeHtml(l.cliente || '-')}<\/td>
-            <td>${l.oc || '-'}<\/td>
-            <td>${escapeHtml(l.fornecedor || '-')}<\/td>
-            <td>${l.categoria || '-'}<\/td>
-            <td>${l.itens || '-'}<\/td>
-            <td>${l.produtos || '-'}<\/td>
-            <td>${formatarValor(l.valor)}<\/td>
-            <td>${formatarData(l.data_pagto)}<\/td>
-            <td>${l.condicao || '-'}<\/td>
-            <td>${formatarData(l.prev_fat)}<\/td>
-            <td>${formatarData(l.novo_prazo)}<\/td>
-            <td>${formatarData(l.prev_chegada)}<\/td>
-            <td>${getStatusBadge(l.status)}<\/td>
-            <td>${formatarData(l.data_fat)}<\/td>
-            <td>${l.nf || '-'}<\/td>
-            <td>${l.transportadora || '-'}<\/td>
-            <td>${formatarData(l.chegada)}<\/td>
-            <td>${formatarData(l.conferencia)}<\/td>
-            <td>${formatarData(l.entrega)}<\/td>
-            <td>${formatarData(l.prazo_final) || '-'}<\/td>
-            <td>${l.usuario || '-'}<\/td>
-            <td>${l.editadoPor ? l.editadoPor + ' ' + new Date(l.editadoEm).toLocaleDateString() : '-'}<\/td>
-            <td>${l.observacoes ? `<span class="tooltip-icon" data-tooltip="${escapeHtml(l.observacoes.replace(/"/g, '&quot;'))}">💬</span>` : '-'}<\/td>
+            <td class="center">${idx + 1}</td>
+            <td>${l.pedido || '-'}</td>
+            <td>${formatarData(l.data)}</td>
+            <td>${l.mes || '-'}</td>
+            <td>${l.tipo || '-'}</td>
+            <td>${escapeHtml(l.cliente || '-')}</td>
+            <td>${l.oc || '-'}</td>
+            <td>${escapeHtml(l.fornecedor || '-')}</td>
+            <td>${l.categoria || '-'}</td>
+            <td>${l.itens || '-'}</td>
+            <td>${l.produtos || '-'}</td>
+            <td>${formatarValor(l.valor)}</td>
+            <td>${formatarData(l.data_pagto)}</td>
+            <td>${l.condicao || '-'}</td>
+            <td>${formatarData(l.prev_fat)}</td>
+            <td>${formatarData(l.novo_prazo)}</td>
+            <td>${formatarData(l.prev_chegada)}</td>
+            <td>${getStatusBadge(l.status)}</td>
+            <td>${formatarData(l.data_fat)}</td>
+            <td>${l.nf || '-'}</td>
+            <td>${l.transportadora || '-'}</td>
+            <td>${formatarData(l.chegada)}</td>
+            <td>${formatarData(l.conferencia)}</td>
+            <td>${formatarData(l.entrega)}</td>
+            <td>${formatarData(l.prazo_final) || '-'}</td>
+            <td>${l.usuario || '-'}</td>
+            <td>${l.editadoPor ? l.editadoPor + ' ' + new Date(l.editadoEm).toLocaleDateString() : '-'}</td>
+            <td>${l.observacoes ? `<span class="tooltip-icon" data-tooltip="${escapeHtml(l.observacoes.replace(/"/g, '&quot;'))}">💬</span>` : '-'}</td>
             <td class="acoes-cell">
                 <button class="small" data-tooltip="Editar lançamento" onclick="abrirModalEdicaoLancamento('${l.id}')">✏️</button>
                 <button class="small" data-tooltip="Duplicar lançamento" onclick="duplicarLancamento('${l.id}')">📋</button>
                 <button class="small info" data-tooltip="Gerenciar anexos" onclick="abrirModalAnexos(${l.pedido})">📎</button>
                 <button class="small danger" data-tooltip="Excluir lançamento" onclick="excluirLancamento('${l.id}')">🗑️</button>
-            <\/td>
-        <\/tr>`;
+            </td>
+        </tr>`;
     }).join('');
     
     const tfoot = document.getElementById('lancamentosFooter');
     if (tfoot) {
         tfoot.innerHTML = `<tr style="background:#FAF0F0; font-weight:bold;">
-            <td colspan="11" style="text-align:right;">TOTAL:<\/td>
-            <td>${formatarValor(totaisFiltrados.totalValor)}<\/td>
-            <td colspan="9"><\/td>
-            <td>${totaisFiltrados.totalItens} itens<\/td>
-            <td colspan="5"><\/td>
-            <td>${totaisFiltrados.totalPedidos} pedidos<\/td>
-            <td colspan="4"><\/td>
-        <\/tr>`;
+            <td colspan="11" style="text-align:right;">TOTAL:</td>
+            <td>${formatarValor(totaisFiltrados.totalValor)}</td>
+            <td colspan="9"></td>
+            <td>${totaisFiltrados.totalItens} itens</td>
+            <td colspan="5"></td>
+            <td>${totaisFiltrados.totalPedidos} pedidos</td>
+            <td colspan="4"></td>
+        </tr>`;
     }
 }
 
@@ -1770,12 +1769,12 @@ function gerarRelatorios(dados) {
     
     document.getElementById('conteudoRelatorios').innerHTML = `
         <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Total Itens</h4><div class="value">${dados.reduce((a,l)=>a+(l.itens||0),0)}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${dados.filter(l=>l.status==='ENTREGUE').length}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${dados.filter(l=>l.status==='EM ABERTO' || !l.status).length}</div></div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0"><div class="chart-container"><h4>📅 Pedidos por Mês</h4> <table style="width:100%">${Object.entries(meses).map(([m,q])=>`<tr><td>${m}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
-        <div class="chart-container"><h4>📌 Pedidos por Status</h4> <table style="width:100%">${Object.entries(status).map(([s,q])=>`<tr><td>${s}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
-        <div class="chart-container"><h4>💰 Pedidos por Condição</h4> <table style="width:100%">${Object.entries(cond).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
-        <div class="chart-container"><h4>🏷️ Pedidos por Categoria</h4> <table style="width:100%">${Object.entries(cat).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div><\/div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px"><div class="chart-container"><h4>🏆 Top Clientes</h4> <table style="width:100%">${topClientes.map(([c,q])=>`<tr><td>${c}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div>
-        <div class="chart-container"><h4>🏭 Top Fornecedores</h4> <table style="width:100%">${topForn.map(([f,q])=>`<tr><td>${f}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div><\/div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0"><div class="chart-container"><h4>📅 Pedidos por Mês</h4> <table style="width:100%">${Object.entries(meses).map(([m,q])=>`<tr><td>${m}</td><td>${q}</td></tr>`).join('')}</table></div>
+        <div class="chart-container"><h4>📌 Pedidos por Status</h4> <table style="width:100%">${Object.entries(status).map(([s,q])=>`<tr><td>${s}</td><td>${q}</td></tr>`).join('')}</table></div>
+        <div class="chart-container"><h4>💰 Pedidos por Condição</h4> <table style="width:100%">${Object.entries(cond).map(([c,q])=>`<tr><td>${c}</td><td>${q}</td></tr>`).join('')}</table></div>
+        <div class="chart-container"><h4>🏷️ Pedidos por Categoria</h4> <table style="width:100%">${Object.entries(cat).map(([c,q])=>`<tr><td>${c}</td><td>${q}</td></tr>`).join('')}</table></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px"><div class="chart-container"><h4>🏆 Top Clientes</h4> <table style="width:100%">${topClientes.map(([c,q])=>`<tr><td>${c}</td><td>${q} pedidos</td></tr>`).join('')}</table></div>
+        <div class="chart-container"><h4>🏭 Top Fornecedores</h4> <table style="width:100%">${topForn.map(([f,q])=>`<tr><td>${f}</td><td>${q} pedidos</td></tr>`).join('')}</table></div></div>
     `;
 }
 
@@ -1878,7 +1877,7 @@ function gerarDashboard(dados) {
         <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${entregues}</div></div><div class="kpi-card"><h4>Atrasados</h4><div class="value">${atrasados}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${pendentes}</div></div></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px"><div class="kpi-card"><h4>⏱️ Tempo Médio Pagamento</h4><div class="value">${tempoMedioPagamento} dias</div></div><div class="kpi-card"><h4>⏱️ Tempo Médio Entrega</h4><div class="value">${tempoMedioEntrega} dias</div></div></div>
         <div class="charts-grid"><div class="chart-container"><canvas id="graficoStatus"></canvas></div><div class="chart-container"><canvas id="graficoTipo"></canvas></div><div class="chart-container"><canvas id="graficoCondicao"></canvas></div></div>
-        <h3>⏱️ Tempo Médio de Entrega por Fornecedor</h3><div class="table-container"><table class="auto-layout"><thead><tr><th>Fornecedor</th><th>Pedidos</th><th>Prazo Médio (dias)</th></tr></thead><tbody>${rankingFornecedores.map(f=>`<tr><td>${f.fornecedor}<\/td><td>${f.pedidos}<\/td><td>${f.prazoMedio}<\/td><\/tr>`).join('')}</tbody><\/table><\/div>
+        <h3>⏱️ Tempo Médio de Entrega por Fornecedor</h3><div class="table-container"><table class="auto-layout"><thead><tr><th>Fornecedor</th><th>Pedidos</th><th>Prazo Médio (dias)</th></tr></thead><tbody>${rankingFornecedores.map(f=>`<tr><td>${f.fornecedor}</td><td>${f.pedidos}</td><td>${f.prazoMedio}</td></tr>`).join('')}</tbody></table></div>
     `;
     
     const statusCount = {}; dados.forEach(l => { let s = l.status || 'PENDENTE'; statusCount[s] = (statusCount[s] || 0) + 1; });
@@ -1897,8 +1896,8 @@ function telaUsuarios() {
             <h2>👤 Gerenciar Usuários</h2>
             <div class="form-grid"><div class="form-group"><label class="required">Novo Usuário</label><input type="text" id="novo_usuario"></div><div class="form-group"><label>Senha</label><input type="password" id="nova_senha" placeholder="Deixe em branco"></div><div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarUsuario" onclick="adicionarUsuario()">➕ Adicionar</button></div></div>
             <div class="table-container"><table class="auto-layout"><thead><tr><th>#</th><th>Usuário</th><th>Senha</th><th>Ações</th></tr></thead><tbody>
-                ${usuarios.map((u,i)=>`<tr><td>${i+1}<\/td><td>${escapeHtml(u.nome)}<\/td><td>${u.senha?'••••••':'Sem senha'}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar usuário" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️</button><button class="small danger" data-tooltip="Excluir usuário" onclick="excluirUsuario('${u.id}')">🗑️</button><\/td><\/tr>`).join('')}
-            </tbody><\/table><\/div>
+                ${usuarios.map((u,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(u.nome)}</td><td>${u.senha?'••••••':'Sem senha'}</td><td class="acoes-cell"><button class="small" data-tooltip="Editar usuário" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️</button><button class="small danger" data-tooltip="Excluir usuário" onclick="excluirUsuario('${u.id}')">🗑️</button></td></tr>`).join('')}
+            </tbody></table></div>
         </div>
     `;
 }
