@@ -1359,7 +1359,7 @@ function renderLancamentos() {
                 <button class="small info" data-tooltip="Gerenciar anexos" onclick="abrirModalAnexos(${l.pedido})">📎</button>
                 <button class="small danger" data-tooltip="Excluir lançamento" onclick="excluirLancamento('${l.id}')">🗑️</button>
             </td>
-         </tr>`;
+        </tr>`;
     }).join('');
     
     const tfoot = document.getElementById('lancamentosFooter');
@@ -1372,7 +1372,7 @@ function renderLancamentos() {
             <td colspan="5"></td>
             <td>${totaisFiltrados.totalPedidos} pedidos</td>
             <td colspan="4"></td>
-         </tr>`;
+        </tr>`;
     }
 }
 
@@ -1624,40 +1624,53 @@ async function salvarEdicaoLancamento(id) {
         const l = lancamentos.find(l => l.id === id);
         if (!l) throw new Error('Lançamento não encontrado');
         
-        // Captura todos os campos do formulário
-        l.pedido = document.getElementById('edit_lan_pedido')?.value || l.pedido;
-        l.data = document.getElementById('edit_lan_data')?.value || l.data;
-        l.mes = document.getElementById('edit_lan_mes')?.value || l.mes;
-        l.tipo = document.getElementById('edit_lan_tipo')?.value || l.tipo;
-        l.cliente = document.getElementById('edit_lan_cliente')?.value || l.cliente;
-        l.oc = document.getElementById('edit_lan_oc')?.value?.toUpperCase() || l.oc;
-        l.fornecedor = document.getElementById('edit_lan_fornecedor')?.value || l.fornecedor;
-        l.categoria = document.getElementById('edit_lan_categoria')?.value || l.categoria;
-        l.itens = parseInt(document.getElementById('edit_lan_itens')?.value) || 0;
-        l.produtos = document.getElementById('edit_lan_produtos')?.value?.toUpperCase() || l.produtos;
+        // Função auxiliar para evitar undefined
+        const getValue = (id, fallback = '') => {
+            const el = document.getElementById(id);
+            return el ? el.value : fallback;
+        };
+        
+        // Captura todos os campos com fallback para string vazia ou valor padrão
+        l.pedido = getValue('edit_lan_pedido') || l.pedido;
+        l.data = getValue('edit_lan_data') || l.data;
+        l.mes = getValue('edit_lan_mes') || l.mes;
+        l.tipo = getValue('edit_lan_tipo') || l.tipo;
+        l.cliente = getValue('edit_lan_cliente') || l.cliente;
+        l.oc = getValue('edit_lan_oc').toUpperCase() || l.oc;
+        l.fornecedor = getValue('edit_lan_fornecedor') || l.fornecedor;
+        l.categoria = getValue('edit_lan_categoria') || l.categoria;
+        l.itens = parseInt(getValue('edit_lan_itens')) || 0;
+        l.produtos = getValue('edit_lan_produtos').toUpperCase() || l.produtos;
         
         // Valor: converte corretamente
-        let valorRaw = document.getElementById('edit_lan_valor')?.value || '0,00';
+        let valorRaw = getValue('edit_lan_valor', '0,00');
         let valorNumerico = parseFloat(valorRaw.replace(/\./g, '').replace(',', '.'));
         if (isNaN(valorNumerico)) valorNumerico = 0;
         l.valor = valorNumerico;
         
-        l.data_pagto = document.getElementById('edit_lan_data_pagto')?.value || l.data_pagto;
-        l.condicao = document.getElementById('edit_lan_condicao')?.value || l.condicao;
-        l.prev_fat = document.getElementById('edit_lan_prev_fat')?.value || l.prev_fat;
-        l.novo_prazo = document.getElementById('edit_lan_novo_prazo')?.value || l.novo_prazo;
-        l.prev_chegada = document.getElementById('edit_lan_prev_chegada')?.value || l.prev_chegada;
-        l.status = document.getElementById('edit_lan_status')?.value || l.status;
-        l.data_fat = document.getElementById('edit_lan_data_fat')?.value || l.data_fat;
-        l.nf = document.getElementById('edit_lan_nf')?.value?.toUpperCase() || l.nf;
-        l.transportadora = document.getElementById('edit_lan_transportadora')?.value?.toUpperCase() || l.transportadora;
-        l.chegada = document.getElementById('edit_lan_chegada')?.value || l.chegada;
-        l.conferencia = document.getElementById('edit_lan_conferencia')?.value || l.conferencia;
-        l.entrega = document.getElementById('edit_lan_entrega')?.value || l.entrega;
-        l.prazo_final = document.getElementById('edit_lan_prazo_final')?.value || l.prazo_final;
-        l.observacoes = (document.getElementById('edit_lan_observacoes')?.value || '').substring(0, 100);
+        l.data_pagto = getValue('edit_lan_data_pagto') || l.data_pagto;
+        l.condicao = getValue('edit_lan_condicao') || l.condicao;
+        l.prev_fat = getValue('edit_lan_prev_fat') || l.prev_fat;
+        l.novo_prazo = getValue('edit_lan_novo_prazo') || l.novo_prazo;
+        l.prev_chegada = getValue('edit_lan_prev_chegada') || l.prev_chegada;
+        l.status = getValue('edit_lan_status') || l.status;
+        l.data_fat = getValue('edit_lan_data_fat') || l.data_fat;
+        l.nf = getValue('edit_lan_nf').toUpperCase() || l.nf;
+        l.transportadora = getValue('edit_lan_transportadora').toUpperCase() || l.transportadora;
+        l.chegada = getValue('edit_lan_chegada') || l.chegada;
+        l.conferencia = getValue('edit_lan_conferencia') || l.conferencia;
+        l.entrega = getValue('edit_lan_entrega') || l.entrega;
+        l.prazo_final = getValue('edit_lan_prazo_final') || l.prazo_final || null; // null é aceito no Firestore
+        l.observacoes = (getValue('edit_lan_observacoes') || '').substring(0, 100);
         l.editadoPor = usuarioAtual;
         l.editadoEm = new Date().toISOString();
+        
+        // Garante que campos vazios virem null para evitar undefined
+        const camposString = ['data', 'mes', 'tipo', 'cliente', 'oc', 'fornecedor', 'categoria', 'produtos', 'data_pagto', 'condicao', 'prev_fat', 'novo_prazo', 'prev_chegada', 'status', 'data_fat', 'nf', 'transportadora', 'chegada', 'conferencia', 'entrega', 'prazo_final', 'observacoes'];
+        camposString.forEach(campo => {
+            if (l[campo] === undefined) l[campo] = null;
+            if (l[campo] === '') l[campo] = null;
+        });
         
         // Validação de datas
         if (!validarDatas(l)) {
