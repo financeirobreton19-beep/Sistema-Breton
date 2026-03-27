@@ -543,7 +543,19 @@ const categorias = [
 ];
 
 const tiposPedido = ['OC', 'SHOWROOM', 'ESTOQUE', 'ASSISTENCIA'];
-const mesesLista = ['Janeiro/2026', 'Fevereiro/2026', 'Março/2026', 'Abril/2026', 'Maio/2026', 'Junho/2026', 'Julho/2026', 'Agosto/2026', 'Setembro/2026', 'Outubro/2026', 'Novembro/2026', 'Dezembro/2026'];
+
+// Gera meses de janeiro/2025 a dezembro/2027
+const mesesLista = (() => {
+    const meses = [];
+    const anos = [2025, 2026, 2027];
+    const nomesMeses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    for (const ano of anos) {
+        for (const mes of nomesMeses) {
+            meses.push(`${mes}/${ano}`);
+        }
+    }
+    return meses;
+})();
 
 const statusLista = [
     'AG. FATURAMENTO',
@@ -968,9 +980,9 @@ function telaClientes() {
             </div>
             <div class="search-box"><input type="text" id="buscaCliente" placeholder="🔍 Buscar..." onkeyup="filtrarClientes()"></div>
             <div class="table-container"><table class="auto-layout" id="tabelaClientes"><thead><th>#</th><th>Pedido</th><th>Data</th><th>Cliente</th><th>CPF/CNPJ</th><th>Contato</th><th>Ações</th></thead>
-                <tbody>${clientes.map((c,i)=>`<tr><td>${i+1}</td><td>${c.pedido}</td><td>${formatarData(c.data)}</td><td>${escapeHtml(c.cliente)}</td><td>${escapeHtml(c.cpf_cnpj||'-')}</td><td>${escapeHtml(c.contato||'-')}</td><td class="acoes-cell"><button class="small" data-tooltip="Editar cliente" onclick="abrirModalEdicaoCliente('${c.id}')">✏️</button><button class="small danger" data-tooltip="Excluir cliente" onclick="excluirCliente('${c.id}')">🗑️</button></td></tr>`).join('')}
-            </tbody></table></div>
-        </div>
+                <tbody>${clientes.map((c,i)=>`<tr><td>${i+1}<\/td><td>${c.pedido}<\/td><td>${formatarData(c.data)}<\/td><td>${escapeHtml(c.cliente)}<\/td><td>${escapeHtml(c.cpf_cnpj||'-')}<\/td><td>${escapeHtml(c.contato||'-')}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar cliente" onclick="abrirModalEdicaoCliente('${c.id}')">✏️<\/button><button class="small danger" data-tooltip="Excluir cliente" onclick="excluirCliente('${c.id}')">🗑️<\/button><\/td><\/tr>`).join('')}
+            </tbody><\/table><\/div>
+        <\/div>
     `;
 }
 
@@ -1024,7 +1036,7 @@ function abrirModalEdicaoCliente(id) {
     const modal = getElement('modalEditarCliente');
     const content = getElement('modalEditarClienteContent');
     if (!modal || !content) return;
-    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nº Pedido</label><input type="number" id="edit_cli_pedido" value="${c.pedido}"></div><div class="form-group"><label>Data</label><input type="date" id="edit_cli_data" value="${c.data}"></div><div class="form-group"><label>Cliente</label><input type="text" id="edit_cli_nome" value="${escapeHtml(c.cliente)}" style="text-transform:uppercase"></div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_cli_cpf" value="${escapeHtml(c.cpf_cnpj||'')}"></div><div class="form-group"><label>Contato</label><input type="text" id="edit_cli_contato" value="${escapeHtml(c.contato||'')}"></div></div><div style="text-align:right; margin-top:20px"><button class="success" id="btnSalvarCliente" onclick="salvarEdicaoCliente('${id}')">💾 SALVAR</button></div>`;
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nº Pedido</label><input type="number" id="edit_cli_pedido" value="${c.pedido}"><\/div><div class="form-group"><label>Data</label><input type="date" id="edit_cli_data" value="${c.data}"><\/div><div class="form-group"><label>Cliente</label><input type="text" id="edit_cli_nome" value="${escapeHtml(c.cliente)}" style="text-transform:uppercase"><\/div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_cli_cpf" value="${escapeHtml(c.cpf_cnpj||'')}"><\/div><div class="form-group"><label>Contato</label><input type="text" id="edit_cli_contato" value="${escapeHtml(c.contato||'')}"><\/div><\/div><div style="text-align:right; margin-top:20px"><button class="success" id="btnSalvarCliente" onclick="salvarEdicaoCliente('${id}')">💾 SALVAR<\/button><\/div>`;
     modal.classList.add('active');
 }
 
@@ -1074,9 +1086,9 @@ function telaFornecedores() {
             </div>
             <div class="search-box"><input type="text" id="buscaFornecedor" placeholder="🔍 Buscar..." onkeyup="filtrarFornecedores()"></div>
             <div class="table-container"><table class="auto-layout" id="tabelaFornecedores"><thead><th>#</th><th>COD</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Condição</th><th>Coleção</th><th>Ações</th></thead>
-                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}</td><td>${f.cod}</td><td>${escapeHtml(f.nome)}</td><td>${escapeHtml(f.cpf_cnpj||'-')}</td><td>${escapeHtml(f.condicao||'-')}</td><td>${escapeHtml(f.colecao||'-')}</td><td class="acoes-cell"><button class="small" data-tooltip="Editar fornecedor" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" data-tooltip="Excluir fornecedor" onclick="excluirFornecedor('${f.id}')">🗑️</button></td></tr>`).join('')}
-            </tbody></table></div>
-        </div>
+                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}<\/td><td>${f.cod}<\/td><td>${escapeHtml(f.nome)}<\/td><td>${escapeHtml(f.cpf_cnpj||'-')}<\/td><td>${escapeHtml(f.condicao||'-')}<\/td><td>${escapeHtml(f.colecao||'-')}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar fornecedor" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️<\/button><button class="small danger" data-tooltip="Excluir fornecedor" onclick="excluirFornecedor('${f.id}')">🗑️<\/button><\/td><\/tr>`).join('')}
+            </tbody><\/table><\/div>
+        <\/div>
     `;
 }
 
@@ -1144,7 +1156,7 @@ function abrirModalEdicaoFornecedor(id) {
     const modal = getElement('modalEditarFornecedor');
     const content = getElement('modalEditarFornecedorContent');
     if (!modal || !content) return;
-    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Código</label><input type="text" id="edit_for_cod" value="${f.cod}" readonly></div><div class="form-group"><label>Fornecedor</label><input type="text" id="edit_for_nome" value="${escapeHtml(f.nome)}" style="text-transform:uppercase"></div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_for_cpf" value="${escapeHtml(f.cpf_cnpj||'')}"></div><div class="form-group"><label>Condição</label><select id="edit_for_condicao"><option value="">Selecione</option><option value="FATURADO" ${f.condicao==='FATURADO'?'selected':''}>FATURADO</option><option value="28D" ${f.condicao==='28D'?'selected':''}>28D</option><option value="ENTRADA + ENTREGA" ${f.condicao==='ENTRADA + ENTREGA'?'selected':''}>ENTRADA + ENTREGA</option><option value="ANTECIPADO" ${f.condicao==='ANTECIPADO'?'selected':''}>ANTECIPADO</option></select></div><div class="form-group"><label>Coleção</label><input type="text" id="edit_for_colecao" value="${escapeHtml(f.colecao||'')}" style="text-transform:uppercase"></div></div><div style="text-align:right; margin-top:20px"><button class="success" id="btnSalvarFornecedor" onclick="salvarEdicaoFornecedor('${id}')">💾 SALVAR</button></div>`;
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Código</label><input type="text" id="edit_for_cod" value="${f.cod}" readonly><\/div><div class="form-group"><label>Fornecedor</label><input type="text" id="edit_for_nome" value="${escapeHtml(f.nome)}" style="text-transform:uppercase"><\/div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_for_cpf" value="${escapeHtml(f.cpf_cnpj||'')}"><\/div><div class="form-group"><label>Condição</label><select id="edit_for_condicao"><option value="">Selecione</option><option value="FATURADO" ${f.condicao==='FATURADO'?'selected':''}>FATURADO</option><option value="28D" ${f.condicao==='28D'?'selected':''}>28D</option><option value="ENTRADA + ENTREGA" ${f.condicao==='ENTRADA + ENTREGA'?'selected':''}>ENTRADA + ENTREGA</option><option value="ANTECIPADO" ${f.condicao==='ANTECIPADO'?'selected':''}>ANTECIPADO</option><\/select><\/div><div class="form-group"><label>Coleção</label><input type="text" id="edit_for_colecao" value="${escapeHtml(f.colecao||'')}" style="text-transform:uppercase"><\/div><\/div><div style="text-align:right; margin-top:20px"><button class="success" id="btnSalvarFornecedor" onclick="salvarEdicaoFornecedor('${id}')">💾 SALVAR<\/button><\/div>`;
     modal.classList.add('active');
 }
 
@@ -1850,12 +1862,12 @@ function gerarRelatorios(dados) {
     
     document.getElementById('conteudoRelatorios').innerHTML = `
         <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Total Itens</h4><div class="value">${dados.reduce((a,l)=>a+(l.itens||0),0)}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${dados.filter(l=>l.status==='ENTREGUE').length}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${dados.filter(l=>l.status==='EM ABERTO' || !l.status).length}</div></div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0"><div class="chart-container"><h4>📅 Pedidos por Mês</h4> <table style="width:100%">${Object.entries(meses).map(([m,q])=>`<tr><td>${m}</td><td>${q}</td></tr>`).join('')}</table></div>
-        <div class="chart-container"><h4>📌 Pedidos por Status</h4> <table style="width:100%">${Object.entries(status).map(([s,q])=>`<tr><td>${s}</td><td>${q}</td></tr>`).join('')}</table></div>
-        <div class="chart-container"><h4>💰 Pedidos por Condição</h4> <table style="width:100%">${Object.entries(cond).map(([c,q])=>`<tr><td>${c}</td><td>${q}</td></tr>`).join('')}</table></div>
-        <div class="chart-container"><h4>🏷️ Pedidos por Categoria</h4> <table style="width:100%">${Object.entries(cat).map(([c,q])=>`<tr><td>${c}</td><td>${q}</td></tr>`).join('')}</table></div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px"><div class="chart-container"><h4>🏆 Top Clientes</h4> <table style="width:100%">${topClientes.map(([c,q])=>`<tr><td>${c}</td><td>${q} pedidos</td></tr>`).join('')}</table></div>
-        <div class="chart-container"><h4>🏭 Top Fornecedores</h4> <table style="width:100%">${topForn.map(([f,q])=>`<tr><td>${f}</td><td>${q} pedidos</td></tr>`).join('')}</table></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0"><div class="chart-container"><h4>📅 Pedidos por Mês</h4> <table style="width:100%">${Object.entries(meses).map(([m,q])=>`<tr><td>${m}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div class="chart-container"><h4>📌 Pedidos por Status</h4> <table style="width:100%">${Object.entries(status).map(([s,q])=>`<tr><td>${s}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div class="chart-container"><h4>💰 Pedidos por Condição</h4> <table style="width:100%">${Object.entries(cond).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div class="chart-container"><h4>🏷️ Pedidos por Categoria</h4> <table style="width:100%">${Object.entries(cat).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div><\/div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px"><div class="chart-container"><h4>🏆 Top Clientes</h4> <table style="width:100%">${topClientes.map(([c,q])=>`<tr><td>${c}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div class="chart-container"><h4>🏭 Top Fornecedores</h4> <table style="width:100%">${topForn.map(([f,q])=>`<tr><td>${f}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div><\/div>
     `;
 }
 
@@ -1958,7 +1970,7 @@ function gerarDashboard(dados) {
         <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${entregues}</div></div><div class="kpi-card"><h4>Atrasados</h4><div class="value">${atrasados}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${pendentes}</div></div></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px"><div class="kpi-card"><h4>⏱️ Tempo Médio Pagamento</h4><div class="value">${tempoMedioPagamento} dias</div></div><div class="kpi-card"><h4>⏱️ Tempo Médio Entrega</h4><div class="value">${tempoMedioEntrega} dias</div></div></div>
         <div class="charts-grid"><div class="chart-container"><canvas id="graficoStatus"></canvas></div><div class="chart-container"><canvas id="graficoTipo"></canvas></div><div class="chart-container"><canvas id="graficoCondicao"></canvas></div></div>
-        <h3>⏱️ Tempo Médio de Entrega por Fornecedor</h3><div class="table-container"><table class="auto-layout"><thead><th>Fornecedor</th><th>Pedidos</th><th>Prazo Médio (dias)</th></thead><tbody>${rankingFornecedores.map(f=>`<tr><td>${f.fornecedor}</td><td>${f.pedidos}</td><td>${f.prazoMedio}</td></tr>`).join('')}</tbody></table></div>
+        <h3>⏱️ Tempo Médio de Entrega por Fornecedor</h3><div class="table-container"><table class="auto-layout"><thead><th>Fornecedor</th><th>Pedidos</th><th>Prazo Médio (dias)</th></thead><tbody>${rankingFornecedores.map(f=>`<tr><td>${f.fornecedor}<\/td><td>${f.pedidos}<\/td><td>${f.prazoMedio}<\/td><\/tr>`).join('')}</tbody><\/table><\/div>
     `;
     
     const statusCount = {}; dados.forEach(l => { let s = l.status || 'PENDENTE'; statusCount[s] = (statusCount[s] || 0) + 1; });
@@ -1977,9 +1989,9 @@ function telaUsuarios() {
             <h2>👤 Gerenciar Usuários</h2>
             <div class="form-grid"><div class="form-group"><label class="required">Novo Usuário</label><input type="text" id="novo_usuario"></div><div class="form-group"><label>Senha</label><input type="password" id="nova_senha" placeholder="Deixe em branco"></div><div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarUsuario" onclick="adicionarUsuario()">➕ Adicionar</button></div></div>
             <div class="table-container"><table class="auto-layout"><thead><th>#</th><th>Usuário</th><th>Senha</th><th>Ações</th></thead><tbody>
-                ${usuarios.map((u,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(u.nome)}</td><td>${u.senha?'••••••':'Sem senha'}</td><td class="acoes-cell"><button class="small" data-tooltip="Editar usuário" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️</button><button class="small danger" data-tooltip="Excluir usuário" onclick="excluirUsuario('${u.id}')">🗑️</button></td></tr>`).join('')}
-            </tbody></table></div>
-        </div>
+                ${usuarios.map((u,i)=>`<tr><td>${i+1}<\/td><td>${escapeHtml(u.nome)}<\/td><td>${u.senha?'••••••':'Sem senha'}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar usuário" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️<\/button><button class="small danger" data-tooltip="Excluir usuário" onclick="excluirUsuario('${u.id}')">🗑️<\/button><\/td><\/tr>`).join('')}
+            </tbody><\/table><\/div>
+        <\/div>
     `;
 }
 
