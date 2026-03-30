@@ -3,1059 +3,2155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Vendas - Breton Belém</title>
+    <title>BRETON BELÉM - Controle de Pedidos</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: #f4f6f9; display: flex; min-height: 100vh; }
-        .sidebar { width: 260px; background: #1e2a3a; color: #e2e8f0; position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
-        .sidebar-header { padding: 24px 20px; border-bottom: 1px solid #2d3e4f; text-align: center; }
-        .sidebar-header h2 { font-size: 1.4rem; color: white; }
-        .sidebar-header p { font-size: 0.75rem; opacity: 0.7; }
-        .sidebar nav { padding: 0 12px; display: flex; flex-direction: column; gap: 4px; margin-top: 20px; }
-        .sidebar nav button { width: 100%; text-align: left; background: transparent; border: none; color: #cbd5e1; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
-        .sidebar nav button:hover { background: #2d3e4f; color: white; }
-        .sidebar nav button.active { background: #2c6e9e; color: white; }
-        .main-content { margin-left: 260px; flex: 1; padding: 24px 32px; background: #f4f6f9; min-height: 100vh; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; background: white; padding: 12px 24px; border-radius: 40px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .page-title { font-size: 1.6rem; font-weight: 600; color: #0f172a; }
-        .user-area { display: flex; align-items: center; gap: 16px; }
-        .logout-btn { background: #e53e3e; border: none; color: white; padding: 6px 14px; border-radius: 30px; cursor: pointer; }
-        .card { background: white; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 28px; }
-        h2 { font-size: 1.3rem; margin-bottom: 1rem; color: #1e2a3a; border-left: 4px solid #2c6e9e; padding-left: 12px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; background: #f8fafc; padding: 20px; border-radius: 16px; margin-bottom: 20px; }
-        .form-group { display: flex; flex-direction: column; gap: 6px; }
-        .form-group label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #4a5568; }
-        input, select, textarea { padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.9rem; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: #2c6e9e; }
-        button { background: #2c6e9e; border: none; color: white; padding: 8px 18px; border-radius: 30px; cursor: pointer; font-weight: 500; transition: 0.2s; }
-        button:hover { background: #1e4a6e; }
-        button.small { padding: 4px 12px; font-size: 0.75rem; }
-        button.success { background: #2b6e3c; }
-        button.danger { background: #b13e3e; }
-        button.info { background: #3182ce; }
-        button.warning { background: #e67e22; }
-        .table-wrapper { overflow-x: auto; border-radius: 16px; border: 1px solid #e2e8f0; background: white; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { background: #f1f5f9; padding: 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e2e8f0; }
-        td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
-        .actions-cell { display: flex; gap: 8px; align-items: center; }
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 28px; }
-        .kpi-card { background: white; border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
-        .kpi-card .value { font-size: 1.8rem; font-weight: 700; color: #2c6e9e; }
-        .filters-bar { background: #f8fafc; border-radius: 20px; padding: 16px; display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; align-items: flex-end; }
-        .filter-group { display: flex; flex-direction: column; gap: 4px; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f0f0; display: flex; }
+        
+        .sidebar {
+            width: 250px;
+            background: #5C2A2A;
+            color: white;
+            height: 100vh;
+            padding: 20px 0;
+            position: fixed;
+            overflow-y: auto;
+        }
+        
+        .logo-area {
+            text-align: center;
+            padding: 0 15px 20px;
+            border-bottom: 1px solid #8B5A5A;
+            margin-bottom: 15px;
+        }
+        
+        .logo-main { font-size: 18px; font-weight: bold; }
+        .logo-sub { font-size: 10px; opacity: 0.8; margin-top: 5px; }
+        
+        .sidebar button {
+            width: 100%;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            color: #FFE8E8;
+            text-align: left;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar button:hover { background: #3f1f1f; padding-left: 25px; }
+        
+        .main {
+            margin-left: 250px;
+            flex: 1;
+            padding: 20px;
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 70px;
+        }
+        
+        .top-bar {
+            background: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #ddd;
+        }
+        
+        .system-title { font-size: 18px; font-weight: bold; color: #5C2A2A; }
+        .system-user { font-size: 14px; color: #8B5A5A; }
+        
+        .box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        h2 { color: #5C2A2A; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #FAF0F0; font-size: 18px; }
+        h3 { color: #8B5A5A; margin: 15px 0 10px; font-size: 16px; }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            background: #FAF0F0;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 12px; color: #5C2A2A; margin-bottom: 3px; font-weight: bold; }
+        .form-group label.required::after { content: " *"; color: #d32f2f; }
+        
+        input, select, textarea {
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            width: 100%;
+        }
+        
+        input:focus, select:focus { outline: none; border-color: #8B5A5A; }
+        input[readonly] { background: #f5f5f5; }
+        
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background: #8B5A5A;
+            color: white;
+            cursor: pointer;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+        
+        button:hover { background: #5C2A2A; }
+        button.small { padding: 4px 8px; font-size: 12px; }
+        button.success { background: #2e7d32; }
+        button.danger { background: #d32f2f; }
+        button.info { background: #0288d1; }
+        button.excel { background: #1e6f3f; font-weight: bold; }
+        button.salvar { background: #2e7d32; font-weight: bold; padding: 10px 20px; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        
+        .acoes-cell {
+            white-space: nowrap;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        
+        .acoes-cell button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 10px;
+            font-size: 0.8rem;
+        }
+        
+        [data-tooltip] {
+            position: relative;
+            cursor: pointer;
+        }
+        [data-tooltip]:before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 5px 10px;
+            background: #333;
+            color: white;
+            font-size: 11px;
+            border-radius: 4px;
+            white-space: nowrap;
+            display: none;
+            z-index: 100;
+            margin-bottom: 5px;
+        }
+        [data-tooltip]:hover:before {
+            display: block;
+        }
+        
+        .table-container { overflow-x: auto; margin-top: 15px; border: 1px solid #ddd; border-radius: 6px; background: white; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { background: #5C2A2A; color: white; padding: 10px 8px; font-weight: 500; font-size: 12px; text-align: left; white-space: nowrap; }
+        td { border: 1px solid #ddd; padding: 8px; white-space: nowrap; }
+        tr:hover { background: #fafafa; }
+        
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .status-badge.faturado { background: #e3f2fd; color: #0b5e7e; border: 1px solid #bbdef5; }
+        .status-badge.ag-faturamento { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+        .status-badge.prorrogado { background: #fff8e1; color: #ff8f00; border: 1px solid #ffecb3; }
+        .status-badge.em-aberto { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+        .status-badge.atrasado { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+        .status-badge.entregue { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+        .status-badge.em-rota { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+        .status-badge.cancelado { background: #eeeeee; color: #616161; border: 1px solid #e0e0e0; }
+        .status-badge.pendente { background: #f5f5f5; color: #616161; border: 1px solid #e0e0e0; }
+        
+        tr.atrasado-row { background-color: #ffebee !important; }
+        tr.atrasado-row:hover { background-color: #ffcdd2 !important; }
+        
+        .resumo-rapido {
+            background: #FAF0F0;
+            padding: 8px 15px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            display: inline-flex;
+            gap: 20px;
+            font-size: 12px;
+            border: 1px solid #ddd;
+            flex-wrap: wrap;
+        }
+        .resumo-item { display: inline-flex; align-items: center; gap: 5px; }
+        .resumo-item strong { color: #5C2A2A; }
+        
+        .filtros-rapidos {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .filtro-tipo-btn {
+            background: #f5f5f5;
+            color: #666;
+            padding: 4px 12px;
+            font-size: 12px;
+            border-radius: 20px;
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .filtro-tipo-btn:hover { background: #e0e0e0; }
+        .filtro-tipo-btn.active { background: #8B5A5A; color: white; border-color: #8B5A5A; }
+        
+        .ordenacao-btns {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .ordem-btn {
+            background: #f5f5f5;
+            color: #666;
+            padding: 4px 10px;
+            font-size: 11px;
+            border-radius: 16px;
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .ordem-btn:hover { background: #e0e0e0; }
+        .ordem-btn.active { background: #8B5A5A; color: white; border-color: #8B5A5A; }
+        
+        .tooltip-icon { cursor: help; color: #8B5A5A; font-size: 16px; }
+        .tooltip-icon:hover { color: #5C2A2A; }
+        
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .kpi-card {
+            background: #FAF0F0;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        .kpi-card h4 { margin: 0 0 5px; color: #5C2A2A; font-size: 13px; }
+        .kpi-card .value { font-size: 22px; font-weight: 500; color: #8B5A5A; }
+        
+        .lembretes-bar {
+            background: #fef7e7;
+            padding: 8px 12px;
+            margin-bottom: 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 12px;
+            border-left: 3px solid #ff9800;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .lembrete-item { display: inline-flex; align-items: center; gap: 4px; }
+        .lembrete-item.urgente { color: #d32f2f; }
+        
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #FAF0F0;
+            border-radius: 6px;
+            align-items: end;
+        }
+        .filtro-item { display: flex; flex-direction: column; }
+        .filtro-item label { font-size: 11px; color: #5C2A2A; margin-bottom: 3px; font-weight: 500; }
+        .filtro-item input, .filtro-item select { padding: 6px 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+        .filtro-actions { display: flex; gap: 5px; justify-content: flex-end; }
+        
+        .form-tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 2px solid #FAF0F0; padding-bottom: 10px; }
+        .tab-btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; background: #FAF0F0; }
+        .tab-btn.active { background: #8B5A5A; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 15px; margin: 15px 0; }
+        .chart-container { background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd; }
+        canvas { max-height: 200px; width: 100% !important; }
+        
+        .upload-area {
+            border: 2px dashed #8B5A5A;
+            padding: 15px;
+            text-align: center;
+            border-radius: 6px;
+            margin: 10px 0;
+            cursor: pointer;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .login-container { display: flex; justify-content: center; align-items: center; min-height: 80vh; }
+        .login-box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            width: 100%;
+            max-width: 350px;
+        }
+        .login-box h1 { color: #5C2A2A; font-size: 22px; text-align: center; margin-bottom: 5px; }
+        .login-box h2 { font-size: 12px; color: #666; text-align: center; margin-bottom: 25px; font-weight: normal; }
+        .login-field { margin-bottom: 20px; }
+        .login-field label { display: block; margin-bottom: 5px; font-size: 13px; color: #555; }
+        .login-field select, .login-field input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
+        .login-button { width: 100%; padding: 12px; background: #5C2A2A; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; }
+        .login-button:hover { background: #3f1f1f; }
+        
+        .log-viewer {
+            background: #f8f8f8;
+            padding: 12px;
+            border-radius: 6px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+            border: 1px solid #eee;
+        }
+        .log-entry { padding: 4px 0; border-bottom: 1px solid #eee; color: #333; }
+        .log-time { color: #888; }
+        .log-user { color: #5C2A2A; font-weight: 500; }
+        .log-action { color: #0288d1; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.3);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
         .modal.active { display: flex; }
-        .modal-content { background: white; border-radius: 24px; padding: 24px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .close-modal { cursor: pointer; font-size: 1.5rem; }
-        .login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f4f6f9; }
-        .login-card { background: white; border-radius: 32px; padding: 32px; width: 100%; max-width: 380px; text-align: center; }
-        .login-card input, .login-card select { width: 100%; padding: 12px; border-radius: 40px; border: 1px solid #cbd5e1; margin-bottom: 16px; }
-        .footer { margin-top: auto; text-align: center; font-size: 0.7rem; color: #8b9cb0; padding: 16px 0; border-top: 1px solid #e2e8f0; }
-        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; display: inline-block; }
-        .status-paid { background: #d4edda; color: #155724; }
-        .status-pending { background: #fff3cd; color: #856404; }
-        .search-box input { width: 100%; max-width: 300px; padding: 8px 16px; border-radius: 30px; border: 1px solid #e2e8f0; }
-        .chart-container { margin-top: 20px; }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+        .close-modal { font-size: 20px; cursor: pointer; color: #999; }
+        
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 250px;
+            right: 0;
+            background: #5C2A2A;
+            color: #F5E8E0;
+            text-align: center;
+            padding: 10px 15px;
+            font-size: 12px;
+            z-index: 10;
+        }
+        
+        .footer-verse {
+            position: fixed;
+            bottom: 8px;
+            left: 260px;
+            font-size: 9px;
+            color: #5C2A2A;
+            font-style: italic;
+            opacity: 0.6;
+            background: transparent;
+            z-index: 15;
+            pointer-events: none;
+        }
+        
+        .hidden { display: none; }
+        .mt-20 { margin-top: 20px; }
+        .text-center { text-align: center; }
+        .char-counter {
+            font-size: 10px;
+            color: #999;
+            text-align: right;
+            margin-top: 2px;
+        }
+        .char-counter.warning { color: #f57c00; }
+        .char-counter.danger { color: #d32f2f; }
+        
+        .search-box {
+            margin: 15px 0;
+        }
+        .search-box input {
+            width: 100%;
+            max-width: 300px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 5px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
-    <div class="sidebar" id="sidebar" style="display: none;">
-        <div class="sidebar-header">
-            <h2>BRETON BELÉM</h2>
-            <p>Sistema de Vendas</p>
-        </div>
-        <nav id="navMenu"></nav>
+
+<div class="sidebar" id="sidebar" style="display: none;">
+    <div class="logo-area">
+        <div class="logo-main">BRETON BELÉM</div>
+        <div class="logo-sub">Hong Possas Mov. de Decoração</div>
     </div>
-    <div class="main-content" id="mainContent"></div>
+    <button onclick="mostrar('clientes')">👥 Clientes</button>
+    <button onclick="mostrar('fornecedores')">📦 Fornecedores</button>
+    <button onclick="mostrar('lancamentos')">📝 Lançamentos</button>
+    <button onclick="mostrar('relatorios')">📊 Relatórios</button>
+    <button onclick="mostrar('dashboard')">📈 Dashboard</button>
+    <button onclick="mostrar('anexos')">📎 Anexos</button>
+    <button id="menuUsuarios" onclick="mostrar('usuarios')" style="display: none;">👤 Usuários</button>
+    <button id="menuLogs" onclick="mostrar('logs')" style="display: none;">📋 Logs</button>
+    <button onclick="logout()" style="margin-top: 20px;">🚪 Sair</button>
+</div>
 
-    <script>
-        // ==================== BANCO DE DADOS ====================
-        let db = {
-            clientes: [],
-            arquitetos: [],
-            consultores: [],
-            usuarios: [],
-            vendas: [],
-            parcelas: [],
-            logs: []
-        };
-        let usuarioAtual = null;
-        let usuarioPermissao = null;
+<div class="main" id="main-content"></div>
 
-        // ==================== FUNÇÕES AUXILIARES ====================
-        function formatarData(d) { if (!d) return '-'; let partes = d.split('-'); return `${partes[2]}/${partes[1]}/${partes[0]}`; }
-        function formatarValor(v) { return v.toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
-        function converterValor(s) { let n = parseFloat(s.replace(/\./g, '').replace(',', '.')); return isNaN(n) ? 0 : n; }
-        function formatarValorInput(i) { let v = i.value; if (!v) { i.value = '0,00'; return; } v = v.replace(/\./g, '').replace(',', '.'); let n = parseFloat(v); i.value = isNaN(n) ? '0,00' : n.toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
+<div class="footer" id="footer" style="display: none;">
+    <div>© 2025 Breton Belém - Todos os direitos reservados</div>
+</div>
+
+<div class="footer-verse" id="footerVerse" style="display: none;">Provérbios 16:3: "Confie ao Senhor as suas obras, e os seus planos serão bem-sucedidos."</div>
+
+<div class="modal" id="modalEditarFornecedor"><div class="modal-content"><div class="modal-header"><h3>✏️ Editar Fornecedor</h3><span class="close-modal" onclick="fecharModal('modalEditarFornecedor')">&times;</span></div><div id="modalEditarFornecedorContent"></div></div></div>
+<div class="modal" id="modalEditarCliente"><div class="modal-content"><div class="modal-header"><h3>✏️ Editar Cliente</h3><span class="close-modal" onclick="fecharModal('modalEditarCliente')">&times;</span></div><div id="modalEditarClienteContent"></div></div></div>
+<div class="modal" id="modalEditarLancamento"><div class="modal-content"><div class="modal-header"><h3>✏️ Editar Lançamento</h3><span class="close-modal" onclick="fecharModal('modalEditarLancamento')">&times;</span></div><div id="modalEditarLancamentoContent"></div></div></div>
+<div class="modal" id="modalAnexos"><div class="modal-content"><div class="modal-header"><h3>📎 Gerenciar Anexos</h3><span class="close-modal" onclick="fecharModal('modalAnexos')">&times;</span></div><div id="modalAnexosContent"></div></div></div>
+<div class="modal" id="modalUsuarios"><div class="modal-content"><div class="modal-header"><h3>👤 Editar Usuário</h3><span class="close-modal" onclick="fecharModal('modalUsuarios')">&times;</span></div><div id="modalUsuarioContent"></div></div></div>
+
+<script>
+// ============================================
+// CONFIGURAÇÃO DO FIREBASE
+// ============================================
+const firebaseConfig = {
+    apiKey: "AIzaSyB_y-pm046iaXL3xFrUDusPyh3yyrtsOoY",
+    authDomain: "sistema-breton.firebaseapp.com",
+    projectId: "sistema-breton",
+    storageBucket: "sistema-breton.firebasestorage.app",
+    messagingSenderId: "734348279859",
+    appId: "1:734348279859:web:246fe0f314063e34712346"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ============================================
+// CACHE DE ELEMENTOS DOM
+// ============================================
+const DOMCache = {};
+function getElement(id) {
+    if (!DOMCache[id]) {
+        DOMCache[id] = document.getElementById(id);
+    }
+    return DOMCache[id];
+}
+
+// ============================================
+// FUNÇÃO DE SANITIZAÇÃO
+// ============================================
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ============================================
+// DADOS
+// ============================================
+let clientes = [];
+let fornecedores = [];
+let lancamentos = [];
+let anexos = [];
+let usuarios = [];
+let logs = [];
+
+let usuarioAtual = null;
+let usuarioPermissao = null;
+let currentFilterType = "TODOS";
+let currentOrder = "data";
+let currentOrderDirection = "desc";
+
+const categorias = [
+    "ACESSORIO", "ADORNOS", "ALMOFADA", "ALMOFADAS", "APARADOR", "APOIO P/ MESA",
+    "ASSISTENCIA", "BALANÇO", "BANCO", "BANQUETA", "BANQUETAS", "BASE DE MESA",
+    "BUFFET", "CADEIRA", "CAMA", "CAPA", "CARRINHO", "CHAISE", "COMODA",
+    "ESPELHO", "ESPREGUIÇADEIRA", "ESCRIVANINHA", "KIT", "LUMINARIA", "LUSTRE",
+    "MESA", "MESA CENTRAL", "MESA DE CENTRO", "MESA DE JANTAR", "MESA DE JOGOS",
+    "MESA LATERAL", "OMBRELLONE", "OUTROS", "PENTEADEIRA", "POLTRONA", "PUFF",
+    "QUADRO", "RECAMIER", "SOFA", "TAMPO", "TAPETE", "TECIDO"
+];
+
+const tiposPedido = ['OC', 'SHOWROOM', 'ESTOQUE', 'ASSISTENCIA'];
+
+// Gera meses de janeiro/2025 a dezembro/2027
+const mesesLista = (() => {
+    const meses = [];
+    const anos = [2025, 2026, 2027];
+    const nomesMeses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    for (const ano of anos) {
+        for (const mes of nomesMeses) {
+            meses.push(`${mes}/${ano}`);
+        }
+    }
+    return meses;
+})();
+
+const statusLista = [
+    'AG. FATURAMENTO',
+    'ATRASADO',
+    'CANCELADO',
+    'EM ABERTO',
+    'ENTREGUE',
+    'FATURADO',
+    'PRORROGADO'
+];
+
+// ============================================
+// FUNÇÃO QUE CALCULA PREV. CHEGADA = DATA FAT + 20 DIAS
+// ============================================
+function calcularPrevisaoChegada() {
+    const dataFat = document.getElementById('lan_data_fat')?.value;
+    if (dataFat) {
+        const data = new Date(dataFat);
+        data.setDate(data.getDate() + 20);
+        const ano = data.getFullYear();
+        const mes = String(data.getMonth() + 1).padStart(2, '0');
+        const dia = String(data.getDate()).padStart(2, '0');
+        const prevChegadaInput = document.getElementById('lan_prev_chegada');
+        if (prevChegadaInput) prevChegadaInput.value = `${ano}-${mes}-${dia}`;
+    }
+}
+
+// ============================================
+// FUNÇÃO DE VALIDAÇÃO DE DATAS (APENAS ENTREGA NÃO PODE SER ANTES DO PAGAMENTO)
+// ============================================
+function validarDatas(lancamento) {
+    if (lancamento.data_pagto && lancamento.entrega) {
+        const dataPagto = new Date(lancamento.data_pagto);
+        const dataEntrega = new Date(lancamento.entrega);
+        if (dataEntrega < dataPagto) {
+            alert('⚠️ Atenção: Data de entrega não pode ser anterior à data de pagamento!');
+            return false;
+        }
+    }
+    return true;
+}
+
+// ============================================
+// FUNÇÃO DE LOADING
+// ============================================
+function showLoading(button, text = 'Salvando...') {
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = `<span class="loading-spinner"></span> ${text}`;
+    return originalText;
+}
+
+function hideLoading(button, originalText) {
+    button.disabled = false;
+    button.innerHTML = originalText;
+}
+
+// ============================================
+// CORREÇÃO: DESTACA SE STATUS NÃO FOR ENTREGUE E DATA VENCIDA OU PRÓXIMA (≤ 7 DIAS)
+// ============================================
+function isPedidoAtrasado(lancamento) {
+    const status = (lancamento.status || '').toUpperCase().trim();
+    if (status === 'ENTREGUE') return false;
+    if (!lancamento.entrega) return false;
+    const hoje = new Date();
+    const dataEntrega = new Date(lancamento.entrega);
+    const diffDias = Math.ceil((dataEntrega - hoje) / 86400000);
+    return diffDias <= 7;
+}
+
+// ============================================
+// FUNÇÕES DO FIREBASE
+// ============================================
+async function carregarDados() {
+    try {
+        const [clientesSnap, fornecedoresSnap, lancamentosSnap, anexosSnap, usuariosSnap, logsSnap] = await Promise.all([
+            db.collection('clientes').get(),
+            db.collection('fornecedores').get(),
+            db.collection('lancamentos').get(),
+            db.collection('anexos').get(),
+            db.collection('usuarios').get(),
+            db.collection('logs').get()
+        ]);
         
-        function calcularTaxas(forma, parcelas, valor) {
-            if (forma === 'À vista' || forma === 'PIX' || forma === 'Dinheiro' || forma === 'Boleto') return 0;
-            if (forma === 'Cartão') {
-                if (parcelas === 1) return valor * 0.0206;
-                if (parcelas <= 6) return valor * 0.0233;
-                return valor * 0.0263;
-            }
-            if (forma === 'Financiamento') return valor * 0.05;
-            return 0;
-        }
+        clientes = clientesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        fornecedores = fornecedoresSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        function salvarDados() { for (let key of Object.keys(db)) localStorage.setItem(key, JSON.stringify(db[key])); }
-        function adicionarLog(acao, detalhe = '') { db.logs.push({ data: new Date().toISOString(), usuario: usuarioAtual || 'Sistema', acao, detalhe }); if (db.logs.length > 500) db.logs = db.logs.slice(-500); salvarDados(); }
-
-        // ==================== CATEGORIA AUTOMÁTICA DO ARQUITETO ====================
-        function getCategoriaPorTotal(total) {
-            if (total <= 225000) return { categoria: 'CLASSIC', percentualRT: 10 };
-            if (total <= 445000) return { categoria: 'SILVER', percentualRT: 11 };
-            if (total <= 675000) return { categoria: 'GOLD', percentualRT: 12 };
-            if (total <= 985000) return { categoria: 'PLATINUM', percentualRT: 13 };
-            if (total <= 1335000) return { categoria: 'BLACK', percentualRT: 14 };
-            return { categoria: 'DIAMOND', percentualRT: 15 };
-        }
-
-        function atualizarCategoriaArquiteto(arquitetoId) {
-            const anoAtual = new Date().getFullYear();
-            const vendasArquiteto = db.vendas.filter(v => v.arquitetoId === arquitetoId && new Date(v.data).getFullYear() === anoAtual);
-            const totalVendas = vendasArquiteto.reduce((soma, v) => soma + v.valorVenda, 0);
-            const { categoria, percentualRT } = getCategoriaPorTotal(totalVendas);
-            const arquiteto = db.arquitetos.find(a => a.id === arquitetoId);
-            if (arquiteto) {
-                arquiteto.categoria = categoria;
-                arquiteto.percentualRT = percentualRT;
-                salvarDados();
+        lancamentos = await Promise.all(lancamentosSnap.docs.map(async (doc) => {
+            const data = { id: doc.id, ...doc.data() };
+            if (data.status) {
+                const normalized = data.status.toUpperCase().trim();
+                if (normalized !== data.status) {
+                    await db.collection('lancamentos').doc(doc.id).update({ status: normalized });
+                    data.status = normalized;
+                }
             }
-        }
-
-        function atualizarCategoriasTodosArquitetos() {
-            db.arquitetos.forEach(a => atualizarCategoriaArquiteto(a.id));
-        }
-
-        // ==================== CARREGAR DADOS INICIAIS ====================
-        function carregarDados() {
-            for (let key of Object.keys(db)) {
-                let stored = localStorage.getItem(key);
-                if (stored) db[key] = JSON.parse(stored);
-            }
-            
-            // Usuários padrão
-            if (db.usuarios.length === 0) {
-                db.usuarios.push({ id: '1', nome: 'Admin', usuario: 'admin', senha: '123', perfil: 'ADMIN' });
-                db.usuarios.push({ id: '2', nome: 'Consultor Teste', usuario: 'consultor', senha: '123', perfil: 'CONSULTIVO' });
-            }
-
-            // CLIENTES
-            if (db.clientes.length === 0) {
-                db.clientes = [
-                    { id: '1', pedido: 1101, data: '2025-03-01', cliente: 'MARIA SILVA' },
-                    { id: '2', pedido: 1102, data: '2025-03-05', cliente: 'JOAO PEREIRA' },
-                    { id: '3', pedido: 1103, data: '2025-03-10', cliente: 'ANA COSTA' },
-                    { id: '4', pedido: 1104, data: '2025-03-15', cliente: 'CARLOS SANTOS' },
-                    { id: '5', pedido: 1105, data: '2025-03-20', cliente: 'FERNANDA LIMA' },
-                    { id: '6', pedido: 1106, data: '2025-03-25', cliente: 'ROBERTO ALVES' }
-                ];
-            }
-
-            // ARQUITETOS
-            if (db.arquitetos.length === 0) {
-                db.arquitetos = [
-                    { id: '1', codigo: 'ARQ001', arquiteto: 'ANA BEATRIZ', contato: '(11) 97777-3333', categoria: 'CLASSIC', chavePix: 'ana@email.com', percentualRT: 10 },
-                    { id: '2', codigo: 'ARQ002', arquiteto: 'CARLOS MENDES', contato: '(11) 98888-4444', categoria: 'CLASSIC', chavePix: '11988884444', percentualRT: 10 },
-                    { id: '3', codigo: 'ARQ003', arquiteto: 'PATRICIA SOUZA', contato: '(11) 99999-5555', categoria: 'CLASSIC', chavePix: 'patricia.souza@email.com', percentualRT: 10 }
-                ];
-            }
-
-            // CONSULTORES
-            if (db.consultores.length === 0) {
-                db.consultores = [
-                    { id: '1', codigo: 'CONS001', consultor: 'CARLA LIMA', contato: '(11) 96666-4444', chavePix: 'carla@email.com' },
-                    { id: '2', codigo: 'CONS002', consultor: 'FERNANDA ROCHA', contato: '(11) 95555-3333', chavePix: '11955553333' },
-                    { id: '3', codigo: 'CONS003', consultor: 'MARIANA SANTOS', contato: '(11) 94444-2222', chavePix: 'mariana.santos@email.com' }
-                ];
-            }
-
-            // LIMPEZA DE DADOS OPERACIONAIS
-            db.vendas = [];
-            db.parcelas = [];
-            db.logs = [];
-
-            atualizarCategoriasTodosArquitetos();
-            salvarDados();
-        }
-
-        // ==================== LOGIN ====================
-        function mostrarLogin() {
-            document.getElementById('sidebar').style.display = 'none';
-            document.getElementById('mainContent').innerHTML = `
-                <div class="login-container">
-                    <div class="login-card">
-                        <h1>BRETON BELÉM</h1>
-                        <p>Sistema de Vendas</p>
-                        <select id="loginUsuario">${db.usuarios.map(u => `<option value="${u.usuario}">${u.nome}</option>`).join('')}</select>
-                        <input type="password" id="loginSenha" placeholder="Senha">
-                        <button onclick="fazerLogin()">Entrar</button>
-                    </div>
-                </div>
-            `;
-        }
+            return data;
+        }));
         
-        function fazerLogin() {
-            let usuario = document.getElementById('loginUsuario').value;
-            let senha = document.getElementById('loginSenha').value;
-            let user = db.usuarios.find(u => u.usuario === usuario && u.senha === senha);
-            if (!user) { alert('Credenciais inválidas'); return; }
-            usuarioAtual = user;
-            usuarioPermissao = user.perfil === 'ADMIN' ? 'admin' : 'user';
-            document.getElementById('sidebar').style.display = 'flex';
-            carregarMenu();
-            adicionarLog('LOGIN', user.nome);
-            mostrar('dashboard');
-        }
+        anexos = anexosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        usuarios = usuariosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        logs = logsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
-        function logout() { usuarioAtual = null; mostrarLogin(); }
-        
-        function carregarMenu() {
-            let menus = [
-                { id: 'clientes', label: 'Clientes', icon: '👥' },
-                { id: 'arquitetos', label: 'Arquitetos', icon: '🏛️' },
-                { id: 'consultores', label: 'Consultores', icon: '👩‍💼' },
-                { id: 'vendas', label: 'Vendas', icon: '💰' },
-                { id: 'dashboard', label: 'Dashboard', icon: '📈' },
-                { id: 'comissoes', label: 'Relatórios / Comissões', icon: '📊' }
+        if (clientes.length === 0) {
+            const clientesIniciais = [
+                { pedido: 1035, data: '2026-01-07', cliente: 'PAULA REGINA CASTRO MARTINS', cpf_cnpj: '616507732-34', contato: '(91) 99999-1234' },
+                { pedido: 1038, data: '2026-01-05', cliente: 'BARBARA EMILY LIMA GOUVEIA', cpf_cnpj: '014296542-10', contato: '(91) 99999-5678' }
             ];
-            if (usuarioPermissao === 'admin') {
-                menus.push({ id: 'usuarios', label: 'Usuários', icon: '👤' });
-                menus.push({ id: 'logs', label: 'Logs', icon: '📋' });
+            for (const c of clientesIniciais) {
+                await db.collection('clientes').add(c);
             }
-            document.getElementById('navMenu').innerHTML = menus.map(m => `<button onclick="mostrar('${m.id}')" id="menu-${m.id}">${m.icon} ${m.label}</button>`).join('');
+            clientes = clientesIniciais;
         }
         
-        function setActiveMenu(id) { document.querySelectorAll('#navMenu button').forEach(b => b.classList.remove('active')); let btn = document.getElementById('menu-' + id); if (btn) btn.classList.add('active'); }
-
-        // ==================== CLIENTES ====================
-        function telaClientes() {
-            let html = `
-                <div class="top-bar"><div class="page-title">Clientes</div><div class="user-area"><span>${usuarioAtual.nome}</span><button class="logout-btn" onclick="logout()">Sair</button></div></div>
-                <div class="card"><h2>Cadastrar Cliente</h2>
-                <div class="form-grid">
-                    <div class="form-group"><label>Nº Pedido</label><input type="number" id="cli_pedido"></div>
-                    <div class="form-group"><label>Data</label><input type="date" id="cli_data"></div>
-                    <div class="form-group"><label>Cliente</label><input type="text" id="cli_nome"></div>
-                    <div class="form-group"><button class="success" onclick="adicionarCliente()">Adicionar</button></div>
-                </div>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>#</th><th>Pedido</th><th>Data</th><th>Cliente</th><th>Ações</th></tr></thead>
-                        <tbody id="listaClientes"></tbody>
-                    </table>
-                </div></div>
-                <div class="footer">"Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos" — Provérbios 16:3</div>
-            `;
-            document.getElementById('mainContent').innerHTML = html;
-            renderizarClientes();
-        }
-        function renderizarClientes() {
-            let tbody = document.getElementById('listaClientes');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            db.clientes.forEach((c, i) => {
-                tbody.innerHTML += `<tr><td>${i+1}</td><td>${c.pedido}</td><td>${formatarData(c.data)}</td><td>${c.cliente}</td><td class="actions-cell"><button class="small" onclick="editarCliente('${c.id}')">Editar</button><button class="small danger" onclick="excluirCliente('${c.id}')">Excluir</button></td></tr>`;
-            });
-        }
-        function adicionarCliente() {
-            let pedido = document.getElementById('cli_pedido').value;
-            let data = document.getElementById('cli_data').value;
-            let nome = document.getElementById('cli_nome').value;
-            if (!pedido || !data || !nome) { alert('Preencha todos os campos'); return; }
-            if (db.clientes.some(c => c.pedido == pedido)) { alert('Pedido já cadastrado'); return; }
-            let novo = { id: Date.now().toString(), pedido: parseInt(pedido), data: data, cliente: nome.toUpperCase() };
-            db.clientes.push(novo);
-            salvarDados();
-            adicionarLog('ADICIONOU CLIENTE', nome);
-            telaClientes();
-        }
-        function excluirCliente(id) { if (confirm('Excluir cliente?')) { db.clientes = db.clientes.filter(c => c.id !== id); salvarDados(); telaClientes(); } }
-        function editarCliente(id) { let c = db.clientes.find(c => c.id === id); if (!c) return; let novoNome = prompt('Novo nome:', c.cliente); if (novoNome) { c.cliente = novoNome.toUpperCase(); salvarDados(); telaClientes(); } }
-
-        // ==================== ARQUITETOS ====================
-        function telaArquitetos() {
-            let html = `
-                <div class="top-bar"><div class="page-title">Arquitetos</div><div class="user-area"><span>${usuarioAtual.nome}</span><button class="logout-btn" onclick="logout()">Sair</button></div></div>
-                <div class="card"><h2>Cadastrar Arquiteto</h2>
-                <div class="form-grid">
-                    <div class="form-group"><label>Código</label><input type="text" id="arq_codigo" value="${gerarCodigoArquiteto()}" readonly></div>
-                    <div class="form-group"><label>Arquiteto</label><input type="text" id="arq_nome"></div>
-                    <div class="form-group"><label>Contato</label><input type="text" id="arq_contato"></div>
-                    <div class="form-group"><label>Categoria</label><input type="text" id="arq_categoria" placeholder="Será calculada automaticamente" readonly></div>
-                    <div class="form-group"><label>Chave PIX</label><input type="text" id="arq_pix" placeholder="CPF, Email, Telefone ou chave aleatória"></div>
-                    <div class="form-group"><button class="success" onclick="adicionarArquiteto()">Adicionar</button></div>
-                </div>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>#</th><th>Código</th><th>Arquiteto</th><th>Contato</th><th>Categoria</th><th>% RT</th><th>Chave PIX</th><th>Ações</th></tr></thead>
-                        <tbody id="listaArquitetos"></tbody>
-                    </table>
-                </div></div>
-                <div class="footer">...</div>
-            `;
-            document.getElementById('mainContent').innerHTML = html;
-            renderizarArquitetos();
-        }
-        function gerarCodigoArquiteto() { let nums = db.arquitetos.map(a => parseInt(a.codigo?.replace('ARQ',''))).filter(n=>!isNaN(n)); let max = Math.max(0, ...nums); return 'ARQ' + String(max+1).padStart(3,'0'); }
-        function renderizarArquitetos() {
-            let tbody = document.getElementById('listaArquitetos');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            db.arquitetos.forEach((a,i) => {
-                tbody.innerHTML += `<tr><td>${i+1}</td><td>${a.codigo}</td><td>${a.arquiteto}</td><td>${a.contato||'-'}</td><td>${a.categoria||'-'}</td><td>${a.percentualRT || 10}%</td><td>${a.chavePix||'-'}</td><td class="actions-cell"><button class="small" onclick="editarArquiteto('${a.id}')">Editar</button><button class="small danger" onclick="excluirArquiteto('${a.id}')">Excluir</button></td></tr>`;
-            });
-        }
-        function adicionarArquiteto() {
-            let nome = document.getElementById('arq_nome').value;
-            if (!nome) { alert('Nome obrigatório'); return; }
-            let novo = { id: Date.now().toString(), codigo: document.getElementById('arq_codigo').value, arquiteto: nome.toUpperCase(), contato: document.getElementById('arq_contato').value, categoria: 'CLASSIC', chavePix: document.getElementById('arq_pix').value, percentualRT: 10 };
-            db.arquitetos.push(novo);
-            salvarDados();
-            adicionarLog('ADICIONOU ARQUITETO', nome);
-            telaArquitetos();
-        }
-        function excluirArquiteto(id) { if (confirm('Excluir arquiteto?')) { db.arquitetos = db.arquitetos.filter(a => a.id !== id); salvarDados(); telaArquitetos(); } }
-        function editarArquiteto(id) { let a = db.arquitetos.find(a => a.id === id); if (!a) return; let novoNome = prompt('Novo nome:', a.arquiteto); if (novoNome) { a.arquiteto = novoNome.toUpperCase(); salvarDados(); telaArquitetos(); } }
-
-        // ==================== CONSULTORES ====================
-        function telaConsultores() {
-            let html = `
-                <div class="top-bar"><div class="page-title">Consultores</div><div class="user-area"><span>${usuarioAtual.nome}</span><button class="logout-btn" onclick="logout()">Sair</button></div></div>
-                <div class="card"><h2>Cadastrar Consultor</h2>
-                <div class="form-grid">
-                    <div class="form-group"><label>Código</label><input type="text" id="cons_codigo" value="${gerarCodigoConsultor()}" readonly></div>
-                    <div class="form-group"><label>Consultor</label><input type="text" id="cons_nome"></div>
-                    <div class="form-group"><label>Contato</label><input type="text" id="cons_contato"></div>
-                    <div class="form-group"><label>Chave PIX</label><input type="text" id="cons_pix" placeholder="CPF, Email, Telefone ou chave aleatória"></div>
-                    <div class="form-group"><button class="success" onclick="adicionarConsultor()">Adicionar</button></div>
-                </div>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>#</th><th>Código</th><th>Consultor</th><th>Contato</th><th>Chave PIX</th><th>Ações</th></tr></thead>
-                        <tbody id="listaConsultores"></tbody>
-                    </table>
-                </div></div>
-                <div class="footer">...</div>
-            `;
-            document.getElementById('mainContent').innerHTML = html;
-            renderizarConsultores();
-        }
-        function gerarCodigoConsultor() { let nums = db.consultores.map(c => parseInt(c.codigo?.replace('CONS',''))).filter(n=>!isNaN(n)); let max = Math.max(0, ...nums); return 'CONS' + String(max+1).padStart(3,'0'); }
-        function renderizarConsultores() {
-            let tbody = document.getElementById('listaConsultores');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            db.consultores.forEach((c,i) => {
-                tbody.innerHTML += `<tr><td>${i+1}</td><td>${c.codigo}</td><td>${c.consultor}</td><td>${c.contato||'-'}</td><td>${c.chavePix||'-'}</td><td class="actions-cell"><button class="small" onclick="editarConsultor('${c.id}')">Editar</button><button class="small danger" onclick="excluirConsultor('${c.id}')">Excluir</button></td></tr>`;
-            });
-        }
-        function adicionarConsultor() {
-            let nome = document.getElementById('cons_nome').value;
-            if (!nome) { alert('Nome obrigatório'); return; }
-            let novo = { id: Date.now().toString(), codigo: document.getElementById('cons_codigo').value, consultor: nome.toUpperCase(), contato: document.getElementById('cons_contato').value, chavePix: document.getElementById('cons_pix').value };
-            db.consultores.push(novo);
-            salvarDados();
-            adicionarLog('ADICIONOU CONSULTOR', nome);
-            telaConsultores();
-        }
-        function excluirConsultor(id) { if (confirm('Excluir consultor?')) { db.consultores = db.consultores.filter(c => c.id !== id); salvarDados(); telaConsultores(); } }
-        function editarConsultor(id) { let c = db.consultores.find(c => c.id === id); if (!c) return; let novoNome = prompt('Novo nome:', c.consultor); if (novoNome) { c.consultor = novoNome.toUpperCase(); salvarDados(); telaConsultores(); } }
-
-        // ==================== USUÁRIOS (CRUD completo) ====================
-        function telaUsuarios() {
-            let html = `
-                <div class="top-bar"><div class="page-title">Usuários</div><div class="user-area"><span>${usuarioAtual.nome}</span><button class="logout-btn" onclick="logout()">Sair</button></div></div>
-                <div class="card"><h2>Gerenciar Usuários</h2>
-                <div class="form-grid">
-                    <div class="form-group"><label>Nome</label><input type="text" id="user_nome" placeholder="Nome completo"></div>
-                    <div class="form-group"><label>Usuário</label><input type="text" id="user_usuario" placeholder="Nome de usuário"></div>
-                    <div class="form-group"><label>Senha</label><input type="password" id="user_senha" placeholder="Senha"></div>
-                    <div class="form-group"><label>Perfil</label><select id="user_perfil"><option value="ADMIN">ADMIN</option><option value="CONSULTIVO">CONSULTIVO</option></select></div>
-                    <div class="form-group"><button class="success" onclick="adicionarUsuario()">Salvar</button></div>
-                </div>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>#</th><th>Nome</th><th>Usuário</th><th>Perfil</th><th>Ações</th></tr></thead>
-                        <tbody id="listaUsuarios"></tbody>
-                    </table>
-                </div></div>
-                <div class="footer">...</div>
-            `;
-            document.getElementById('mainContent').innerHTML = html;
-            renderizarUsuarios();
-        }
-        function renderizarUsuarios() {
-            let tbody = document.getElementById('listaUsuarios');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            db.usuarios.forEach((u,i) => {
-                tbody.innerHTML += `<tr><td>${i+1}</td><td>${u.nome}</td><td>${u.usuario}</td><td>${u.perfil}</td><td class="actions-cell">${u.usuario !== 'admin' ? `<button class="small" onclick="editarUsuario('${u.id}')">Editar</button><button class="small danger" onclick="excluirUsuario('${u.id}')">Excluir</button>` : '-'}</td></tr>`;
-            });
-        }
-        function adicionarUsuario() {
-            let nome = document.getElementById('user_nome').value;
-            let usuario = document.getElementById('user_usuario').value;
-            let senha = document.getElementById('user_senha').value;
-            let perfil = document.getElementById('user_perfil').value;
-            if (!nome || !usuario || !senha) { alert('Preencha todos os campos'); return; }
-            if (db.usuarios.some(u => u.usuario === usuario)) { alert('Usuário já existe'); return; }
-            let novo = { id: Date.now().toString(), nome: nome, usuario: usuario, senha: senha, perfil: perfil };
-            db.usuarios.push(novo);
-            salvarDados();
-            adicionarLog('ADICIONOU USUÁRIO', nome);
-            telaUsuarios();
-        }
-        function excluirUsuario(id) { 
-            let user = db.usuarios.find(u => u.id === id);
-            if (user && user.usuario === 'admin') { alert('Não pode excluir o Admin'); return; }
-            if (confirm('Excluir usuário?')) { db.usuarios = db.usuarios.filter(u => u.id !== id); salvarDados(); telaUsuarios(); }
-        }
-        function editarUsuario(id) {
-            let user = db.usuarios.find(u => u.id === id);
-            if (!user) return;
-            let novoNome = prompt('Novo nome:', user.nome);
-            if (novoNome) {
-                user.nome = novoNome;
-                salvarDados();
-                telaUsuarios();
+        if (fornecedores.length === 0) {
+            const fornecedoresIniciais = [
+                { cod: 'FOR001', nome: 'FEFER', cpf_cnpj: '', condicao: '28D', colecao: 'VERÃO 2026' },
+                { cod: 'FOR002', nome: 'BRETON MÓVEIS', cpf_cnpj: '12.345.678/0001-90', condicao: 'FATURADO', colecao: 'INVERNO 2026' }
+            ];
+            for (const f of fornecedoresIniciais) {
+                await db.collection('fornecedores').add(f);
             }
-        }
-
-        // ==================== LOGS ====================
-        function telaLogs() {
-            let html = `
-                <div class="top-bar"><div class="page-title">Logs</div><div class="user-area"><span>${usuarioAtual.nome}</span><button class="logout-btn" onclick="logout()">Sair</button></div></div>
-                <div class="card"><h2>Registro de Atividades</h2>
-                <div class="table-wrapper">
-                     <thead> <th>Data/Hora</th><th>Usuário</th><th>Ação</th><th>Detalhe</th> </thead>
-                    <tbody id="listaLogs"></tbody>
-                 </div>
-                <button class="danger" onclick="limparLogs()">Limpar Logs</button></div>
-                <div class="footer">...</div>
-            `;
-            document.getElementById('mainContent').innerHTML = html;
-            renderizarLogs();
-        }
-        function renderizarLogs() { let tbody = document.getElementById('listaLogs'); if (!tbody) return; tbody.innerHTML = ''; db.logs.slice().reverse().forEach(log => { tbody.innerHTML += `   <td>${new Date(log.data).toLocaleString()} <td>${log.usuario} <td>${log.acao} <td>${log.detalhe || ''} `; }); }
-        function limparLogs() { if (confirm('Limpar logs?')) { db.logs = []; salvarDados(); telaLogs(); } }
-
-        // ==================== VENDAS ====================
-        function telaVendas() {
-            let optionsCli = db.clientes.map(c => `<option value="${c.id}" data-data="${c.data}" data-pedido="${c.pedido}">${c.cliente} (${c.pedido})</option>`).join('');
-            let optionsArq = '<option value="">Nenhum</option>' + db.arquitetos.map(a => `<option value="${a.id}">${a.arquiteto} (${a.categoria} - ${a.percentualRT}%)</option>`).join('');
-            let optionsCons = db.consultores.map(c => `<option value="${c.id}">${c.consultor}</option>`).join('');
-            let html = `
-                <div class="top-bar"><div class="page-title">Vendas</div><div class="user-area"><span>${usuarioAtual.nome}</span><button class="logout-btn" onclick="logout()">Sair</button></div></div>
-                <div class="card"><h2>Nova Venda</h2>
-                <div class="form-grid" id="formVenda">
-                    <div class="form-group"><label>Nº Pedido</label><input type="number" id="venda_numero_pedido" placeholder="Digite o número do pedido"></div>
-                    <div class="form-group"><label>Cliente</label><select id="venda_cliente"><option value="">Selecione um cliente</option>${optionsCli}</select></div>
-                    <div class="form-group"><label>Data</label><input type="date" id="venda_data" readonly></div>
-                    <div class="form-group"><label>Consultor</label><select id="venda_consultor">${optionsCons}</select></div>
-                    <div class="form-group"><label>Arquiteto</label><select id="venda_arquiteto">${optionsArq}</select></div>
-                    <div class="form-group"><label>% RT</label><input type="number" id="venda_rt" step="0.01" value="0" readonly></div>
-                    <div class="form-group"><label>Forma</label><select id="venda_forma" onchange="toggleVencimentoVenda()"><option>À vista</option><option>Cartão</option><option>Financiamento</option><option>Boleto</option><option>PIX</option></select></div>
-                    <div class="form-group"><label>Parcelas</label><input type="number" id="venda_parcelas" value="1" min="1"></div>
-                    <div class="form-group" id="div_vencimento_venda" style="display:none"><label>1º Vencimento</label><input type="date" id="venda_vencimento"></div>
-                    <div class="form-group"><label>Valor</label><input type="text" id="venda_valor" placeholder="0,00" onblur="formatarValorInput(this); calcularTaxasVenda()"></div>
-                    <div class="form-group"><label>Taxas</label><input type="text" id="venda_taxas" readonly></div>
-                    <div class="form-group"><label>Líquido</label><input type="text" id="venda_liquido" readonly></div>
-                    <div class="form-group"><label>Observação</label><textarea rows="2" id="venda_obs" placeholder="Observações sobre a venda"></textarea></div>
-                </div>
-                <button class="success" onclick="salvarVenda()">Salvar Venda</button></div>
-                <div class="card"><h2>Lançamentos</h2>
-                <div class="search-box"><input type="text" id="buscaVendas" placeholder="Buscar..." onkeyup="filtrarVendas()"></div>
-                <div class="table-wrapper"><table id="tabelaVendas"><thead> <th>Data</th><th>Pedido</th><th>Cliente</th><th>Consultor</th><th>Arquiteto</th><th>Forma</th><th>Valor</th><th>Ações</th> </thead><tbody id="listaVendas"></tbody><tfoot><td colspan="6"><strong>Total:</strong> <td id="totalVendas">R$ 0,00</tfoot> </div></div>
-                <div class="footer">...</div>
-            `;
-            document.getElementById('mainContent').innerHTML = html;
-            
-            const inputPedido = document.getElementById('venda_numero_pedido');
-            const selectCliente = document.getElementById('venda_cliente');
-            const selectArquiteto = document.getElementById('venda_arquiteto');
-            const inputRt = document.getElementById('venda_rt');
-            
-            inputPedido.addEventListener('blur', function() {
-                let numero = parseInt(this.value);
-                if (!isNaN(numero)) {
-                    let clienteExistente = db.clientes.find(c => c.pedido === numero);
-                    if (clienteExistente) {
-                        selectCliente.value = clienteExistente.id;
-                        document.getElementById('venda_data').value = clienteExistente.data;
-                    } else {
-                        selectCliente.value = '';
-                        document.getElementById('venda_data').value = '';
-                    }
-                }
-            });
-            
-            selectCliente.addEventListener('change', function() {
-                let opt = this.selectedOptions[0];
-                if (opt && opt.value) {
-                    document.getElementById('venda_data').value = opt.getAttribute('data-data');
-                    let pedidoAtual = parseInt(inputPedido.value);
-                    let clienteId = opt.value;
-                    let cliente = db.clientes.find(c => c.id === clienteId);
-                    if (cliente && pedidoAtual && !isNaN(pedidoAtual) && cliente.pedido !== pedidoAtual) {
-                        let outroCliente = db.clientes.find(c => c.pedido === pedidoAtual);
-                        if (outroCliente) {
-                            alert(`Este pedido já está vinculado ao cliente ${outroCliente.cliente}.`);
-                            selectCliente.value = '';
-                            return;
-                        }
-                    }
-                    if (cliente && (!pedidoAtual || isNaN(pedidoAtual))) {
-                        inputPedido.value = cliente.pedido;
-                    }
-                } else {
-                    document.getElementById('venda_data').value = '';
-                }
-            });
-            
-            selectArquiteto.addEventListener('change', function() {
-                let arqId = this.value;
-                if (arqId) {
-                    let arquiteto = db.arquitetos.find(a => a.id === arqId);
-                    if (arquiteto) {
-                        inputRt.value = arquiteto.percentualRT || 10;
-                    }
-                } else {
-                    inputRt.value = 0;
-                }
-                calcularTaxasVenda();
-            });
-            
-            window.toggleVencimentoVenda = function() { let forma = document.getElementById('venda_forma').value; let div = document.getElementById('div_vencimento_venda'); div.style.display = forma === 'Boleto' ? 'block' : 'none'; if (forma === 'Boleto' && !document.getElementById('venda_vencimento').value) { let hoje = new Date(); hoje.setDate(hoje.getDate() + 30); document.getElementById('venda_vencimento').value = hoje.toISOString().slice(0,10); } calcularTaxasVenda(); };
-            window.calcularTaxasVenda = function() { let forma = document.getElementById('venda_forma').value; let parcelas = parseInt(document.getElementById('venda_parcelas').value) || 1; let valor = converterValor(document.getElementById('venda_valor').value); let taxas = calcularTaxas(forma, parcelas, valor); document.getElementById('venda_taxas').value = formatarValor(taxas); document.getElementById('venda_liquido').value = formatarValor(valor - taxas); };
-            renderizarVendas();
-        }
-        function renderizarVendas() {
-            let tbody = document.getElementById('listaVendas');
-            if (!tbody) return;
-            let busca = document.getElementById('buscaVendas')?.value.toLowerCase() || '';
-            let vendasFiltradas = db.vendas.filter(v => v.pedido.toString().includes(busca) || v.clienteNome.toLowerCase().includes(busca) || v.consultorNome.toLowerCase().includes(busca));
-            tbody.innerHTML = ''; let total = 0;
-            vendasFiltradas.forEach(v => { total += v.valorVenda; tbody.innerHTML += `   <td>${formatarData(v.data)} <td>${v.pedido} <td>${v.clienteNome} <td>${v.consultorNome} <td>${v.arquitetoNome || '-'} <td>${v.formaPagamento} <td>${formatarValor(v.valorVenda)} <td class="actions-cell"><button class="small" onclick="editarVenda('${v.id}')">Editar</button><button class="small danger" onclick="excluirVenda('${v.id}')">Excluir</button> `; });
-            document.getElementById('totalVendas').innerHTML = formatarValor(total);
-        }
-        function filtrarVendas() { renderizarVendas(); }
-        function excluirVenda(id) { 
-            if(confirm('Excluir venda?')){ 
-                let venda = db.vendas.find(v=>v.id===id);
-                db.vendas = db.vendas.filter(v=>v.id!==id); 
-                db.parcelas = db.parcelas.filter(p=>p.vendaId!==id); 
-                salvarDados(); 
-                if(venda && venda.arquitetoId) atualizarCategoriaArquiteto(venda.arquitetoId);
-                renderizarVendas(); 
-            } 
-        }
-        function editarVenda(id) {
-            let venda = db.vendas.find(v => v.id === id);
-            if (!venda) return;
-            let optionsCli = db.clientes.map(c => `<option value="${c.id}" data-data="${c.data}" data-pedido="${c.pedido}" ${c.id===venda.clienteId?'selected':''}>${c.cliente}</option>`).join('');
-            let optionsArq = '<option value="">Nenhum</option>' + db.arquitetos.map(a => `<option value="${a.id}" ${a.id===venda.arquitetoId?'selected':''}>${a.arquiteto} (${a.categoria} - ${a.percentualRT}%)</option>`).join('');
-            let optionsCons = db.consultores.map(c => `<option value="${c.id}" ${c.id===venda.consultorId?'selected':''}>${c.consultor}</option>`).join('');
-            let modalHtml = `<div class="modal active" id="modalEdicao"><div class="modal-content"><div class="modal-header"><h3>Editar Venda - Pedido ${venda.pedido}</h3><span class="close-modal" onclick="fecharModal()">&times;</span></div><div class="form-grid"><div class="form-group"><label>Nº Pedido</label><input type="number" id="edit_pedido" value="${venda.pedido}" readonly></div><div class="form-group"><label>Cliente</label><select id="edit_cliente">${optionsCli}</select></div><div class="form-group"><label>Data</label><input type="date" id="edit_data" value="${venda.data}"></div><div class="form-group"><label>Consultor</label><select id="edit_consultor">${optionsCons}</select></div><div class="form-group"><label>Arquiteto</label><select id="edit_arquiteto">${optionsArq}</select></div><div class="form-group"><label>% RT</label><input type="number" id="edit_rt" step="0.01" value="${venda.percentualRT}"></div><div class="form-group"><label>Forma</label><select id="edit_forma" onchange="toggleEditVencimento()"><option ${venda.formaPagamento==='À vista'?'selected':''}>À vista</option><option ${venda.formaPagamento==='Cartão'?'selected':''}>Cartão</option><option ${venda.formaPagamento==='Financiamento'?'selected':''}>Financiamento</option><option ${venda.formaPagamento==='Boleto'?'selected':''}>Boleto</option><option ${venda.formaPagamento==='PIX'?'selected':''}>PIX</option></select></div><div class="form-group"><label>Parcelas</label><input type="number" id="edit_parcelas" value="${venda.parcelas}" min="1"></div><div class="form-group" id="edit_div_vencimento" style="display:${venda.formaPagamento==='Boleto'?'block':'none'}"><label>1º Vencimento</label><input type="date" id="edit_vencimento" value="${venda.primeiroVencimento||''}"></div><div class="form-group"><label>Valor</label><input type="text" id="edit_valor" value="${formatarValor(venda.valorVenda)}" onblur="formatarValorInput(this); recalcEditTaxas()"></div><div class="form-group"><label>Taxas</label><input type="text" id="edit_taxas" readonly value="${formatarValor(venda.taxas)}"></div><div class="form-group"><label>Líquido</label><input type="text" id="edit_liquido" readonly value="${formatarValor(venda.liquido)}"></div><div class="form-group"><label>Observação</label><textarea rows="2" id="edit_obs">${venda.observacao||''}</textarea></div></div><div style="text-align:right"><button class="success" onclick="salvarEdicaoVenda('${id}')">Salvar</button></div></div></div>`;
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-            
-            window.toggleEditVencimento = function() { let forma = document.getElementById('edit_forma').value; let div = document.getElementById('edit_div_vencimento'); div.style.display = forma === 'Boleto' ? 'block' : 'none'; recalcEditTaxas(); };
-            window.recalcEditTaxas = function() { let forma = document.getElementById('edit_forma').value; let parcelas = parseInt(document.getElementById('edit_parcelas').value) || 1; let valor = converterValor(document.getElementById('edit_valor').value); let taxas = calcularTaxas(forma, parcelas, valor); document.getElementById('edit_taxas').value = formatarValor(taxas); document.getElementById('edit_liquido').value = formatarValor(valor - taxas); };
-            window.salvarEdicaoVenda = function(id) {
-                let v = db.vendas.find(v => v.id === id); if (!v) return;
-                let clienteId = document.getElementById('edit_cliente').value; let cliente = db.clientes.find(c => c.id === clienteId);
-                let oldArquitetoId = v.arquitetoId;
-                v.clienteId = cliente.id; v.clienteNome = cliente.cliente; v.pedido = cliente.pedido; v.data = document.getElementById('edit_data').value;
-                v.consultorId = document.getElementById('edit_consultor').value; v.consultorNome = db.consultores.find(c => c.id === v.consultorId).consultor;
-                v.arquitetoId = document.getElementById('edit_arquiteto').value || null; v.arquitetoNome = v.arquitetoId ? db.arquitetos.find(a => a.id === v.arquitetoId).arquiteto : null;
-                v.percentualRT = parseFloat(document.getElementById('edit_rt').value) || 0; v.formaPagamento = document.getElementById('edit_forma').value; v.parcelas = parseInt(document.getElementById('edit_parcelas').value) || 1;
-                v.primeiroVencimento = document.getElementById('edit_vencimento').value || null; v.valorVenda = converterValor(document.getElementById('edit_valor').value); v.taxas = converterValor(document.getElementById('edit_taxas').value); v.liquido = converterValor(document.getElementById('edit_liquido').value);
-                v.observacao = document.getElementById('edit_obs').value;
-                db.parcelas = db.parcelas.filter(p => p.vendaId !== id);
-                let totalParcelas = v.parcelas; let baseConsultor = v.liquido * (1 - v.percentualRT / 100); let valorParcela = baseConsultor / totalParcelas;
-                if (v.formaPagamento === 'Boleto' && v.primeiroVencimento) {
-                    let primeiroVencimento = new Date(v.primeiroVencimento);
-                    for (let i = 1; i <= v.parcelas; i++) { let dataVenc = new Date(primeiroVencimento); dataVenc.setMonth(dataVenc.getMonth() + (i-1)); let mesComp = dataVenc.toISOString().slice(0,7); db.parcelas.push({ id: Date.now() + i, vendaId: v.id, parcelaNumero: i, valor: valorParcela, mesCompetencia: mesComp, pago: i === 1, consultorId: v.consultorId, consultorNome: v.consultorNome, clienteNome: v.clienteNome, valorVenda: v.valorVenda, valorParcelaBruto: v.valorVenda / v.parcelas, arquitetoId: v.arquitetoId }); }
-                } else { let mesComp = v.data.slice(0,7); db.parcelas.push({ id: Date.now(), vendaId: v.id, parcelaNumero: 1, valor: valorParcela, mesCompetencia: mesComp, pago: true, consultorId: v.consultorId, consultorNome: v.consultorNome, clienteNome: v.clienteNome, valorVenda: v.valorVenda, valorParcelaBruto: v.valorVenda, arquitetoId: v.arquitetoId }); }
-                salvarDados();
-                if (oldArquitetoId) atualizarCategoriaArquiteto(oldArquitetoId);
-                if (v.arquitetoId) atualizarCategoriaArquiteto(v.arquitetoId);
-                fecharModal(); mostrar('vendas');
-            };
-        }
-        function fecharModal() { let m = document.getElementById('modalEdicao'); if(m) m.remove(); }
-
-        function salvarVenda() {
-            let pedidoNum = document.getElementById('venda_numero_pedido').value;
-            let clienteId = document.getElementById('venda_cliente').value;
-            let data = document.getElementById('venda_data').value;
-            let consultorId = document.getElementById('venda_consultor').value;
-            let arquitetoId = document.getElementById('venda_arquiteto').value || null;
-            let rt = parseFloat(document.getElementById('venda_rt').value) || 0;
-            let forma = document.getElementById('venda_forma').value;
-            let parcelas = parseInt(document.getElementById('venda_parcelas').value) || 1;
-            let valorVenda = converterValor(document.getElementById('venda_valor').value);
-            let taxas = converterValor(document.getElementById('venda_taxas').value);
-            let liquido = converterValor(document.getElementById('venda_liquido').value);
-            let primeiroVencimento = forma === 'Boleto' ? document.getElementById('venda_vencimento').value : null;
-            let obs = document.getElementById('venda_obs').value;
-            
-            if (!clienteId) { alert('Selecione um cliente'); return; }
-            let cliente = db.clientes.find(c => c.id === clienteId);
-            let consultor = db.consultores.find(c => c.id === consultorId);
-            if (!cliente || !consultor) { alert('Cliente ou consultor inválido'); return; }
-            
-            let pedidoExistente = db.clientes.find(c => c.pedido == pedidoNum);
-            if (pedidoExistente && pedidoExistente.id !== clienteId) {
-                alert(`Este pedido já está vinculado ao cliente ${pedidoExistente.cliente}.`);
-                return;
-            }
-            
-            if (!pedidoExistente) {
-                cliente.pedido = parseInt(pedidoNum);
-                salvarDados();
-            }
-            
-            let venda = {
-                id: Date.now().toString(),
-                pedido: parseInt(pedidoNum),
-                data: data,
-                consultorId: consultor.id,
-                consultorNome: consultor.consultor,
-                arquitetoId: arquitetoId,
-                arquitetoNome: arquitetoId ? db.arquitetos.find(a => a.id === arquitetoId)?.arquiteto : null,
-                percentualRT: rt,
-                clienteId: cliente.id,
-                clienteNome: cliente.cliente,
-                formaPagamento: forma,
-                parcelas: parcelas,
-                primeiroVencimento: primeiroVencimento,
-                valorVenda: valorVenda,
-                taxas: taxas,
-                liquido: liquido,
-                arquitetoPago: false,
-                consultorComissaoPaga: false,
-                observacao: obs,
-                criadoEm: new Date().toISOString()
-            };
-            db.vendas.push(venda);
-            
-            let totalParcelas = parcelas;
-            let baseConsultor = liquido * (1 - rt / 100);
-            let valorParcela = baseConsultor / totalParcelas;
-            if (forma === 'Boleto' && primeiroVencimento) {
-                let primeiroVencimentoDate = new Date(primeiroVencimento);
-                for (let i = 1; i <= parcelas; i++) {
-                    let dataVenc = new Date(primeiroVencimentoDate);
-                    dataVenc.setMonth(dataVenc.getMonth() + (i-1));
-                    let mesComp = dataVenc.toISOString().slice(0,7);
-                    db.parcelas.push({
-                        id: Date.now() + i,
-                        vendaId: venda.id,
-                        parcelaNumero: i,
-                        valor: valorParcela,
-                        mesCompetencia: mesComp,
-                        pago: i === 1,
-                        consultorId: consultor.id,
-                        consultorNome: consultor.consultor,
-                        clienteNome: cliente.cliente,
-                        valorVenda: valorVenda,
-                        valorParcelaBruto: valorVenda / parcelas,
-                        arquitetoId: arquitetoId
-                    });
-                }
-            } else {
-                let mesComp = data.slice(0,7);
-                db.parcelas.push({
-                    id: Date.now(),
-                    vendaId: venda.id,
-                    parcelaNumero: 1,
-                    valor: valorParcela,
-                    mesCompetencia: mesComp,
-                    pago: true,
-                    consultorId: consultor.id,
-                    consultorNome: consultor.consultor,
-                    clienteNome: cliente.cliente,
-                    valorVenda: valorVenda,
-                    valorParcelaBruto: valorVenda,
-                    arquitetoId: arquitetoId
-                });
-            }
-            
-            salvarDados();
-            if (arquitetoId) atualizarCategoriaArquiteto(arquitetoId);
-            adicionarLog('VENDA ADICIONADA', `Pedido ${pedidoNum} - R$ ${formatarValor(valorVenda)}`);
-            mostrar('vendas');
-        }
-
-        // ==================== DASHBOARD ====================
-        function telaDashboard() {
-            let html = `
-                <div class="top-bar"><div class="page-title">Dashboard</div><div class="user-area"><span>${usuarioAtual.nome}</span><button class="logout-btn" onclick="logout()">Sair</button></div></div>
-                <div class="filters-bar">
-                    <div class="filter-group"><label>Período</label><select id="periodo_tipo" onchange="togglePeriodo()"><option value="periodo">Período específico</option><option value="ano">Ano completo</option><option value="trimestre">Trimestre</option></select></div>
-                    <div class="filter-group" id="periodo_especifico"><label>Data Inicial</label><input type="date" id="data_ini" value="2025-03-01"><label>Data Final</label><input type="date" id="data_fim" value="2025-03-31"></div>
-                    <div class="filter-group" id="periodo_ano" style="display:none"><label>Ano</label><input type="number" id="ano" value="2025"></div>
-                    <div class="filter-group" id="periodo_trimestre" style="display:none"><label>Trimestre</label><select id="trimestre"><option value="1">1º Trimestre (Jan-Mar)</option><option value="2">2º Trimestre (Abr-Jun)</option><option value="3">3º Trimestre (Jul-Set)</option><option value="4">4º Trimestre (Out-Dez)</option></select></div>
-                    <div class="filter-group"><label>Consultor</label><select id="dash_consultor"><option value="">Todos</option>${db.consultores.map(c => `<option value="${c.id}">${c.consultor}</option>`).join('')}</select></div>
-                    <div class="filter-group"><label>Arquiteto</label><select id="dash_arquiteto"><option value="">Todos</option>${db.arquitetos.map(a => `<option value="${a.id}">${a.arquiteto}</option>`).join('')}</select></div>
-                    <div class="filter-group"><label>Forma</label><select id="dash_forma"><option value="">Todas</option><option>À vista</option><option>Cartão</option><option>Financiamento</option><option>Boleto</option><option>PIX</option></select></div>
-                    <div class="filter-group"><button onclick="atualizarDashboard()">Filtrar</button></div>
-                </div>
-                <div id="dashKpis"></div>
-                <div class="card"><h2>Vendas por Consultor</h2><div class="chart-container"><canvas id="graficoConsultor"></canvas></div></div>
-                <div class="card"><h2>Vendas por Arquiteto</h2><div class="chart-container"><canvas id="graficoArquiteto"></canvas></div></div>
-                <div class="card"><h2>Vendas por Forma de Pagamento</h2><div class="chart-container"><canvas id="graficoForma"></canvas></div></div>
-                <div class="footer">"Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos" — Provérbios 16:3</div>
-            `;
-            document.getElementById('mainContent').innerHTML = html;
-            togglePeriodo();
-            atualizarDashboard();
+            fornecedores = fornecedoresIniciais;
         }
         
-        function togglePeriodo() {
-            let tipo = document.getElementById('periodo_tipo').value;
-            document.getElementById('periodo_especifico').style.display = tipo === 'periodo' ? 'flex' : 'none';
-            document.getElementById('periodo_ano').style.display = tipo === 'ano' ? 'flex' : 'none';
-            document.getElementById('periodo_trimestre').style.display = tipo === 'trimestre' ? 'flex' : 'none';
+        if (lancamentos.length === 0) {
+            const lancamentosIniciais = [
+                { pedido: 1035, data: '2026-01-07', mes: 'Janeiro/2026', tipo: 'OC', cliente: 'PAULA REGINA CASTRO MARTINS', oc: 'OC001', fornecedor: 'FEFER', categoria: 'SOFA', itens: 2, produtos: 'SOFA RETRÁTIL', valor: 3500.00, data_pagto: '2026-01-10', condicao: 'Em aberto', prev_fat: '2026-01-15', novo_prazo: '', prev_chegada: '2026-02-01', status: 'EM ROTA', data_fat: '', nf: 'NF001', transportadora: 'TRANSPORTADORA A', chegada: '', conferencia: '', entrega: '2026-02-05', prazo_final: '', usuario: 'Admin', criado: new Date().toISOString(), observacoes: '' },
+                { pedido: 1038, data: '2026-01-05', mes: 'Janeiro/2026', tipo: 'OC', cliente: 'BARBARA EMILY LIMA GOUVEIA', oc: 'OC002', fornecedor: 'BRETON MÓVEIS', categoria: 'CADEIRA', itens: 4, produtos: 'CADEIRA DE JANTAR', valor: 1200.00, data_pagto: '2026-01-08', condicao: 'Em aberto', prev_fat: '2026-01-10', novo_prazo: '', prev_chegada: '2026-01-20', status: 'ENTREGUE', data_fat: '2026-01-09', nf: 'NF002', transportadora: 'TRANSPORTADORA B', chegada: '2026-01-19', conferencia: '2026-01-19', entrega: '2026-01-20', prazo_final: '', usuario: 'Admin', criado: new Date().toISOString(), observacoes: '' }
+            ];
+            for (const l of lancamentosIniciais) {
+                await db.collection('lancamentos').add(l);
+            }
+            lancamentos = lancamentosIniciais;
         }
         
-        function getPeriodoFiltro() {
-            let tipo = document.getElementById('periodo_tipo').value;
-            if (tipo === 'periodo') {
-                let dataIni = document.getElementById('data_ini').value;
-                let dataFim = document.getElementById('data_fim').value;
-                if (!dataIni) dataIni = '2025-01-01';
-                if (!dataFim) dataFim = new Date().toISOString().slice(0,10);
-                return { dataIni, dataFim };
-            } else if (tipo === 'ano') {
-                let ano = document.getElementById('ano').value;
-                return { dataIni: `${ano}-01-01`, dataFim: `${ano}-12-31` };
-            } else {
-                let ano = new Date().getFullYear();
-                let trim = parseInt(document.getElementById('trimestre').value);
-                let mesIni = (trim-1)*3 + 1;
-                let mesFim = trim*3;
-                let ultimoDia = new Date(ano, mesFim, 0).getDate();
-                return { dataIni: `${ano}-${String(mesIni).padStart(2,'0')}-01`, dataFim: `${ano}-${String(mesFim).padStart(2,'0')}-${ultimoDia}` };
+        if (usuarios.length === 0) {
+            const usuariosIniciais = [
+                { nome: 'Admin', senha: '123' },
+                { nome: 'Joana', senha: '' },
+                { nome: 'Carlos', senha: '' },
+                { nome: 'Mariana', senha: '' }
+            ];
+            for (const u of usuariosIniciais) {
+                await db.collection('usuarios').add(u);
             }
+            usuarios = usuariosIniciais;
         }
         
-        function atualizarDashboard() {
-            let { dataIni, dataFim } = getPeriodoFiltro();
-            let consultorId = document.getElementById('dash_consultor').value;
-            let arquitetoId = document.getElementById('dash_arquiteto').value;
-            let forma = document.getElementById('dash_forma').value;
-            
-            let vendasFiltradas = db.vendas.filter(v => v.data >= dataIni && v.data <= dataFim);
-            if (consultorId) vendasFiltradas = vendasFiltradas.filter(v => v.consultorId === consultorId);
-            if (arquitetoId) vendasFiltradas = vendasFiltradas.filter(v => v.arquitetoId === arquitetoId);
-            if (forma) vendasFiltradas = vendasFiltradas.filter(v => v.formaPagamento === forma);
-            
-            let pedidosUnicos = new Set(vendasFiltradas.map(v => v.pedido)).size;
-            let receitaBruta = vendasFiltradas.reduce((s, v) => s + v.valorVenda, 0);
-            let totalTaxas = vendasFiltradas.reduce((s, v) => s + v.taxas, 0);
-            let boletosFuturos = 0;
-            for (let v of vendasFiltradas) {
-                if (v.formaPagamento === 'Boleto') {
-                    let parcelasFuturas = db.parcelas.filter(p => p.vendaId === v.id && (p.mesCompetencia < dataIni.slice(0,7) || p.mesCompetencia > dataFim.slice(0,7)));
-                    boletosFuturos += parcelasFuturas.reduce((s, p) => s + (p.valorParcelaBruto || 0), 0);
-                }
-            }
-            let receitaRecebida = receitaBruta - totalTaxas - boletosFuturos;
-            
-            let kpis = `
-                <div class="kpi-grid">
-                    <div class="kpi-card"><h4>Total de Pedidos</h4><div class="value">${pedidosUnicos}</div></div>
-                    <div class="kpi-card"><h4>Receita Bruta</h4><div class="value">${formatarValor(receitaBruta)}</div></div>
-                    <div class="kpi-card"><h4>Receita Recebida</h4><div class="value">${formatarValor(receitaRecebida)}</div></div>
-                </div>
-            `;
-            document.getElementById('dashKpis').innerHTML = kpis;
-            
-            let porConsultor = {}; vendasFiltradas.forEach(v => { porConsultor[v.consultorNome] = (porConsultor[v.consultorNome] || 0) + v.valorVenda; });
-            let porArquiteto = {}; vendasFiltradas.filter(v => v.arquitetoNome).forEach(v => { porArquiteto[v.arquitetoNome] = (porArquiteto[v.arquitetoNome] || 0) + v.valorVenda; });
-            let porForma = {}; vendasFiltradas.forEach(v => { porForma[v.formaPagamento] = (porForma[v.formaPagamento] || 0) + v.valorVenda; });
-            
-            setTimeout(() => {
-                if (window.g1) window.g1.destroy();
-                if (window.g2) window.g2.destroy();
-                if (window.g3) window.g3.destroy();
-                window.g1 = new Chart(document.getElementById('graficoConsultor'), { type: 'bar', data: { labels: Object.keys(porConsultor), datasets: [{ label: 'Vendas (R$)', data: Object.values(porConsultor), backgroundColor: '#2c6e9e' }] } });
-                window.g2 = new Chart(document.getElementById('graficoArquiteto'), { type: 'bar', data: { labels: Object.keys(porArquiteto), datasets: [{ label: 'Vendas (R$)', data: Object.values(porArquiteto), backgroundColor: '#9b59b6' }] } });
-                window.g3 = new Chart(document.getElementById('graficoForma'), { type: 'pie', data: { labels: Object.keys(porForma), datasets: [{ data: Object.values(porForma), backgroundColor: ['#2c6e9e','#2b6e3c','#e67e22','#b13e3e','#3182ce'] }] } });
-            }, 100);
-        }
+        console.log("✅ Dados carregados do Firebase!");
+        return true;
+    } catch (error) {
+        console.error("❌ Erro ao carregar dados:", error);
+        alert("❌ Erro ao conectar com o Firebase. Verifique sua internet e tente novamente.");
+        return false;
+    }
+}
 
-        // ==================== RELATÓRIOS / COMISSÕES ====================
-        function telaComissoes() {
-            let html = `
-                <div class="top-bar"><div class="page-title">Relatórios / Comissões</div><div class="user-area"><span>${usuarioAtual.nome}</span><button class="logout-btn" onclick="logout()">Sair</button></div></div>
-                <div class="filters-bar">
-                    <div class="filter-group"><label>Data Inicial</label><input type="date" id="rel_data_ini" value="2025-03-01"></div>
-                    <div class="filter-group"><label>Data Final</label><input type="date" id="rel_data_fim" value="2025-03-31"></div>
-                    <div class="filter-group"><label>Consultor</label><select id="rel_consultor"><option value="">Todos</option>${db.consultores.map(c => `<option value="${c.id}">${c.consultor}</option>`).join('')}</select></div>
-                    <div class="filter-group"><label>Arquiteto</label><select id="rel_arquiteto"><option value="">Todos</option>${db.arquitetos.map(a => `<option value="${a.id}">${a.arquiteto}</option>`).join('')}</select></div>
-                    <div class="filter-group"><label>Forma</label><select id="rel_forma"><option value="">Todas</option><option>À vista</option><option>Cartão</option><option>Financiamento</option><option>Boleto</option><option>PIX</option></select></div>
-                    <div class="filter-group"><button onclick="gerarRelatorios()">Filtrar</button></div>
-                </div>
-                <div id="relatoriosConteudo"></div>
-                <div style="margin:20px 0"><button class="info" onclick="gerarPDFRelatorioFiltrado()">📄 Gerar PDF Relatório</button></div>
-                <div class="footer">"Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos" — Provérbios 16:3</div>
-            `;
-            document.getElementById('mainContent').innerHTML = html;
-            gerarRelatorios();
+async function adicionarLog(acao, detalhe = '') {
+    try {
+        const log = { data: new Date().toISOString(), usuario: usuarioAtual || 'Sistema', acao, detalhe };
+        await db.collection('logs').add(log);
+        logs.push(log);
+        if (logs.length > 100) logs = logs.slice(-100);
+    } catch (error) {
+        console.error("Erro ao adicionar log:", error);
+    }
+}
+
+function formatarData(dataStr) {
+    if (!dataStr) return '-';
+    try { const [a,m,d] = dataStr.split('-'); return `${d}/${m}/${a}`; } catch { return dataStr; }
+}
+
+function formatarValor(valor) {
+    if (valor === undefined || valor === null) return '-';
+    return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatarValorInput(input) {
+    let valor = input.value;
+    if (!valor) { input.value = '0,00'; return; }
+    valor = valor.replace(/\./g, '').replace(',', '.');
+    let num = parseFloat(valor);
+    if (!isNaN(num)) input.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    else input.value = '0,00';
+}
+
+function converterValorParaNumero(valorStr) {
+    if (!valorStr) return 0;
+    return parseFloat(valorStr.replace(/\./g, '').replace(',', '.')) || 0;
+}
+
+function gerarProximoCodFornecedor() {
+    const nums = fornecedores.map(f => parseInt(f.cod.replace('FOR',''))).filter(n => !isNaN(n));
+    return 'FOR' + String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3,'0');
+}
+
+function buscarClientePorPedido(pedido) { return clientes.find(c => c.pedido == pedido); }
+
+function calcularPrazoMedio(pagto, entrega) {
+    if (!pagto || !entrega) return null;
+    return Math.round((new Date(entrega) - new Date(pagto)) / 86400000);
+}
+
+function calcularTempoPagamento(dataPedido, dataPagto) {
+    if (!dataPedido || !dataPagto) return null;
+    return Math.round((new Date(dataPagto) - new Date(dataPedido)) / 86400000);
+}
+
+function getStatusClass(status) {
+    if (!status) return 'pendente';
+    const map = { 
+        'FATURADO':'faturado', 
+        'AG. FATURAMENTO':'ag-faturamento', 
+        'PRORROGADO':'prorrogado', 
+        'EM ABERTO':'em-aberto', 
+        'ATRASADO':'atrasado', 
+        'ENTREGUE':'entregue', 
+        'EM ROTA':'em-rota', 
+        'CANCELADO':'cancelado' 
+    };
+    return map[status.toUpperCase()] || 'pendente';
+}
+
+function getStatusBadge(status) {
+    if (!status) return '<span class="status-badge pendente">PENDENTE</span>';
+    const classe = getStatusClass(status);
+    const up = status.toUpperCase();
+    return `<span class="status-badge ${classe}">${up}</span>`;
+}
+
+function topBar() {
+    return `<div class="top-bar"><div class="system-title">CONTROLE DE PEDIDOS</div><div class="system-user">👤 ${escapeHtml(usuarioAtual || '')}</div></div>`;
+}
+
+function fecharModal(modalId) { 
+    const modal = getElement(modalId);
+    if (modal) modal.classList.remove('active'); 
+}
+
+function gerarLembretes() {
+    const lembretes = [], hoje = new Date(); hoje.setHours(0,0,0,0);
+    lancamentos.forEach(l => {
+        if (l.prev_chegada) {
+            const diff = Math.round((new Date(l.prev_chegada) - hoje) / 86400000);
+            if (diff === 0) lembretes.push({tipo:'urgente', icon:'🔴', msg:`HOJE: Pedido #${l.pedido} - CHEGADA`});
+            else if (diff === 1) lembretes.push({tipo:'alerta-1d', icon:'🟠', msg:`AMANHÃ: Pedido #${l.pedido} - Chegada`});
+            else if (diff <= 7 && diff > 1) lembretes.push({tipo:'alerta-7d', icon:'🟡', msg:`${diff}d: Pedido #${l.pedido} - Chegada`});
+        }
+        if (l.entrega && l.status !== 'ENTREGUE') {
+            const diff = Math.round((new Date(l.entrega) - hoje) / 86400000);
+            if (diff === 0) lembretes.push({tipo:'urgente', icon:'🔴', msg:`HOJE: Pedido #${l.pedido} - ENTREGA`});
+            else if (diff === 1) lembretes.push({tipo:'alerta-1d', icon:'🟠', msg:`AMANHÃ: Pedido #${l.pedido} - Entrega`});
+            else if (diff <= 7 && diff > 1) lembretes.push({tipo:'alerta-7d', icon:'🟡', msg:`${diff}d: Pedido #${l.pedido} - Entrega`});
+        }
+        if (l.status === 'ATRASADO') lembretes.push({tipo:'urgente', icon:'⚠️', msg:`ATRASADO: Pedido #${l.pedido}`});
+    });
+    return lembretes.slice(0,8);
+}
+
+// ============================================
+// FUNÇÕES DE ORDENAÇÃO E FILTRO
+// ============================================
+function aplicarOrdenacao(lista) {
+    return [...lista].sort((a, b) => {
+        let valA, valB;
+        switch(currentOrder) {
+            case 'data':
+                valA = a.data || '';
+                valB = b.data || '';
+                break;
+            case 'cliente':
+                valA = (a.cliente || '').toLowerCase();
+                valB = (b.cliente || '').toLowerCase();
+                break;
+            case 'pedido':
+                valA = a.pedido || 0;
+                valB = b.pedido || 0;
+                break;
+            case 'status':
+                valA = (a.status || '').toLowerCase();
+                valB = (b.status || '').toLowerCase();
+                break;
+            default:
+                valA = a.data || '';
+                valB = b.data || '';
         }
         
-        function gerarRelatorios() {
-            let dataIni = document.getElementById('rel_data_ini').value;
-            let dataFim = document.getElementById('rel_data_fim').value;
-            let consultorId = document.getElementById('rel_consultor').value;
-            let arquitetoId = document.getElementById('rel_arquiteto').value;
-            let forma = document.getElementById('rel_forma').value;
-            
-            let vendasFiltradas = db.vendas.filter(v => v.data >= dataIni && v.data <= dataFim);
-            if (consultorId) vendasFiltradas = vendasFiltradas.filter(v => v.consultorId === consultorId);
-            if (arquitetoId) vendasFiltradas = vendasFiltradas.filter(v => v.arquitetoId === arquitetoId);
-            if (forma) vendasFiltradas = vendasFiltradas.filter(v => v.formaPagamento === forma);
-            
-            let receitaBruta = vendasFiltradas.reduce((s, v) => s + v.valorVenda, 0);
-            let totalTaxas = vendasFiltradas.reduce((s, v) => s + v.taxas, 0);
-            let boletosFuturos = 0;
-            for (let v of vendasFiltradas) {
-                if (v.formaPagamento === 'Boleto') {
-                    let parcelasFuturas = db.parcelas.filter(p => p.vendaId === v.id && (p.mesCompetencia < dataIni.slice(0,7) || p.mesCompetencia > dataFim.slice(0,7)));
-                    boletosFuturos += parcelasFuturas.reduce((s, p) => s + (p.valorParcelaBruto || 0), 0);
-                }
-            }
-            let receitaRecebida = receitaBruta - totalTaxas - boletosFuturos;
-            
-            // 1. Vendas por Consultor
-            let porConsultor = {}; vendasFiltradas.forEach(v => { porConsultor[v.consultorNome] = (porConsultor[v.consultorNome] || 0) + v.valorVenda; });
-            // 2. Vendas por Arquiteto
-            let porArquiteto = {}; vendasFiltradas.filter(v => v.arquitetoNome).forEach(v => { porArquiteto[v.arquitetoNome] = (porArquiteto[v.arquitetoNome] || 0) + v.valorVenda; });
-            // 3. Vendas por Forma de Pagamento
-            let porForma = {}; vendasFiltradas.forEach(v => { porForma[v.formaPagamento] = (porForma[v.formaPagamento] || 0) + v.valorVenda; });
-            
-            // Detalhamento por Consultor
-            let detalheConsultores = {};
-            vendasFiltradas.forEach(v => {
-                if (!detalheConsultores[v.consultorId]) detalheConsultores[v.consultorId] = { nome: v.consultorNome, total: 0, vendas: [] };
-                let comissao = v.liquido * (v.percentualRT / 100);
-                detalheConsultores[v.consultorId].total += comissao;
-                detalheConsultores[v.consultorId].vendas.push({
-                    id: v.id,
-                    data: v.data,
-                    cliente: v.clienteNome,
-                    forma: v.formaPagamento,
-                    valor: v.valorVenda,
-                    comissao: comissao,
-                    pago: v.consultorComissaoPaga || false
-                });
-            });
-            
-            // Comissão Arquitetos
-            let arquitetosComissao = {};
-            vendasFiltradas.forEach(v => {
-                if (v.arquitetoId && v.percentualRT > 0) {
-                    let comissao = v.liquido * v.percentualRT / 100;
-                    if (!arquitetosComissao[v.arquitetoNome]) arquitetosComissao[v.arquitetoNome] = { total: 0, vendas: [] };
-                    arquitetosComissao[v.arquitetoNome].total += comissao;
-                    arquitetosComissao[v.arquitetoNome].vendas.push({
-                        id: v.id,
-                        data: v.data,
-                        cliente: v.clienteNome,
-                        valor: v.valorVenda,
-                        comissao: comissao,
-                        pago: v.arquitetoPago || false
-                    });
-                }
-            });
-            
-            // Boletos
-            let boletosEntraram = db.parcelas.filter(p => {
-                let venda = db.vendas.find(v => v.id === p.vendaId);
-                return venda && venda.data >= dataIni && venda.data <= dataFim && p.mesCompetencia >= dataIni.slice(0,7) && p.mesCompetencia <= dataFim.slice(0,7) && p.parcelaNumero > 1;
-            });
-            let boletosFuturosLista = db.parcelas.filter(p => {
-                let venda = db.vendas.find(v => v.id === p.vendaId);
-                return venda && venda.data >= dataIni && venda.data <= dataFim && p.mesCompetencia > dataFim.slice(0,7);
-            });
-            
-            let html = `
-                <div class="kpi-grid">
-                    <div class="kpi-card"><h4>Receita Bruta</h4><div class="value">${formatarValor(receitaBruta)}</div></div>
-                    <div class="kpi-card"><h4>Receita Recebida</h4><div class="value">${formatarValor(receitaRecebida)}</div></div>
+        if (currentOrderDirection === 'asc') {
+            return valA > valB ? 1 : -1;
+        } else {
+            return valA < valB ? 1 : -1;
+        }
+    });
+}
+
+function aplicarFiltroTipo(lista) {
+    if (currentFilterType === "TODOS") return lista;
+    return lista.filter(l => l.tipo === currentFilterType);
+}
+
+function getLancamentosFiltrados() {
+    let filtrados = aplicarFiltroTipo(lancamentos);
+    filtrados = aplicarOrdenacao(filtrados);
+    return filtrados;
+}
+
+function calcularTotais(lista) {
+    const totalPedidos = lista.length;
+    const totalValor = lista.reduce((acc, l) => acc + (l.valor || 0), 0);
+    const totalItens = lista.reduce((acc, l) => acc + (l.itens || 0), 0);
+    const totalAtrasados = lista.filter(l => isPedidoAtrasado(l)).length;
+    return { totalPedidos, totalValor, totalItens, totalAtrasados };
+}
+
+// ============================================
+// TELA DE LOGIN E PERSISTÊNCIA
+// ============================================
+function salvarSessao(nome, permissao) {
+    localStorage.setItem('breton_user', nome);
+    localStorage.setItem('breton_permissao', permissao);
+}
+
+function limparSessao() {
+    localStorage.removeItem('breton_user');
+    localStorage.removeItem('breton_permissao');
+}
+
+function restaurarSessao() {
+    const nome = localStorage.getItem('breton_user');
+    const permissao = localStorage.getItem('breton_permissao');
+    if (nome && permissao) {
+        usuarioAtual = nome;
+        usuarioPermissao = permissao;
+        return true;
+    }
+    return false;
+}
+
+function mostrarLogin() {
+    const sidebar = getElement('sidebar');
+    const footer = getElement('footer');
+    const footerVerse = getElement('footerVerse');
+    if (sidebar) sidebar.style.display = 'none';
+    if (footer) footer.style.display = 'none';
+    if (footerVerse) footerVerse.style.display = 'none';
+    
+    const main = getElement('main-content');
+    if (main) {
+        main.innerHTML = `
+            <div class="login-container">
+                <div class="login-box">
+                    <h1>BRETON BELÉM</h1>
+                    <h2>Hong Possas Mov. de Decoração</h2>
+                    <div class="login-field"><label>👤 Usuário</label><select id="loginUsuario">${usuarios.map(u => `<option value="${escapeHtml(u.nome)}">${escapeHtml(u.nome)}</option>`).join('')}</select></div>
+                    <div class="login-field"><label>🔑 Senha</label><input type="password" id="loginSenha" placeholder="•••" autocomplete="off"></div>
+                    <button class="login-button" onclick="fazerLogin()">🔓 ENTRAR</button>
                 </div>
-                
-                <div class="card"><h2>Vendas por Consultor</h2>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>Consultor</th><th>Valor</th></tr></thead>
-                        <tbody>${Object.entries(porConsultor).map(([n,v]) => `<tr><td>${n}</td><td>${formatarValor(v)}</td></tr>`).join('')}</tbody>
-                    </table>
-                </div></div>
-                
-                <div class="card"><h2>Vendas por Arquiteto</h2>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>Arquiteto</th><th>Valor</th></tr></thead>
-                        <tbody>${Object.entries(porArquiteto).map(([n,v]) => `<tr><td>${n}</td><td>${formatarValor(v)}</td></tr>`).join('')}</tbody>
-                    </table>
-                </div></div>
-                
-                <div class="card"><h2>Vendas por Forma de Pagamento</h2>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>Forma</th><th>Valor</th></tr></thead>
-                        <tbody>${Object.entries(porForma).map(([f,v]) => `<tr><td>${f}</td><td>${formatarValor(v)}</td></tr>`).join('')}</tbody>
-                    </table>
-                </div></div>
-            `;
-            
-            // Detalhamento por Consultor
-            html += `<div class="card"><h2>Detalhamento por Consultor</h2>`;
-            for (let consId in detalheConsultores) {
-                let cons = detalheConsultores[consId];
-                html += `<h3>${cons.nome} - Total: ${formatarValor(cons.total)}</h3>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>Data</th><th>Cliente</th><th>Forma</th><th>Valor Venda</th><th>Comissão</th><th>Status</th><th>Ação</th></tr></thead>
-                        <tbody>`;
-                for (let v of cons.vendas) {
-                    html += `<tr>
-                        <td>${formatarData(v.data)}</td>
-                        <td>${v.cliente}</td>
-                        <td>${v.forma}</td>
-                        <td>${formatarValor(v.valor)}</td>
-                        <td>${formatarValor(v.comissao)}</td>
-                        <td><span class="status-badge ${v.pago ? 'status-paid' : 'status-pending'}">${v.pago ? 'Pago' : 'Pendente'}</span></td>
-                        <td><button class="small" onclick="toggleConsultorPago('${v.id}')">${v.pago ? 'Desmarcar' : 'Marcar Pago'}</button></td>
-                    </tr>`;
-                }
-                html += `</tbody></table></div>`;
-            }
-            html += `</div>`;
-            
-            // Comissão Arquitetos
-            html += `<div class="card"><h2>Comissão Arquitetos</h2>`;
-            for (let nome in arquitetosComissao) {
-                let arq = arquitetosComissao[nome];
-                html += `<h3>${nome} - Total: ${formatarValor(arq.total)}</h3>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>Data</th><th>Cliente</th><th>Valor Venda</th><th>Comissão</th><th>Status</th><th>Ação</th></tr></thead>
-                        <tbody>`;
-                for (let v of arq.vendas) {
-                    html += `<tr>
-                        <td>${formatarData(v.data)}</td>
-                        <td>${v.cliente}</td>
-                        <td>${formatarValor(v.valor)}</td>
-                        <td>${formatarValor(v.comissao)}</td>
-                        <td><span class="status-badge ${v.pago ? 'status-paid' : 'status-pending'}">${v.pago ? 'Pago' : 'Pendente'}</span></td>
-                        <td><button class="small" onclick="toggleArquitetoPagoRel('${v.id}')">${v.pago ? 'Desmarcar' : 'Marcar Pago'}</button></td>
-                    </tr>`;
-                }
-                html += `</tbody></table></div>`;
-            }
-            html += `</div>`;
-            
-            // Boletos
-            html += `
-                <div class="card"><h2>📆 Boletos que ENTRARAM no período</h2>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>Cliente</th><th>Pedido</th><th>Valor</th><th>Vencimento</th></tr></thead>
-                        <tbody>${boletosEntraram.map(p => { let venda = db.vendas.find(v=>v.id===p.vendaId); return `<tr><td>${p.clienteNome}</td><td>${venda?.pedido || '-'}</td><td>${formatarValor(p.valorParcelaBruto || p.valor)}</td><td>${p.mesCompetencia}</td></tr>`; }).join('') || '<tr><td colspan="4">Nenhum boleto entrou no período</td></tr>'}</tbody>
-                    </table>
-                </div></div>
-                
-                <div class="card"><h2>📆 Boletos que VENCERÃO em meses futuros</h2>
-                <div class="table-wrapper">
-                    <table>
-                        <thead><tr><th>Cliente</th><th>Pedido</th><th>Valor</th><th>Vencimento</th></tr></thead>
-                        <tbody>${boletosFuturosLista.map(p => { let venda = db.vendas.find(v=>v.id===p.vendaId); return `<tr><td>${p.clienteNome}</td><td>${venda?.pedido || '-'}</td><td>${formatarValor(p.valorParcelaBruto || p.valor)}</td><td>${p.mesCompetencia}</td></tr>`; }).join('') || '<tr><td colspan="4">Nenhum boleto futuro</td></tr>'}</tbody>
-                    </table>
-                </div></div>
-            `;
-            
-            document.getElementById('relatoriosConteudo').innerHTML = html;
+            </div>
+        `;
+    }
+}
+
+async function fazerLogin() {
+    const nome = document.getElementById('loginUsuario').value;
+    const senha = document.getElementById('loginSenha')?.value || '';
+    
+    await carregarDados();
+    
+    const usuario = usuarios.find(u => u.nome === nome);
+    if (!usuario) { alert('Usuário não encontrado!'); return; }
+    if (usuario.senha && usuario.senha !== senha) { alert('Senha incorreta!'); return; }
+    
+    usuarioAtual = nome;
+    usuarioPermissao = nome === 'Admin' ? 'admin' : 'user';
+    salvarSessao(usuarioAtual, usuarioPermissao);
+    
+    const menuUsuarios = getElement('menuUsuarios');
+    const menuLogs = getElement('menuLogs');
+    const sidebar = getElement('sidebar');
+    const footer = getElement('footer');
+    const footerVerse = getElement('footerVerse');
+    
+    if (menuUsuarios) menuUsuarios.style.display = nome === 'Admin' ? 'block' : 'none';
+    if (menuLogs) menuLogs.style.display = nome === 'Admin' ? 'block' : 'none';
+    if (sidebar) sidebar.style.display = 'block';
+    if (footer) footer.style.display = 'block';
+    if (footerVerse) footerVerse.style.display = 'block';
+    
+    await adicionarLog('LOGIN', nome);
+    mostrar('clientes');
+}
+
+function logout() {
+    usuarioAtual = null;
+    usuarioPermissao = null;
+    limparSessao();
+    const sidebar = getElement('sidebar');
+    const footer = getElement('footer');
+    const footerVerse = getElement('footerVerse');
+    if (sidebar) sidebar.style.display = 'none';
+    if (footer) footer.style.display = 'none';
+    if (footerVerse) footerVerse.style.display = 'none';
+    mostrarLogin();
+}
+
+// ============================================
+// TELA DE CLIENTES (validação de pedido único)
+// ============================================
+function telaClientes() {
+    return topBar() + `
+        <div class="box">
+            <h2>👥 Clientes</h2>
+            <div class="form-grid">
+                <div class="form-group"><label class="required">Nº Pedido</label><input type="number" id="cli_pedido"></div>
+                <div class="form-group"><label class="required">Data</label><input type="date" id="cli_data"></div>
+                <div class="form-group"><label class="required">Cliente</label><input type="text" id="cli_nome" style="text-transform:uppercase"></div>
+                <div class="form-group"><label>CPF/CNPJ</label><input type="text" id="cli_cpf"></div>
+                <div class="form-group"><label>Contato</label><input type="text" id="cli_contato" placeholder="Telefone/Email"></div>
+                <div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarCliente" onclick="adicionarCliente()">➕ Adicionar</button></div>
+            </div>
+            <div class="search-box"><input type="text" id="buscaCliente" placeholder="🔍 Buscar..." onkeyup="filtrarClientes()"></div>
+            <div class="table-container"><table class="auto-layout" id="tabelaClientes"><thead><th>#</th><th>Pedido</th><th>Data</th><th>Cliente</th><th>CPF/CNPJ</th><th>Contato</th><th>Ações</th></thead>
+                <tbody>${clientes.map((c,i)=>`<tr><td>${i+1}<\/td><td>${c.pedido}<\/td><td>${formatarData(c.data)}<\/td><td>${escapeHtml(c.cliente)}<\/td><td>${escapeHtml(c.cpf_cnpj||'-')}<\/td><td>${escapeHtml(c.contato||'-')}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar cliente" onclick="abrirModalEdicaoCliente('${c.id}')">✏️<\/button><button class="small danger" data-tooltip="Excluir cliente" onclick="excluirCliente('${c.id}')">🗑️<\/button><\/td><\/tr>`).join('')}
+            </tbody><\/table><\/div>
+        <\/div>
+    `;
+}
+
+async function adicionarCliente() {
+    const btn = getElement('btnAdicionarCliente');
+    if (!btn) return;
+    const originalText = showLoading(btn, 'Salvando...');
+    
+    try {
+        let p = document.getElementById('cli_pedido')?.value, d = document.getElementById('cli_data')?.value, n = document.getElementById('cli_nome')?.value;
+        if (!p||!d||!n) { alert('Preencha pedido, data e nome!'); return; }
+        if (clientes.some(c => c.pedido == p)) {
+            alert(`❌ Já existe um cliente com o pedido número ${p}. Cada pedido deve ser único.`);
+            return;
+        }
+        const novo = { pedido:parseInt(p), data:d, cliente:n.toUpperCase(), cpf_cnpj:document.getElementById('cli_cpf')?.value||'', contato:document.getElementById('cli_contato')?.value||'' };
+        const docRef = await db.collection('clientes').add(novo);
+        clientes.push({ id: docRef.id, ...novo });
+        await adicionarLog('ADICIONOU CLIENTE', n);
+        mostrar('clientes');
+    } catch (error) {
+        console.error('Erro ao adicionar cliente:', error);
+        alert('❌ Erro ao salvar! Tente novamente.');
+    } finally {
+        hideLoading(btn, originalText);
+    }
+}
+
+async function excluirCliente(id) {
+    if (confirm('⚠️ Excluir cliente? Esta ação não pode ser desfeita.')) {
+        try {
+            const c = clientes.find(c => c.id === id);
+            await db.collection('clientes').doc(id).delete();
+            clientes = clientes.filter(c => c.id !== id);
+            await adicionarLog('EXCLUIU CLIENTE', c.cliente);
+            mostrar('clientes');
+        } catch (error) {
+            console.error('Erro ao excluir cliente:', error);
+            alert('❌ Erro ao excluir! Tente novamente.');
+        }
+    }
+}
+
+function filtrarClientes() {
+    let b = document.getElementById('buscaCliente')?.value.toLowerCase() || '';
+    document.querySelectorAll('#tabelaClientes tbody tr').forEach(l => l.style.display = l.textContent.toLowerCase().includes(b) ? '' : 'none');
+}
+
+function abrirModalEdicaoCliente(id) {
+    const c = clientes.find(c => c.id === id);
+    const modal = getElement('modalEditarCliente');
+    const content = getElement('modalEditarClienteContent');
+    if (!modal || !content) return;
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nº Pedido</label><input type="number" id="edit_cli_pedido" value="${c.pedido}"><\/div><div class="form-group"><label>Data</label><input type="date" id="edit_cli_data" value="${c.data}"><\/div><div class="form-group"><label>Cliente</label><input type="text" id="edit_cli_nome" value="${escapeHtml(c.cliente)}" style="text-transform:uppercase"><\/div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_cli_cpf" value="${escapeHtml(c.cpf_cnpj||'')}"><\/div><div class="form-group"><label>Contato</label><input type="text" id="edit_cli_contato" value="${escapeHtml(c.contato||'')}"><\/div><\/div><div style="text-align:right; margin-top:20px"><button class="success" id="btnSalvarCliente" onclick="salvarEdicaoCliente('${id}')">💾 SALVAR<\/button><\/div>`;
+    modal.classList.add('active');
+}
+
+async function salvarEdicaoCliente(id) {
+    const btn = document.getElementById('btnSalvarCliente');
+    if (!btn) return;
+    const originalText = showLoading(btn, 'Salvando...');
+    
+    try {
+        const c = clientes.find(c => c.id === id);
+        const novoPedido = parseInt(document.getElementById('edit_cli_pedido')?.value);
+        if (clientes.some(cli => cli.id !== id && cli.pedido === novoPedido)) {
+            alert(`❌ O pedido ${novoPedido} já está cadastrado para outro cliente.`);
+            return;
+        }
+        c.pedido = novoPedido;
+        c.data = document.getElementById('edit_cli_data')?.value || c.data;
+        c.cliente = document.getElementById('edit_cli_nome')?.value?.toUpperCase() || c.cliente;
+        c.cpf_cnpj = document.getElementById('edit_cli_cpf')?.value || '';
+        c.contato = document.getElementById('edit_cli_contato')?.value || '';
+        await db.collection('clientes').doc(id).update(c);
+        await adicionarLog('EDITOU CLIENTE', c.cliente);
+        fecharModal('modalEditarCliente');
+        mostrar('clientes');
+    } catch (error) {
+        console.error('Erro ao editar cliente:', error);
+        alert('❌ Erro ao salvar! Tente novamente.');
+    } finally {
+        hideLoading(btn, originalText);
+    }
+}
+
+// ============================================
+// TELA DE FORNECEDORES (validação de nome e CNPJ únicos)
+// ============================================
+function telaFornecedores() {
+    return topBar() + `
+        <div class="box">
+            <h2>📦 Fornecedores</h2>
+            <div class="form-grid">
+                <div class="form-group"><label>Código</label><input type="text" id="for_cod" value="${gerarProximoCodFornecedor()}" readonly></div>
+                <div class="form-group"><label class="required">Fornecedor</label><input type="text" id="for_nome" style="text-transform:uppercase"></div>
+                <div class="form-group"><label>CPF/CNPJ</label><input type="text" id="for_cpf"></div>
+                <div class="form-group"><label>Condição</label><select id="for_condicao"><option value="">Selecione</option><option value="FATURADO">FATURADO</option><option value="28D">28D</option><option value="ENTRADA + ENTREGA">ENTRADA + ENTREGA</option><option value="ANTECIPADO">ANTECIPADO</option></select></div>
+                <div class="form-group"><label>Coleção</label><input type="text" id="for_colecao" style="text-transform:uppercase"></div>
+                <div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarFornecedor" onclick="adicionarFornecedor()">➕ Adicionar</button></div>
+            </div>
+            <div class="search-box"><input type="text" id="buscaFornecedor" placeholder="🔍 Buscar..." onkeyup="filtrarFornecedores()"></div>
+            <div class="table-container"><table class="auto-layout" id="tabelaFornecedores"><thead><th>#</th><th>COD</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Condição</th><th>Coleção</th><th>Ações</th></thead>
+                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}<\/td><td>${f.cod}<\/td><td>${escapeHtml(f.nome)}<\/td><td>${escapeHtml(f.cpf_cnpj||'-')}<\/td><td>${escapeHtml(f.condicao||'-')}<\/td><td>${escapeHtml(f.colecao||'-')}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar fornecedor" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️<\/button><button class="small danger" data-tooltip="Excluir fornecedor" onclick="excluirFornecedor('${f.id}')">🗑️<\/button><\/td><\/tr>`).join('')}
+            </tbody><\/table><\/div>
+        <\/div>
+    `;
+}
+
+function normalizarCNPJ(cnpj) {
+    if (!cnpj) return '';
+    return cnpj.replace(/[^\d]/g, '');
+}
+
+async function adicionarFornecedor() {
+    const btn = document.getElementById('btnAdicionarFornecedor');
+    if (!btn) return;
+    const originalText = showLoading(btn, 'Salvando...');
+    
+    try {
+        let nome = document.getElementById('for_nome')?.value;
+        if (!nome) { alert('Nome obrigatório!'); return; }
+        nome = nome.toUpperCase().trim();
+        const cnpjRaw = document.getElementById('for_cpf')?.value || '';
+        const cnpjNorm = normalizarCNPJ(cnpjRaw);
+        
+        if (fornecedores.some(f => f.nome.toUpperCase() === nome)) {
+            alert(`❌ Já existe um fornecedor com o nome "${nome}".`);
+            return;
+        }
+        if (cnpjNorm && fornecedores.some(f => normalizarCNPJ(f.cpf_cnpj) === cnpjNorm)) {
+            alert(`❌ Já existe um fornecedor com o CNPJ ${cnpjRaw}.`);
+            return;
         }
         
-        window.toggleConsultorPago = function(vendaId) {
-            let venda = db.vendas.find(v => v.id === vendaId);
-            if (venda) {
-                venda.consultorComissaoPaga = !venda.consultorComissaoPaga;
-                salvarDados();
-                gerarRelatorios();
-            }
+        const novo = { cod: document.getElementById('for_cod')?.value || gerarProximoCodFornecedor(), nome, cpf_cnpj: cnpjRaw, condicao: document.getElementById('for_condicao')?.value || '', colecao: (document.getElementById('for_colecao')?.value || '').toUpperCase() };
+        const docRef = await db.collection('fornecedores').add(novo);
+        fornecedores.push({ id: docRef.id, ...novo });
+        await adicionarLog('ADICIONOU FORNECEDOR', nome);
+        mostrar('fornecedores');
+    } catch (error) {
+        console.error('Erro ao adicionar fornecedor:', error);
+        alert('❌ Erro ao salvar! Tente novamente.');
+    } finally {
+        hideLoading(btn, originalText);
+    }
+}
+
+async function excluirFornecedor(id) {
+    if (confirm('⚠️ Excluir fornecedor?')) {
+        try {
+            const f = fornecedores.find(f => f.id === id);
+            await db.collection('fornecedores').doc(id).delete();
+            fornecedores = fornecedores.filter(f => f.id !== id);
+            await adicionarLog('EXCLUIU FORNECEDOR', f.nome);
+            mostrar('fornecedores');
+        } catch (error) {
+            console.error('Erro ao excluir fornecedor:', error);
+            alert('❌ Erro ao excluir!');
+        }
+    }
+}
+
+function filtrarFornecedores() {
+    let b = document.getElementById('buscaFornecedor')?.value.toLowerCase() || '';
+    document.querySelectorAll('#tabelaFornecedores tbody tr').forEach(l => l.style.display = l.textContent.toLowerCase().includes(b) ? '' : 'none');
+}
+
+function abrirModalEdicaoFornecedor(id) {
+    const f = fornecedores.find(f => f.id === id);
+    const modal = getElement('modalEditarFornecedor');
+    const content = getElement('modalEditarFornecedorContent');
+    if (!modal || !content) return;
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Código</label><input type="text" id="edit_for_cod" value="${f.cod}" readonly><\/div><div class="form-group"><label>Fornecedor</label><input type="text" id="edit_for_nome" value="${escapeHtml(f.nome)}" style="text-transform:uppercase"><\/div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_for_cpf" value="${escapeHtml(f.cpf_cnpj||'')}"><\/div><div class="form-group"><label>Condição</label><select id="edit_for_condicao"><option value="">Selecione</option><option value="FATURADO" ${f.condicao==='FATURADO'?'selected':''}>FATURADO</option><option value="28D" ${f.condicao==='28D'?'selected':''}>28D</option><option value="ENTRADA + ENTREGA" ${f.condicao==='ENTRADA + ENTREGA'?'selected':''}>ENTRADA + ENTREGA</option><option value="ANTECIPADO" ${f.condicao==='ANTECIPADO'?'selected':''}>ANTECIPADO</option><\/select><\/div><div class="form-group"><label>Coleção</label><input type="text" id="edit_for_colecao" value="${escapeHtml(f.colecao||'')}" style="text-transform:uppercase"><\/div><\/div><div style="text-align:right; margin-top:20px"><button class="success" id="btnSalvarFornecedor" onclick="salvarEdicaoFornecedor('${id}')">💾 SALVAR<\/button><\/div>`;
+    modal.classList.add('active');
+}
+
+async function salvarEdicaoFornecedor(id) {
+    const btn = document.getElementById('btnSalvarFornecedor');
+    if (!btn) return;
+    const originalText = showLoading(btn, 'Salvando...');
+    
+    try {
+        const f = fornecedores.find(f => f.id === id);
+        const novoNome = document.getElementById('edit_for_nome')?.value?.toUpperCase().trim() || f.nome;
+        const novoCnpj = document.getElementById('edit_for_cpf')?.value || '';
+        const novoCnpjNorm = normalizarCNPJ(novoCnpj);
+        
+        if (fornecedores.some(f2 => f2.id !== id && f2.nome.toUpperCase() === novoNome)) {
+            alert(`❌ Já existe um fornecedor com o nome "${novoNome}".`);
+            return;
+        }
+        if (novoCnpjNorm && fornecedores.some(f2 => f2.id !== id && normalizarCNPJ(f2.cpf_cnpj) === novoCnpjNorm)) {
+            alert(`❌ Já existe um fornecedor com o CNPJ ${novoCnpj}.`);
+            return;
+        }
+        
+        f.nome = novoNome;
+        f.cpf_cnpj = novoCnpj;
+        f.condicao = document.getElementById('edit_for_condicao')?.value || '';
+        f.colecao = document.getElementById('edit_for_colecao')?.value?.toUpperCase() || '';
+        await db.collection('fornecedores').doc(id).update(f);
+        await adicionarLog('EDITOU FORNECEDOR', f.nome);
+        fecharModal('modalEditarFornecedor');
+        mostrar('fornecedores');
+    } catch (error) {
+        console.error('Erro ao editar fornecedor:', error);
+        alert('❌ Erro ao salvar!');
+    } finally {
+        hideLoading(btn, originalText);
+    }
+}
+
+// ============================================
+// FUNÇÃO PARA ATUALIZAR CONTADOR DE CARACTERES
+// ============================================
+function atualizarContadorCaracteres(textarea, maxChars = 100) {
+    const length = textarea.value.length;
+    const counter = document.getElementById('obsCharCounter');
+    if (counter) {
+        counter.textContent = `${length}/${maxChars}`;
+        counter.classList.remove('warning', 'danger');
+        if (length > maxChars * 0.8) counter.classList.add('warning');
+        if (length >= maxChars) counter.classList.add('danger');
+    }
+    if (length > maxChars) {
+        textarea.value = textarea.value.substring(0, maxChars);
+        atualizarContadorCaracteres(textarea, maxChars);
+    }
+}
+
+// ============================================
+// TELA DE LANÇAMENTOS (com busca por OC, NF, pedido, cliente)
+// ============================================
+function telaLancamentos() {
+    let optionsCat = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+    let optionsForn = fornecedores.map(f => `<option value="${escapeHtml(f.nome)}">${escapeHtml(f.nome)} (${f.cod})</option>`).join('');
+    let optionsTipo = tiposPedido.map(t => `<option value="${t}">${t}</option>`).join('');
+    let optionsMeses = mesesLista.map(m => `<option value="${m}">${m}</option>`).join('');
+    let optionsStatus = statusLista.map(s => `<option value="${s}">${s}</option>`).join('');
+    
+    const lancamentosFiltrados = getLancamentosFiltrados();
+    const totais = calcularTotais(lancamentosFiltrados);
+    
+    return topBar() + `
+        <div class="box">
+            <h2>📝 Lançamentos</h2>
+            
+            <div class="resumo-rapido">
+                <span class="resumo-item">📊 <strong>${totais.totalPedidos}</strong> pedidos</span>
+                <span class="resumo-item">💰 <strong>${formatarValor(totais.totalValor)}</strong></span>
+                <span class="resumo-item">📦 <strong>${totais.totalItens}</strong> itens</span>
+                <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados</span>
+            </div>
+            
+            <div class="filtros-rapidos">
+                <button class="filtro-tipo-btn ${currentFilterType === 'TODOS' ? 'active' : ''}" onclick="setFilterType('TODOS')">📋 TODOS</button>
+                <button class="filtro-tipo-btn ${currentFilterType === 'OC' ? 'active' : ''}" onclick="setFilterType('OC')">📄 OC</button>
+                <button class="filtro-tipo-btn ${currentFilterType === 'SHOWROOM' ? 'active' : ''}" onclick="setFilterType('SHOWROOM')">🖼️ SHOWROOM</button>
+                <button class="filtro-tipo-btn ${currentFilterType === 'ESTOQUE' ? 'active' : ''}" onclick="setFilterType('ESTOQUE')">📦 ESTOQUE</button>
+                <button class="filtro-tipo-btn ${currentFilterType === 'ASSISTENCIA' ? 'active' : ''}" onclick="setFilterType('ASSISTENCIA')">🔧 ASSISTENCIA</button>
+            </div>
+            
+            <div class="ordenacao-btns">
+                <button class="ordem-btn ${currentOrder === 'data' ? 'active' : ''}" onclick="setOrder('data')">📅 Data</button>
+                <button class="ordem-btn ${currentOrder === 'cliente' ? 'active' : ''}" onclick="setOrder('cliente')">👤 Cliente</button>
+                <button class="ordem-btn ${currentOrder === 'pedido' ? 'active' : ''}" onclick="setOrder('pedido')">🔢 Pedido</button>
+                <button class="ordem-btn ${currentOrder === 'status' ? 'active' : ''}" onclick="setOrder('status')">📌 Status</button>
+                <button class="ordem-btn" onclick="toggleOrderDirection()">${currentOrderDirection === 'asc' ? '⬆️ Crescente' : '⬇️ Decrescente'}</button>
+            </div>
+            
+            <details>
+                <summary style="cursor:pointer;padding:10px;background:#FAF0F0;border-radius:6px;font-weight:bold">➕ NOVO LANÇAMENTO</summary>
+                <div style="margin-top:15px">
+                    <div class="form-tabs">
+                        <button class="tab-btn active" onclick="mudarAba('tab1', event)">📋 Dados</button>
+                        <button class="tab-btn" onclick="mudarAba('tab2', event)">📅 Datas</button>
+                        <button class="tab-btn" onclick="mudarAba('tab3', event)">💰 Financeiro</button>
+                    </div>
+                    <div id="tab1" class="tab-content active">
+                        <div class="form-grid">
+                            <div class="form-group"><label class="required">Nº Pedido</label><input type="number" id="lan_pedido" onchange="preencherClienteAuto()"></div>
+                            <div class="form-group"><label>Data Pedido</label><input type="date" id="lan_data" readonly style="background:#f5f5f5"></div>
+                            <div class="form-group"><label>Mês/Ano</label><select id="lan_mes"><option value="">Selecione</option>${optionsMeses}</select></div>
+                            <div class="form-group"><label>Tipo</label><select id="lan_tipo"><option value="">Selecione</option>${optionsTipo}</select></div>
+                            <div class="form-group"><label>Cliente</label><input type="text" id="lan_cliente" readonly></div>
+                            <div class="form-group"><label>OC</label><input type="text" id="lan_oc" style="text-transform:uppercase"></div>
+                            <div class="form-group"><label>Fornecedor</label><select id="lan_fornecedor"><option value="">Selecione</option>${optionsForn}</select></div>
+                            <div class="form-group"><label class="required">Categoria</label><select id="lan_categoria" required><option value="">Selecione</option>${optionsCat}</select></div>
+                            <div class="form-group"><label>Itens</label><input type="number" id="lan_itens"></div>
+                            <div class="form-group"><label>Produtos</label><input type="text" id="lan_produtos" style="text-transform:uppercase"></div>
+                        </div>
+                    </div>
+                    <div id="tab2" class="tab-content">
+                        <div class="form-grid">
+                            <div class="form-group"><label>Data Pagamento</label><input type="date" id="lan_data_pagto"></div>
+                            <div class="form-group"><label>Prev. Faturamento</label><input type="date" id="lan_prev_fat"></div>
+                            <div class="form-group"><label>Data Faturamento</label><input type="date" id="lan_data_fat" onchange="calcularPrevisaoChegada()"></div>
+                            <div class="form-group"><label>Prev. Chegada</label><input type="date" id="lan_prev_chegada" readonly style="background:#f5f5f5"></div>
+                            <div class="form-group"><label>Novo Prazo</label><input type="date" id="lan_novo_prazo"></div>
+                            <div class="form-group"><label>Data Chegada</label><input type="date" id="lan_chegada"></div>
+                            <div class="form-group"><label>Data Conferência</label><input type="date" id="lan_conferencia"></div>
+                            <div class="form-group"><label>Data Entrega</label><input type="date" id="lan_entrega"></div>
+                            <div class="form-group"><label>Prazo Final</label><input type="date" id="lan_prazo_final" placeholder="Data manual"></div>
+                        </div>
+                    </div>
+                    <div id="tab3" class="tab-content">
+                        <div class="form-grid">
+                            <div class="form-group"><label>Valor</label><input type="text" id="lan_valor" placeholder="0,00" onblur="formatarValorInput(this)"></div>
+                            <div class="form-group"><label>Condição</label><select id="lan_condicao"><option value="">Selecione</option><option value="Em aberto">EM ABERTO</option><option value="Em produção">EM PRODUÇÃO</option><option value="Cancelado">CANCELADO</option><option value="Entregue">ENTREGUE</option><option value="Em Rota">EM ROTA</option><option value="Entregue em fábrica">ENTREGUE EM FÁBRICA</option><option value="Entregue - Pag. Pendente">ENTREGUE - PAG. PENDENTE</option><option value="Pedido Retido">PEDIDO RETIDO</option></select></div>
+                            <div class="form-group"><label>Status</label><select id="lan_status"><option value="">Selecione</option>${optionsStatus}</select></div>
+                            <div class="form-group"><label>Nº NF</label><input type="text" id="lan_nf" style="text-transform:uppercase"></div>
+                            <div class="form-group"><label>Transportadora</label><input type="text" id="lan_transportadora" style="text-transform:uppercase"></div>
+                            <div class="form-group"><label>Observações</label>
+                                <textarea id="lan_observacoes" rows="2" maxlength="100" placeholder="Informações adicionais (máx 100 caracteres)" oninput="atualizarContadorCaracteres(this, 100)"></textarea>
+                                <div class="char-counter" id="obsCharCounter">0/100</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align:center;margin-top:20px"><button class="salvar" id="btnSalvarLancamento" onclick="adicionarLancamento()">💾 SALVAR LANÇAMENTO</button></div>
+                </div>
+            </details>
+            
+            <div class="search-box"><input type="text" id="buscaLancamento" placeholder="🔍 Buscar por pedido, cliente, OC ou NF..." onkeyup="filtrarLancamentos()"></div>
+            <div class="table-container"><table class="lancamentos-table" id="tabelaLancamentos"><thead>
+                <th>#</th><th>Pedido</th><th>Data</th><th>Mês</th><th>Tipo</th><th>Cliente</th><th>OC</th><th>Fornecedor</th><th>Categoria</th>
+                <th>Itens</th><th>Produtos</th><th>Valor</th><th>Data Pagto</th><th>Condição</th><th>Prev.Fat</th>
+                <th>Data Fat</th><th>Prev.Chegada</th><th>Novo Prazo</th><th>Status</th><th>Nº NF</th><th>Transportadora</th><th>Chegada</th><th>Conf</th>
+                <th>Entrega</th><th>Prazo Final</th><th>Usuário</th><th>Editado</th><th>Obs</th><th>Ações</th>
+            </thead>
+                <tbody id="lancamentosBody"></tbody>
+                <tfoot id="lancamentosFooter"></tfoot>
+             </div>
+        </div>
+    `;
+}
+
+function renderLancamentos() {
+    const lancamentosFiltrados = getLancamentosFiltrados();
+    const busca = document.getElementById('buscaLancamento')?.value.toLowerCase() || '';
+    
+    let dadosFiltrados = lancamentosFiltrados;
+    if (busca) {
+        dadosFiltrados = dadosFiltrados.filter(l => 
+            (l.pedido?.toString().includes(busca)) ||
+            (l.cliente?.toLowerCase().includes(busca)) ||
+            (l.oc?.toLowerCase().includes(busca)) ||
+            (l.nf?.toLowerCase().includes(busca))
+        );
+    }
+    
+    const totaisFiltrados = calcularTotais(dadosFiltrados);
+    
+    const tbody = document.getElementById('lancamentosBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = dadosFiltrados.map((l, idx) => {
+        const atrasado = isPedidoAtrasado(l);
+        const rowClass = atrasado ? 'atrasado-row' : '';
+        
+        return `<tr class="${rowClass}" data-id="${l.id}">
+            <td class="center">${idx + 1}<\/td>
+            <td>${l.pedido || '-'}<\/td>
+            <td>${formatarData(l.data)}<\/td>
+            <td>${l.mes || '-'}<\/td>
+            <td>${l.tipo || '-'}<\/td>
+            <td>${escapeHtml(l.cliente || '-')}<\/td>
+            <td>${l.oc || '-'}<\/td>
+            <td>${escapeHtml(l.fornecedor || '-')}<\/td>
+            <td>${l.categoria || '-'}<\/td>
+            <td>${l.itens || '-'}<\/td>
+            <td>${l.produtos || '-'}<\/td>
+            <td>${formatarValor(l.valor)}<\/td>
+            <td>${formatarData(l.data_pagto)}<\/td>
+            <td>${l.condicao || '-'}<\/td>
+            <td>${formatarData(l.prev_fat)}<\/td>
+            <td>${formatarData(l.data_fat)}<\/td>
+            <td>${formatarData(l.prev_chegada)}<\/td>
+            <td>${formatarData(l.novo_prazo)}<\/td>
+            <td>${getStatusBadge(l.status)}<\/td>
+            <td>${l.nf || '-'}<\/td>
+            <td>${l.transportadora || '-'}<\/td>
+            <td>${formatarData(l.chegada)}<\/td>
+            <td>${formatarData(l.conferencia)}<\/td>
+            <td>${formatarData(l.entrega)}<\/td>
+            <td>${formatarData(l.prazo_final) || '-'}<\/td>
+            <td>${l.usuario || '-'}<\/td>
+            <td>${l.editadoPor ? l.editadoPor + ' ' + new Date(l.editadoEm).toLocaleDateString() : '-'}<\/td>
+            <td>${l.observacoes ? `<span class="tooltip-icon" data-tooltip="${escapeHtml(l.observacoes.replace(/"/g, '&quot;'))}">💬<\/span>` : '-'}<\/td>
+            <td class="acoes-cell">
+                <button class="small" data-tooltip="Editar lançamento" onclick="abrirModalEdicaoLancamento('${l.id}')">✏️<\/button>
+                <button class="small" data-tooltip="Duplicar lançamento" onclick="duplicarLancamento('${l.id}')">📋<\/button>
+                <button class="small info" data-tooltip="Gerenciar anexos" onclick="abrirModalAnexos(${l.pedido})">📎<\/button>
+                <button class="small danger" data-tooltip="Excluir lançamento" onclick="excluirLancamento('${l.id}')">🗑️<\/button>
+             <\/td>
+         <\/tr>`;
+    }).join('');
+    
+    const tfoot = document.getElementById('lancamentosFooter');
+    if (tfoot) {
+        tfoot.innerHTML = `<tr style="background:#FAF0F0; font-weight:bold;">
+            <td colspan="11" style="text-align:right;">TOTAL:<\/td>
+            <td>${formatarValor(totaisFiltrados.totalValor)}<\/td>
+            <td colspan="9"><\/td>
+            <td>${totaisFiltrados.totalItens} itens<\/td>
+            <td colspan="5"><\/td>
+            <td>${totaisFiltrados.totalPedidos} pedidos<\/td>
+            <td colspan="4"><\/td>
+         <\/tr>`;
+    }
+}
+
+function setFilterType(tipo) {
+    currentFilterType = tipo;
+    renderLancamentos();
+    const totais = calcularTotais(getLancamentosFiltrados());
+    const resumoDiv = document.querySelector('.resumo-rapido');
+    if (resumoDiv) {
+        resumoDiv.innerHTML = `
+            <span class="resumo-item">📊 <strong>${totais.totalPedidos}</strong> pedidos</span>
+            <span class="resumo-item">💰 <strong>${formatarValor(totais.totalValor)}</strong></span>
+            <span class="resumo-item">📦 <strong>${totais.totalItens}</strong> itens</span>
+            <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados</span>
+        `;
+    }
+    document.querySelectorAll('.filtro-tipo-btn').forEach(btn => btn.classList.remove('active'));
+    if (event && event.target) event.target.classList.add('active');
+}
+
+function setOrder(order) {
+    currentOrder = order;
+    renderLancamentos();
+    document.querySelectorAll('.ordem-btn').forEach(btn => btn.classList.remove('active'));
+    if (event && event.target) event.target.classList.add('active');
+}
+
+function toggleOrderDirection() {
+    currentOrderDirection = currentOrderDirection === 'asc' ? 'desc' : 'asc';
+    renderLancamentos();
+    const btn = document.querySelector('.ordenacao-btns button:last-child');
+    if (btn) btn.textContent = currentOrderDirection === 'asc' ? '⬆️ Crescente' : '⬇️ Decrescente';
+}
+
+function mudarAba(aba, event) {
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const abaElement = document.getElementById(aba);
+    if (abaElement) abaElement.classList.add('active');
+    if (event && event.target) event.target.classList.add('active');
+}
+
+function preencherClienteAuto() {
+    let pedido = document.getElementById('lan_pedido')?.value;
+    let cliente = buscarClientePorPedido(pedido);
+    const clienteInput = document.getElementById('lan_cliente');
+    const dataInput = document.getElementById('lan_data');
+    if (cliente) {
+        if (clienteInput) clienteInput.value = cliente.cliente;
+        if (dataInput) dataInput.value = cliente.data;
+    } else {
+        if (clienteInput) clienteInput.value = 'NÃO ENCONTRADO';
+        if (dataInput) dataInput.value = '';
+    }
+}
+
+async function adicionarLancamento() {
+    const btn = document.getElementById('btnSalvarLancamento');
+    if (!btn) return;
+    const originalText = showLoading(btn, 'Salvando...');
+    
+    try {
+        if (!document.getElementById('lan_categoria')?.value) { alert('Categoria obrigatória!'); return; }
+        let valorRaw = document.getElementById('lan_valor')?.value || '0,00';
+        let valorNumerico = converterValorParaNumero(valorRaw);
+        let observacoes = document.getElementById('lan_observacoes')?.value || '';
+        if (observacoes.length > 100) observacoes = observacoes.substring(0, 100);
+        
+        let l = {
+            pedido: document.getElementById('lan_pedido')?.value,
+            data: document.getElementById('lan_data')?.value,
+            mes: document.getElementById('lan_mes')?.value,
+            tipo: document.getElementById('lan_tipo')?.value,
+            cliente: document.getElementById('lan_cliente')?.value,
+            oc: document.getElementById('lan_oc')?.value?.toUpperCase(),
+            fornecedor: document.getElementById('lan_fornecedor')?.value,
+            categoria: document.getElementById('lan_categoria')?.value,
+            itens: parseInt(document.getElementById('lan_itens')?.value) || 0,
+            produtos: document.getElementById('lan_produtos')?.value?.toUpperCase(),
+            valor: valorNumerico,
+            data_pagto: document.getElementById('lan_data_pagto')?.value,
+            condicao: document.getElementById('lan_condicao')?.value,
+            prev_fat: document.getElementById('lan_prev_fat')?.value,
+            data_fat: document.getElementById('lan_data_fat')?.value,
+            prev_chegada: document.getElementById('lan_prev_chegada')?.value,
+            novo_prazo: document.getElementById('lan_novo_prazo')?.value,
+            status: document.getElementById('lan_status')?.value,
+            nf: document.getElementById('lan_nf')?.value?.toUpperCase(),
+            transportadora: document.getElementById('lan_transportadora')?.value?.toUpperCase(),
+            chegada: document.getElementById('lan_chegada')?.value,
+            conferencia: document.getElementById('lan_conferencia')?.value,
+            entrega: document.getElementById('lan_entrega')?.value,
+            prazo_final: document.getElementById('lan_prazo_final')?.value,
+            observacoes: observacoes,
+            usuario: usuarioAtual,
+            criado: new Date().toISOString()
         };
         
-        window.toggleArquitetoPagoRel = function(vendaId) {
-            let venda = db.vendas.find(v => v.id === vendaId);
-            if (venda) {
-                venda.arquitetoPago = !venda.arquitetoPago;
-                salvarDados();
-                gerarRelatorios();
-            }
+        if (!l.pedido) { alert('Pedido obrigatório!'); return; }
+        
+        if (!validarDatas(l)) return;
+        
+        const docRef = await db.collection('lancamentos').add(l);
+        lancamentos.push({ id: docRef.id, ...l });
+        await adicionarLog('ADICIONOU LANÇAMENTO', `Pedido ${l.pedido}`);
+        mostrar('lancamentos');
+    } catch (error) {
+        console.error('Erro ao adicionar lançamento:', error);
+        alert('❌ Erro ao salvar! Tente novamente.');
+    } finally {
+        hideLoading(btn, originalText);
+    }
+}
+
+async function excluirLancamento(id) {
+    if (confirm('⚠️ Excluir lançamento?')) {
+        try {
+            const l = lancamentos.find(l => l.id === id);
+            if (!l) return;
+            await db.collection('lancamentos').doc(id).delete();
+            lancamentos = lancamentos.filter(l => l.id !== id);
+            await adicionarLog('EXCLUIU LANÇAMENTO', `Pedido ${l.pedido}`);
+            mostrar('lancamentos');
+        } catch (error) {
+            console.error('Erro ao excluir:', error);
+            alert('❌ Erro ao excluir!');
+        }
+    }
+}
+
+async function duplicarLancamento(id) {
+    if (confirm('Deseja duplicar este pedido? Será criado um novo pedido com número sequencial.')) {
+        try {
+            const original = lancamentos.find(l => l.id === id);
+            if (!original) return;
+            
+            let novoPedido = parseInt(original.pedido) + 1;
+            const novo = { ...original };
+            delete novo.id;
+            novo.pedido = novoPedido;
+            novo.observacoes = original.observacoes ? `[CÓPIA] ${original.observacoes.substring(0, 90)}` : 'CÓPIA DO PEDIDO';
+            novo.criado = new Date().toISOString();
+            novo.usuario = usuarioAtual;
+            
+            const docRef = await db.collection('lancamentos').add(novo);
+            lancamentos.push({ id: docRef.id, ...novo });
+            await adicionarLog('DUPLICOU LANÇAMENTO', `Pedido ${original.pedido} → ${novoPedido}`);
+            mostrar('lancamentos');
+        } catch (error) {
+            console.error('Erro ao duplicar:', error);
+            alert('❌ Erro ao duplicar!');
+        }
+    }
+}
+
+function filtrarLancamentos() {
+    renderLancamentos();
+}
+
+function exportarLancamentosExcel() {
+    if (lancamentos.length === 0) { alert('Não há dados!'); return; }
+    const wsData = [['#','Pedido','Data','Mês','Tipo','Cliente','OC','Fornecedor','Categoria','Itens','Produtos','Valor','Data Pagto','Condição','Prev.Fat','Data Fat','Prev.Chegada','Novo Prazo','Status','Nº NF','Transportadora','Chegada','Conf','Entrega','Prazo Final','Usuário','Editado','Observações']];
+    const lancamentosFiltrados = getLancamentosFiltrados();
+    lancamentosFiltrados.forEach((l, idx) => { 
+        wsData.push([
+            idx+1, l.pedido||'', l.data||'', l.mes||'', l.tipo||'', l.cliente||'', l.oc||'', l.fornecedor||'', 
+            l.categoria||'', l.itens||'', l.produtos||'', l.valor||'', l.data_pagto||'', l.condicao||'', 
+            l.prev_fat||'', l.data_fat||'', l.prev_chegada||'', l.novo_prazo||'', l.status||'', l.nf||'', 
+            l.transportadora||'', l.chegada||'', l.conferencia||'', l.entrega||'', l.prazo_final||'', 
+            l.usuario||'', l.editadoPor||'', (l.observacoes||'').substring(0, 100)
+        ]); 
+    });
+    const wb = XLSX.utils.book_new(); 
+    const ws = XLSX.utils.aoa_to_sheet(wsData); 
+    XLSX.utils.book_append_sheet(wb, ws, 'Lançamentos'); 
+    XLSX.writeFile(wb, `lancamentos_${new Date().toISOString().slice(0,10)}.xlsx`);
+    alert('✅ Arquivo exportado!');
+}
+
+function abrirModalEdicaoLancamento(id) {
+    const l = lancamentos.find(l => l.id === id);
+    if (!l) return;
+    const modal = getElement('modalEditarLancamento');
+    const content = getElement('modalEditarLancamentoContent');
+    if (!modal || !content) return;
+    
+    let optionsCat = categorias.map(c => `<option value="${c}" ${l.categoria===c?'selected':''}>${c}</option>`).join('');
+    let optionsForn = fornecedores.map(f => `<option value="${escapeHtml(f.nome)}" ${l.fornecedor===f.nome?'selected':''}>${escapeHtml(f.nome)}</option>`).join('');
+    let optionsTipo = tiposPedido.map(t => `<option value="${t}" ${l.tipo===t?'selected':''}>${t}</option>`).join('');
+    let optionsStatus = statusLista.map(s => `<option value="${s}" ${l.status===s?'selected':''}>${s}</option>`).join('');
+    
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Pedido</label><input type="number" id="edit_lan_pedido" value="${l.pedido||''}"></div>
+        <div class="form-group"><label>Data</label><input type="date" id="edit_lan_data" value="${l.data||''}"></div>
+        <div class="form-group"><label>Mês</label><input type="text" id="edit_lan_mes" value="${l.mes||''}"></div>
+        <div class="form-group"><label>Tipo</label><select id="edit_lan_tipo"><option value="">Selecione</option>${optionsTipo}</select></div>
+        <div class="form-group"><label>Cliente</label><input type="text" id="edit_lan_cliente" value="${escapeHtml(l.cliente||'')}" readonly></div>
+        <div class="form-group"><label>OC</label><input type="text" id="edit_lan_oc" value="${l.oc||''}"></div>
+        <div class="form-group"><label>Fornecedor</label><select id="edit_lan_fornecedor"><option value="">Selecione</option>${optionsForn}</select></div>
+        <div class="form-group"><label>Categoria</label><select id="edit_lan_categoria"><option value="">Selecione</option>${optionsCat}</select></div>
+        <div class="form-group"><label>Itens</label><input type="number" id="edit_lan_itens" value="${l.itens||''}"></div>
+        <div class="form-group"><label>Produtos</label><input type="text" id="edit_lan_produtos" value="${l.produtos||''}"></div>
+        <div class="form-group"><label>Valor</label><input type="text" id="edit_lan_valor" value="${formatarValor(l.valor)}" onblur="formatarValorInput(this)"></div>
+        <div class="form-group"><label>Data Pagto</label><input type="date" id="edit_lan_data_pagto" value="${l.data_pagto||''}"></div>
+        <div class="form-group"><label>Condição</label><select id="edit_lan_condicao"><option value="">Selecione</option><option value="Em aberto" ${l.condicao==='Em aberto'?'selected':''}>EM ABERTO</option><option value="Em produção" ${l.condicao==='Em produção'?'selected':''}>EM PRODUÇÃO</option><option value="Cancelado" ${l.condicao==='Cancelado'?'selected':''}>CANCELADO</option><option value="Entregue" ${l.condicao==='Entregue'?'selected':''}>ENTREGUE</option><option value="Em Rota" ${l.condicao==='Em Rota'?'selected':''}>EM ROTA</option><option value="Entregue em fábrica" ${l.condicao==='Entregue em fábrica'?'selected':''}>ENTREGUE EM FÁBRICA</option><option value="Entregue - Pag. Pendente" ${l.condicao==='Entregue - Pag. Pendente'?'selected':''}>ENTREGUE - PAG. PENDENTE</option><option value="Pedido Retido" ${l.condicao==='Pedido Retido'?'selected':''}>PEDIDO RETIDO</option></select></div>
+        <div class="form-group"><label>Prev. Fat</label><input type="date" id="edit_lan_prev_fat" value="${l.prev_fat||''}"></div>
+        <div class="form-group"><label>Data Fat</label><input type="date" id="edit_lan_data_fat" value="${l.data_fat||''}" onchange="calcularPrevisaoChegadaEdicao()"></div>
+        <div class="form-group"><label>Prev. Chegada</label><input type="date" id="edit_lan_prev_chegada" value="${l.prev_chegada||''}" readonly style="background:#f5f5f5"></div>
+        <div class="form-group"><label>Novo Prazo</label><input type="date" id="edit_lan_novo_prazo" value="${l.novo_prazo||''}"></div>
+        <div class="form-group"><label>Status</label><select id="edit_lan_status">${optionsStatus}</select></div>
+        <div class="form-group"><label>Nº NF</label><input type="text" id="edit_lan_nf" value="${l.nf||''}"></div>
+        <div class="form-group"><label>Transportadora</label><input type="text" id="edit_lan_transportadora" value="${l.transportadora||''}"></div>
+        <div class="form-group"><label>Chegada</label><input type="date" id="edit_lan_chegada" value="${l.chegada||''}"></div>
+        <div class="form-group"><label>Conferência</label><input type="date" id="edit_lan_conferencia" value="${l.conferencia||''}"></div>
+        <div class="form-group"><label>Entrega</label><input type="date" id="edit_lan_entrega" value="${l.entrega||''}"></div>
+        <div class="form-group"><label>Prazo Final</label><input type="date" id="edit_lan_prazo_final" value="${l.prazo_final||''}"></div>
+        <div class="form-group"><label>Observações</label>
+            <textarea id="edit_lan_observacoes" rows="2" maxlength="100" oninput="atualizarContadorCaracteres(this, 100)">${escapeHtml(l.observacoes || '')}</textarea>
+            <div class="char-counter" id="editObsCharCounter">${(l.observacoes || '').length}/100</div>
+        </div>
+    </div><div style="text-align:right; margin-top:20px"><p>Editando como: ${escapeHtml(usuarioAtual)}</p><button class="success" id="btnSalvarEdicaoLancamento" onclick="salvarEdicaoLancamento('${id}')">💾 SALVAR</button></div>`;
+    
+    setTimeout(() => {
+        const editTextarea = document.getElementById('edit_lan_observacoes');
+        if (editTextarea) atualizarContadorCaracteres(editTextarea, 100);
+    }, 50);
+    
+    modal.classList.add('active');
+}
+
+function calcularPrevisaoChegadaEdicao() {
+    const dataFat = document.getElementById('edit_lan_data_fat')?.value;
+    if (dataFat) {
+        const data = new Date(dataFat);
+        data.setDate(data.getDate() + 20);
+        const ano = data.getFullYear();
+        const mes = String(data.getMonth() + 1).padStart(2, '0');
+        const dia = String(data.getDate()).padStart(2, '0');
+        const prevChegadaInput = document.getElementById('edit_lan_prev_chegada');
+        if (prevChegadaInput) prevChegadaInput.value = `${ano}-${mes}-${dia}`;
+    }
+}
+
+async function salvarEdicaoLancamento(id) {
+    const btn = document.getElementById('btnSalvarEdicaoLancamento');
+    if (!btn) return;
+    const originalText = showLoading(btn, 'Salvando...');
+    
+    try {
+        const l = lancamentos.find(l => l.id === id);
+        if (!l) throw new Error('Lançamento não encontrado');
+        
+        const getValue = (id, fallback = '') => {
+            const el = document.getElementById(id);
+            return el ? el.value : fallback;
         };
         
-        function gerarPDFRelatorioFiltrado() {
-            let dataIni = document.getElementById('rel_data_ini').value;
-            let dataFim = document.getElementById('rel_data_fim').value;
-            let consultorId = document.getElementById('rel_consultor').value;
-            let arquitetoId = document.getElementById('rel_arquiteto').value;
-            let forma = document.getElementById('rel_forma').value;
-            
-            let vendasFiltradas = db.vendas.filter(v => v.data >= dataIni && v.data <= dataFim);
-            if (consultorId) vendasFiltradas = vendasFiltradas.filter(v => v.consultorId === consultorId);
-            if (arquitetoId) vendasFiltradas = vendasFiltradas.filter(v => v.arquitetoId === arquitetoId);
-            if (forma) vendasFiltradas = vendasFiltradas.filter(v => v.formaPagamento === forma);
-            
-            let receitaBruta = vendasFiltradas.reduce((s, v) => s + v.valorVenda, 0);
-            let totalTaxas = vendasFiltradas.reduce((s, v) => s + v.taxas, 0);
-            let boletosFuturos = 0;
-            for (let v of vendasFiltradas) {
-                if (v.formaPagamento === 'Boleto') {
-                    let parcelasFuturas = db.parcelas.filter(p => p.vendaId === v.id && (p.mesCompetencia < dataIni.slice(0,7) || p.mesCompetencia > dataFim.slice(0,7)));
-                    boletosFuturos += parcelasFuturas.reduce((s, p) => s + (p.valorParcelaBruto || 0), 0);
-                }
+        l.pedido = getValue('edit_lan_pedido') || l.pedido;
+        l.data = getValue('edit_lan_data') || l.data;
+        l.mes = getValue('edit_lan_mes') || l.mes;
+        l.tipo = getValue('edit_lan_tipo') || l.tipo;
+        l.cliente = getValue('edit_lan_cliente') || l.cliente;
+        l.oc = getValue('edit_lan_oc').toUpperCase() || l.oc;
+        l.fornecedor = getValue('edit_lan_fornecedor') || l.fornecedor;
+        l.categoria = getValue('edit_lan_categoria') || l.categoria;
+        l.itens = parseInt(getValue('edit_lan_itens')) || 0;
+        l.produtos = getValue('edit_lan_produtos').toUpperCase() || l.produtos;
+        
+        let valorRaw = getValue('edit_lan_valor', '0,00');
+        let valorNumerico = parseFloat(valorRaw.replace(/\./g, '').replace(',', '.'));
+        if (isNaN(valorNumerico)) valorNumerico = 0;
+        l.valor = valorNumerico;
+        
+        const camposData = ['data_pagto', 'prev_fat', 'data_fat', 'prev_chegada', 'novo_prazo', 'chegada', 'conferencia', 'entrega', 'prazo_final'];
+        camposData.forEach(campo => {
+            const valor = getValue(`edit_lan_${campo}`);
+            l[campo] = valor === '' ? null : valor;
+        });
+        
+        l.condicao = getValue('edit_lan_condicao') || l.condicao;
+        l.status = getValue('edit_lan_status') || l.status;
+        l.nf = getValue('edit_lan_nf').toUpperCase() || l.nf;
+        l.transportadora = getValue('edit_lan_transportadora').toUpperCase() || l.transportadora;
+        l.observacoes = getValue('edit_lan_observacoes').substring(0, 100);
+        l.editadoPor = usuarioAtual;
+        l.editadoEm = new Date().toISOString();
+        
+        const camposString = ['data', 'mes', 'tipo', 'cliente', 'oc', 'fornecedor', 'categoria', 'produtos', 'condicao', 'status', 'nf', 'transportadora', 'observacoes'];
+        camposString.forEach(campo => {
+            if (l[campo] === undefined) l[campo] = null;
+            if (l[campo] === '') l[campo] = null;
+        });
+        
+        if (!validarDatas(l)) throw new Error('Datas inválidas');
+        
+        await db.collection('lancamentos').doc(id).update(l);
+        
+        const index = lancamentos.findIndex(item => item.id === id);
+        if (index !== -1) lancamentos[index] = l;
+        
+        await adicionarLog('EDITOU LANÇAMENTO', `Pedido ${l.pedido}`);
+        fecharModal('modalEditarLancamento');
+        mostrar('lancamentos');
+        
+    } catch (error) {
+        console.error('Erro detalhado ao salvar:', error);
+        alert(`❌ Erro ao salvar: ${error.message || 'Verifique o console (F12) para mais detalhes'}`);
+    } finally {
+        hideLoading(btn, originalText);
+    }
+}
+
+// ============================================
+// ANEXOS, RELATÓRIOS, DASHBOARD, USUÁRIOS E LOGS
+// ============================================
+function abrirModalAnexos(pedido) {
+    const modal = getElement('modalAnexos');
+    const content = getElement('modalAnexosContent');
+    if (!modal || !content) return;
+    
+    const anexosPedido = anexos.filter(a => a.pedido == pedido);
+    const lancamento = lancamentos.find(l => l.pedido == pedido);
+    content.innerHTML = `<h4>Pedido #${pedido} ${lancamento?.oc ? `- OC: ${escapeHtml(lancamento.oc)}` : ''}</h4>
+        <div class="anexos-area">
+            ${anexosPedido.length === 0 ? '<p>Nenhum anexo.</p>' : ''}
+            ${anexosPedido.map((a,i)=>`<div class="anexo-item"><div><strong>${escapeHtml(a.nome)}</strong><br><small>${new Date(a.data).toLocaleString()}</small></div><div><button class="small" data-tooltip="Baixar anexo" onclick="baixarAnexo('${a.id}')">⬇️</button><button class="small danger" data-tooltip="Excluir anexo" onclick="excluirAnexo('${a.id}', ${pedido})">🗑️</button></div></div>`).join('')}
+        </div>
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">📂 Anexar arquivo</div>
+        <input type="file" id="fileInput" style="display:none" onchange="anexarArquivo(${pedido})">`;
+    modal.classList.add('active');
+}
+
+async function anexarArquivo(pedido) {
+    const file = document.getElementById('fileInput')?.files[0];
+    if (!file) return;
+    try {
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const novo = { pedido, nome: file.name, tipo: file.type, data: new Date().toISOString(), conteudo: e.target.result, usuario: usuarioAtual };
+            const docRef = await db.collection('anexos').add(novo);
+            anexos.push({ id: docRef.id, ...novo });
+            await adicionarLog('ANEXOU ARQUIVO', file.name);
+            fecharModal('modalAnexos');
+            abrirModalAnexos(pedido);
+        };
+        reader.readAsDataURL(file);
+    } catch (error) {
+        console.error('Erro ao anexar arquivo:', error);
+        alert('❌ Erro ao anexar arquivo!');
+    }
+}
+
+function baixarAnexo(id) { 
+    const a = anexos.find(a => a.id === id);
+    if (a && a.conteudo) {
+        const link = document.createElement('a'); 
+        link.href = a.conteudo; 
+        link.download = a.nome; 
+        link.click();
+    }
+}
+
+async function excluirAnexo(id, pedido) { 
+    if (confirm('Excluir anexo?')) { 
+        try {
+            await db.collection('anexos').doc(id).delete(); 
+            anexos = anexos.filter(a => a.id !== id); 
+            await adicionarLog('EXCLUIU ANEXO', ''); 
+            fecharModal('modalAnexos'); 
+            abrirModalAnexos(pedido);
+        } catch (error) {
+            console.error('Erro ao excluir anexo:', error);
+            alert('❌ Erro ao excluir!');
+        }
+    } 
+}
+
+function telaAnexos() {
+    return topBar() + `
+        <div class="box">
+            <h2>📎 Anexos</h2>
+            <div class="filtros-grid">
+                <div class="filtro-item"><label>Buscar Pedido</label><input type="text" id="buscaAnexoPedido" placeholder="Nº Pedido" onkeyup="filtrarAnexos()"></div>
+                <div class="filtro-item"><label>Buscar OC</label><input type="text" id="buscaAnexoOC" placeholder="OC" onkeyup="filtrarAnexosPorOC()"></div>
+                <div class="filtro-actions"><button onclick="limparBuscaAnexos()">Limpar</button></div>
+            </div>
+            <div id="anexosLista">${gerarListaAnexos()}</div>
+        </div>
+    `;
+}
+
+function gerarListaAnexos() {
+    const anexosPorPedido = {};
+    anexos.forEach(a => { if (!anexosPorPedido[a.pedido]) anexosPorPedido[a.pedido] = []; anexosPorPedido[a.pedido].push(a); });
+    return Object.entries(anexosPorPedido).map(([p,as]) => { const lancamento = lancamentos.find(l => l.pedido == p); return `<div class="anexo-item" style="flex-direction:column;align-items:stretch" data-pedido="${p}" data-oc="${lancamento?.oc||''}"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><strong>Pedido #${p} ${lancamento?.oc?`- OC: ${escapeHtml(lancamento.oc)}`:''}</strong><button class="small" data-tooltip="Gerenciar anexos deste pedido" onclick="abrirModalAnexos(${p})">📎 Gerenciar</button></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:5px">${as.map(a=>`<div style="background:#FAF0F0;padding:5px;border-radius:4px"><small>${escapeHtml(a.nome)}</small><br><small>${new Date(a.data).toLocaleDateString()}</small></div>`).join('')}</div></div>`; }).join('') || '<p>Nenhum anexo encontrado.</p>';
+}
+
+function filtrarAnexos() {
+    const busca = document.getElementById('buscaAnexoPedido')?.value.toLowerCase() || '';
+    document.querySelectorAll('#anexosLista > div').forEach(d => d.style.display = d.dataset.pedido.includes(busca) ? '' : 'none');
+}
+function filtrarAnexosPorOC() {
+    const busca = document.getElementById('buscaAnexoOC')?.value.toLowerCase() || '';
+    document.querySelectorAll('#anexosLista > div').forEach(d => { const oc = (d.dataset.oc || '').toLowerCase(); d.style.display = oc.includes(busca) ? '' : 'none'; });
+}
+function limparBuscaAnexos() { document.getElementById('buscaAnexoPedido').value = ''; document.getElementById('buscaAnexoOC').value = ''; document.querySelectorAll('#anexosLista > div').forEach(d => d.style.display = ''); }
+
+function telaRelatorios() {
+    return topBar() + `
+        <div class="box">
+            <h2>📊 Relatórios</h2>
+            <div class="filtros-grid">
+                <div class="filtro-item"><label>Período</label><select id="filtroPeriodo" onchange="alterarTipoPeriodoRelatorio()"><option value="personalizado">Personalizado</option><option value="hoje">Hoje</option><option value="7d">Últimos 7 dias</option><option value="30d">Últimos 30 dias</option><option value="mes">Este mês</option><option value="mespassado">Mês passado</option><option value="trimestre">Este trimestre</option><option value="semestre">Este semestre</option><option value="ano">Este ano</option></select></div>
+                <div class="filtro-item"><label>Data Início</label><input type="date" id="filtroDataInicio"></div>
+                <div class="filtro-item"><label>Data Fim</label><input type="date" id="filtroDataFim"></div>
+                <div class="filtro-item"><label>OC</label><input type="text" id="filtroOC" placeholder="Nº OC"></div>
+                <div class="filtro-item"><label>Pedido</label><input type="number" id="filtroPedido" placeholder="Nº Pedido"></div>
+                <div class="filtro-item"><label>Condição</label><select id="filtroCondicao"><option value="">Todas</option><option value="Em aberto">Em aberto</option><option value="Em produção">Em produção</option><option value="Cancelado">Cancelado</option><option value="Entregue">Entregue</option><option value="Em Rota">Em rota</option><option value="Pedido Retido">Pedido Retido</option></select></div>
+                <div class="filtro-actions"><button class="info" onclick="aplicarFiltrosRelatorio()">🔍 Filtrar</button><button class="success" onclick="exportarRelatoriosExcel()">📥 Excel</button><button onclick="gerarPDF()">🖨️ PDF</button></div>
+            </div>
+            <div id="conteudoRelatorios"></div>
+        </div>
+    `;
+}
+
+function alterarTipoPeriodoRelatorio() {
+    const tipo = document.getElementById('filtroPeriodo').value;
+    if (tipo === 'personalizado') return;
+    const hoje = new Date();
+    let inicio, fim;
+    switch(tipo) {
+        case 'hoje': inicio = new Date(); fim = new Date(); inicio.setHours(0,0,0,0); fim.setHours(23,59,59,999); break;
+        case '7d': fim = new Date(); inicio = new Date(); inicio.setDate(inicio.getDate() - 7); break;
+        case '30d': fim = new Date(); inicio = new Date(); inicio.setDate(inicio.getDate() - 30); break;
+        case 'mes': inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1); fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0); break;
+        case 'mespassado': inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1); fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0); break;
+        case 'trimestre': const trim = Math.floor(hoje.getMonth() / 3); inicio = new Date(hoje.getFullYear(), trim * 3, 1); fim = new Date(hoje.getFullYear(), trim * 3 + 3, 0); break;
+        case 'semestre': const sem = Math.floor(hoje.getMonth() / 6); inicio = new Date(hoje.getFullYear(), sem * 6, 1); fim = new Date(hoje.getFullYear(), sem * 6 + 6, 0); break;
+        case 'ano': inicio = new Date(hoje.getFullYear(), 0, 1); fim = new Date(hoje.getFullYear(), 11, 31); break;
+        default: return;
+    }
+    document.getElementById('filtroDataInicio').value = inicio.toISOString().split('T')[0];
+    document.getElementById('filtroDataFim').value = fim.toISOString().split('T')[0];
+}
+
+function aplicarFiltrosRelatorio() {
+    let dados = [...lancamentos];
+    const dataInicio = document.getElementById('filtroDataInicio')?.value;
+    const dataFim = document.getElementById('filtroDataFim')?.value;
+    if (dataInicio && dataFim) {
+        dados = dados.filter(l => l.data && new Date(l.data) >= new Date(dataInicio) && new Date(l.data) <= new Date(dataFim));
+    }
+    const filtroOC = document.getElementById('filtroOC')?.value; if (filtroOC) dados = dados.filter(l => l.oc && l.oc.toLowerCase().includes(filtroOC.toLowerCase()));
+    const filtroPedido = document.getElementById('filtroPedido')?.value; if (filtroPedido) dados = dados.filter(l => l.pedido == filtroPedido);
+    const filtroCondicao = document.getElementById('filtroCondicao')?.value; if (filtroCondicao) dados = dados.filter(l => l.condicao === filtroCondicao);
+    gerarRelatorios(dados);
+}
+
+function gerarRelatorios(dados) {
+    const total = dados.length;
+    const meses = {}; dados.forEach(l=>{ if(l.data){ let d=new Date(l.data); let m=d.toLocaleString('pt-BR',{month:'long',year:'numeric'}); meses[m]=(meses[m]||0)+1; } });
+    const status = {}; dados.forEach(l=>{ let s=l.status||'PENDENTE'; status[s]=(status[s]||0)+1; });
+    const cond = {}; dados.forEach(l=>{ let c=l.condicao||'SEM CONDIÇÃO'; cond[c]=(cond[c]||0)+1; });
+    const cat = {}; dados.forEach(l=>{ let c=l.categoria||'SEM CATEGORIA'; cat[c]=(cat[c]||0)+1; });
+    const clientesRank = {}; dados.forEach(l=>{ if(l.cliente) clientesRank[l.cliente]=(clientesRank[l.cliente]||0)+1; });
+    const topClientes = Object.entries(clientesRank).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const fornRank = {}; dados.forEach(l=>{ if(l.fornecedor) fornRank[l.fornecedor]=(fornRank[l.fornecedor]||0)+1; });
+    const topForn = Object.entries(fornRank).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    
+    document.getElementById('conteudoRelatorios').innerHTML = `
+        <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Total Itens</h4><div class="value">${dados.reduce((a,l)=>a+(l.itens||0),0)}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${dados.filter(l=>l.status==='ENTREGUE').length}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${dados.filter(l=>l.status==='EM ABERTO' || !l.status).length}</div></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0"><div class="chart-container"><h4>📅 Pedidos por Mês</h4> <table style="width:100%">${Object.entries(meses).map(([m,q])=>`<tr><td>${m}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div class="chart-container"><h4>📌 Pedidos por Status</h4> <table style="width:100%">${Object.entries(status).map(([s,q])=>`<tr><td>${s}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div class="chart-container"><h4>💰 Pedidos por Condição</h4> <table style="width:100%">${Object.entries(cond).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div class="chart-container"><h4>🏷️ Pedidos por Categoria</h4> <table style="width:100%">${Object.entries(cat).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div><\/div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px"><div class="chart-container"><h4>🏆 Top Clientes</h4> <table style="width:100%">${topClientes.map(([c,q])=>`<tr><td>${c}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div class="chart-container"><h4>🏭 Top Fornecedores</h4> <table style="width:100%">${topForn.map(([f,q])=>`<tr><td>${f}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div><\/div>
+    `;
+}
+
+function exportarRelatoriosExcel() {
+    if (lancamentos.length === 0) { alert('Não há dados!'); return; }
+    const wsData = [['Nº Pedido','Data','Cliente','OC','Fornecedor','Categoria','Itens','Status','Condição','Entrega','Observações']];
+    lancamentos.forEach(l => { wsData.push([l.pedido||'', formatarData(l.data), l.cliente||'', l.oc||'', l.fornecedor||'', l.categoria||'', l.itens||'', l.status||'', l.condicao||'', formatarData(l.entrega), (l.observacoes||'').substring(0,100)]); });
+    const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(wsData); XLSX.utils.book_append_sheet(wb, ws, 'Relatório'); XLSX.writeFile(wb, `relatorio_${new Date().toISOString().slice(0,10)}.xlsx`);
+    alert('Exportado!');
+}
+
+function gerarPDF() {
+    const elemento = document.getElementById('conteudoRelatorios');
+    if (!elemento) return;
+    html2canvas(elemento).then(canvas => {
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`relatorio_${new Date().toISOString().slice(0,10)}.pdf`);
+    });
+}
+
+function telaDashboard() {
+    return topBar() + `
+        <div class="box">
+            <h2>📈 Dashboard</h2>
+            <div class="filtros-grid">
+                <div class="filtro-item"><label>Período</label><select id="filtroPeriodoDashboard" onchange="alterarTipoPeriodoDashboard()"><option value="personalizado">Personalizado</option><option value="hoje">Hoje</option><option value="7d">Últimos 7 dias</option><option value="30d">Últimos 30 dias</option><option value="mes">Este mês</option><option value="mespassado">Mês passado</option><option value="trimestre">Este trimestre</option><option value="semestre">Este semestre</option><option value="ano">Este ano</option></select></div>
+                <div class="filtro-item"><label>Data Início</label><input type="date" id="filtroDataInicioDash"></div>
+                <div class="filtro-item"><label>Data Fim</label><input type="date" id="filtroDataFimDash"></div>
+                <div class="filtro-actions"><button class="info" onclick="aplicarFiltroDashboard()">🔍 Filtrar</button></div>
+            </div>
+            <div id="conteudoDashboard"></div>
+        </div>
+    `;
+}
+
+function alterarTipoPeriodoDashboard() {
+    const tipo = document.getElementById('filtroPeriodoDashboard').value;
+    if (tipo === 'personalizado') return;
+    const hoje = new Date();
+    let inicio, fim;
+    switch(tipo) {
+        case 'hoje': inicio = new Date(); fim = new Date(); inicio.setHours(0,0,0,0); fim.setHours(23,59,59,999); break;
+        case '7d': fim = new Date(); inicio = new Date(); inicio.setDate(inicio.getDate() - 7); break;
+        case '30d': fim = new Date(); inicio = new Date(); inicio.setDate(inicio.getDate() - 30); break;
+        case 'mes': inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1); fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0); break;
+        case 'mespassado': inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1); fim = new Date(hoje.getFullYear(), hoje.getMonth(), 0); break;
+        case 'trimestre': const trim = Math.floor(hoje.getMonth() / 3); inicio = new Date(hoje.getFullYear(), trim * 3, 1); fim = new Date(hoje.getFullYear(), trim * 3 + 3, 0); break;
+        case 'semestre': const sem = Math.floor(hoje.getMonth() / 6); inicio = new Date(hoje.getFullYear(), sem * 6, 1); fim = new Date(hoje.getFullYear(), sem * 6 + 6, 0); break;
+        case 'ano': inicio = new Date(hoje.getFullYear(), 0, 1); fim = new Date(hoje.getFullYear(), 11, 31); break;
+        default: return;
+    }
+    document.getElementById('filtroDataInicioDash').value = inicio.toISOString().split('T')[0];
+    document.getElementById('filtroDataFimDash').value = fim.toISOString().split('T')[0];
+}
+
+function aplicarFiltroDashboard() {
+    let dados = [...lancamentos];
+    const dataInicio = document.getElementById('filtroDataInicioDash')?.value;
+    const dataFim = document.getElementById('filtroDataFimDash')?.value;
+    if (dataInicio && dataFim) {
+        dados = dados.filter(l => l.data && new Date(l.data) >= new Date(dataInicio) && new Date(l.data) <= new Date(dataFim));
+    }
+    gerarDashboard(dados);
+}
+
+function gerarDashboard(dados) {
+    // Remove pedidos SHOWROOM dos cálculos de tempo médio
+    const dadosParaCalculo = dados.filter(l => l.tipo !== 'SHOWROOM');
+    
+    const lembretes = gerarLembretes();
+    const total = dados.length;
+    const entregues = dados.filter(l => l.status === 'ENTREGUE').length;
+    const atrasados = dados.filter(l => l.status === 'ATRASADO').length;
+    const pendentes = dados.filter(l => l.status === 'EM ABERTO' || l.status === 'EM ROTA' || !l.status).length;
+    
+    let totalDiasPagamento = 0, countPagamento = 0, totalDiasEntrega = 0, countEntrega = 0;
+    dadosParaCalculo.forEach(l => {
+        const tempoPag = calcularTempoPagamento(l.data, l.data_pagto);
+        if (tempoPag) { totalDiasPagamento += tempoPag; countPagamento++; }
+        if (l.data && l.entrega) { const dias = Math.round((new Date(l.entrega) - new Date(l.data)) / 86400000); if (dias >= 0) { totalDiasEntrega += dias; countEntrega++; } }
+    });
+    const tempoMedioPagamento = countPagamento > 0 ? (totalDiasPagamento / countPagamento).toFixed(1) : 0;
+    const tempoMedioEntrega = countEntrega > 0 ? (totalDiasEntrega / countEntrega).toFixed(1) : 0;
+    
+    const fornecedoresTempos = {};
+    dados.forEach(l => {
+        if (!l.fornecedor) return;
+        if (l.data && l.entrega) { const dias = Math.round((new Date(l.entrega) - new Date(l.data)) / 86400000); if (dias >= 0) { if (!fornecedoresTempos[l.fornecedor]) fornecedoresTempos[l.fornecedor] = { total: 0, count: 0 }; fornecedoresTempos[l.fornecedor].total += dias; fornecedoresTempos[l.fornecedor].count++; } }
+    });
+    const rankingFornecedores = Object.entries(fornecedoresTempos).map(([n,d]) => ({ fornecedor: n, pedidos: d.count, prazoMedio: (d.total / d.count).toFixed(1) })).sort((a,b)=>a.prazoMedio-b.prazoMedio);
+    
+    if (window.graficoStatus) window.graficoStatus.destroy();
+    if (window.graficoTipo) window.graficoTipo.destroy();
+    if (window.graficoCondicao) window.graficoCondicao.destroy();
+    
+    document.getElementById('conteudoDashboard').innerHTML = `
+        <div class="lembretes-bar">${lembretes.map(l=>`<span class="lembrete-item ${l.tipo}">${l.icon} ${l.msg}</span>`).join(' | ')}${lembretes.length===0?'✅ Nenhum lembrete':''}</div>
+        <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${entregues}</div></div><div class="kpi-card"><h4>Atrasados</h4><div class="value">${atrasados}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${pendentes}</div></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px"><div class="kpi-card"><h4>⏱️ Tempo Médio Pagamento</h4><div class="value">${tempoMedioPagamento} dias</div><div class="value" style="font-size:10px; color:#666;">*Exclui SHOWROOM</div></div><div class="kpi-card"><h4>⏱️ Tempo Médio Entrega</h4><div class="value">${tempoMedioEntrega} dias</div><div class="value" style="font-size:10px; color:#666;">*Exclui SHOWROOM</div></div></div>
+        <div class="charts-grid"><div class="chart-container"><canvas id="graficoStatus"></canvas></div><div class="chart-container"><canvas id="graficoTipo"></canvas></div><div class="chart-container"><canvas id="graficoCondicao"></canvas></div></div>
+        <h3>⏱️ Tempo Médio de Entrega por Fornecedor</h3><div class="table-container"><table class="auto-layout"><thead><th>Fornecedor</th><th>Pedidos</th><th>Prazo Médio (dias)</th></thead><tbody>${rankingFornecedores.map(f=>`<tr><td>${f.fornecedor}<\/td><td>${f.pedidos}<\/td><td>${f.prazoMedio}<\/td><\/tr>`).join('')}</tbody><\/table><\/div>
+    `;
+    
+    const statusCount = {}; dados.forEach(l => { let s = l.status || 'PENDENTE'; statusCount[s] = (statusCount[s] || 0) + 1; });
+    const ctx1 = document.getElementById('graficoStatus')?.getContext('2d'); if(ctx1) window.graficoStatus = new Chart(ctx1, { type: 'doughnut', data: { labels: Object.keys(statusCount), datasets: [{ data: Object.values(statusCount), backgroundColor: ['#5C2A2A','#8B5A5A','#B87A7A','#9e9e9e','#4caf50','#f44336'] }] }, options: { plugins: { title: { display: true, text: 'Pedidos por Status' } } } });
+    
+    const tipoCount = {}; dados.forEach(l => { let t = l.tipo || 'SEM TIPO'; tipoCount[t] = (tipoCount[t] || 0) + 1; });
+    const ctx2 = document.getElementById('graficoTipo')?.getContext('2d'); if(ctx2) window.graficoTipo = new Chart(ctx2, { type: 'bar', data: { labels: Object.keys(tipoCount), datasets: [{ label: 'Quantidade', data: Object.values(tipoCount), backgroundColor: '#8B5A5A' }] }, options: { plugins: { title: { display: true, text: 'Pedidos por Tipo' } } } });
+    
+    const condCount = {}; dados.forEach(l => { let c = l.condicao || 'SEM CONDIÇÃO'; condCount[c] = (condCount[c] || 0) + 1; });
+    const ctx3 = document.getElementById('graficoCondicao')?.getContext('2d'); if(ctx3) window.graficoCondicao = new Chart(ctx3, { type: 'bar', data: { labels: Object.keys(condCount), datasets: [{ label: 'Quantidade', data: Object.values(condCount), backgroundColor: '#8B5A5A' }] }, options: { plugins: { title: { display: true, text: 'Pedidos por Condição' } } } });
+}
+
+function telaUsuarios() {
+    return topBar() + `
+        <div class="box">
+            <h2>👤 Gerenciar Usuários</h2>
+            <div class="form-grid"><div class="form-group"><label class="required">Novo Usuário</label><input type="text" id="novo_usuario"></div><div class="form-group"><label>Senha</label><input type="password" id="nova_senha" placeholder="Deixe em branco"></div><div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarUsuario" onclick="adicionarUsuario()">➕ Adicionar</button></div></div>
+            <div class="table-container"><table class="auto-layout"><thead><th>#</th><th>Usuário</th><th>Senha</th><th>Ações</th></thead><tbody>
+                ${usuarios.map((u,i)=>`<tr><td>${i+1}<\/td><td>${escapeHtml(u.nome)}<\/td><td>${u.senha?'••••••':'Sem senha'}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar usuário" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️<\/button><button class="small danger" data-tooltip="Excluir usuário" onclick="excluirUsuario('${u.id}')">🗑️<\/button><\/td><\/tr>`).join('')}
+            </tbody><\/table><\/div>
+        <\/div>
+    `;
+}
+
+function abrirModalEdicaoUsuario(id) {
+    const u = usuarios.find(u => u.id === id);
+    const modal = getElement('modalUsuarios');
+    const content = getElement('modalUsuarioContent');
+    if (!modal || !content) return;
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nome</label><input type="text" id="edit_user_nome" value="${escapeHtml(u.nome)}"></div><div class="form-group"><label>Nova Senha</label><input type="password" id="edit_user_senha" placeholder="Deixe em branco"></div><div class="form-group"><label>Confirmar</label><input type="password" id="edit_user_confirm" placeholder="Digite novamente"></div></div><div style="text-align:right"><button class="success" id="btnSalvarUsuario" onclick="salvarEdicaoUsuario('${id}')">💾 SALVAR</button></div>`;
+    modal.classList.add('active');
+}
+
+async function salvarEdicaoUsuario(id) {
+    const btn = document.getElementById('btnSalvarUsuario');
+    if (!btn) return;
+    const originalText = showLoading(btn, 'Salvando...');
+    
+    try {
+        const u = usuarios.find(u => u.id === id);
+        const novoNome = document.getElementById('edit_user_nome')?.value;
+        const novaSenha = document.getElementById('edit_user_senha')?.value;
+        const confirm = document.getElementById('edit_user_confirm')?.value;
+        if (!novoNome) { alert('Nome obrigatório!'); return; }
+        if (usuarios.some((user,i)=>user.id !== id && user.nome===novoNome)) { alert('Nome já existe!'); return; }
+        u.nome = novoNome;
+        if (novaSenha) { if (novaSenha !== confirm) { alert('Senhas não conferem!'); return; } u.senha = novaSenha; }
+        await db.collection('usuarios').doc(id).update(u);
+        await adicionarLog('EDITOU USUÁRIO', u.nome);
+        fecharModal('modalUsuarios');
+        mostrar('usuarios');
+    } catch (error) {
+        console.error('Erro ao editar usuário:', error);
+        alert('❌ Erro ao salvar!');
+    } finally {
+        hideLoading(btn, originalText);
+    }
+}
+
+async function adicionarUsuario() {
+    const btn = document.getElementById('btnAdicionarUsuario');
+    if (!btn) return;
+    const originalText = showLoading(btn, 'Salvando...');
+    
+    try {
+        let nome = document.getElementById('novo_usuario')?.value;
+        let senha = document.getElementById('nova_senha')?.value || '';
+        if (!nome) { alert('Digite um nome!'); return; }
+        if (usuarios.some(u=>u.nome===nome)) { alert('Nome já existe!'); return; }
+        const novo = { nome, senha };
+        const docRef = await db.collection('usuarios').add(novo);
+        usuarios.push({ id: docRef.id, ...novo });
+        await adicionarLog('ADICIONOU USUÁRIO', nome);
+        mostrar('usuarios');
+    } catch (error) {
+        console.error('Erro ao adicionar usuário:', error);
+        alert('❌ Erro ao adicionar!');
+    } finally {
+        hideLoading(btn, originalText);
+    }
+}
+
+async function excluirUsuario(id) {
+    if (usuarios.length <= 1) { alert('Não pode excluir o último!'); return; }
+    const u = usuarios.find(u => u.id === id);
+    if (u.nome === 'Admin') { alert('Não pode excluir o Admin!'); return; }
+    if (confirm(`Excluir ${u.nome}?`)) {
+        try {
+            await db.collection('usuarios').doc(id).delete();
+            usuarios = usuarios.filter(u => u.id !== id);
+            if (usuarioAtual === u.nome) {
+                usuarioAtual = usuarios[0].nome;
+                usuarioPermissao = usuarioAtual === 'Admin' ? 'admin' : 'user';
+                const menuUsuarios = getElement('menuUsuarios');
+                const menuLogs = getElement('menuLogs');
+                if (menuUsuarios) menuUsuarios.style.display = usuarioAtual === 'Admin' ? 'block' : 'none';
+                if (menuLogs) menuLogs.style.display = usuarioAtual === 'Admin' ? 'block' : 'none';
             }
-            let receitaRecebida = receitaBruta - totalTaxas - boletosFuturos;
-            let porConsultor = {}; vendasFiltradas.forEach(v => { porConsultor[v.consultorNome] = (porConsultor[v.consultorNome] || 0) + v.valorVenda; });
-            let porForma = {}; vendasFiltradas.forEach(v => { porForma[v.formaPagamento] = (porForma[v.formaPagamento] || 0) + v.valorVenda; });
-            
-            let html = `<div style="padding:20px;font-family:Arial"><h1>Relatório de Comissões</h1><p>Período: ${formatarData(dataIni)} a ${formatarData(dataFim)}</p><p>Gerado em: ${new Date().toLocaleString()}</p><hr>
-            <h2>Resumo</h2><p>Receita Bruta: ${formatarValor(receitaBruta)}</p><p>Receita Recebida: ${formatarValor(receitaRecebida)}</p>
-            <h2>Vendas por Consultor</h2><table border="1" style="width:100%;border-collapse:collapse"><thead><tr><th>Consultor</th><th>Valor</th></tr></thead><tbody>${Object.entries(porConsultor).map(([n,v]) => `<tr><td>${n}</td><td>${formatarValor(v)}</td></tr>`).join('')}</tbody></table>
-            <h2>Vendas por Forma de Pagamento</h2><table border="1"><thead><tr><th>Forma</th><th>Valor</th></tr></thead><tbody>${Object.entries(porForma).map(([f,v]) => `<tr><td>${f}</td><td>${formatarValor(v)}</td></tr>`).join('')}</tbody></table>
-            <h2>Detalhamento das Vendas</h2><table border="1"><thead><tr><th>Data</th><th>Pedido</th><th>Cliente</th><th>Consultor</th><th>Forma</th><th>Valor</th></tr></thead><tbody>${vendasFiltradas.map(v => `<tr><td>${formatarData(v.data)}</td><td>${v.pedido}</td><td>${v.clienteNome}</td><td>${v.consultorNome}</td><td>${v.formaPagamento}</td><td>${formatarValor(v.valorVenda)}</td></tr>`).join('')}</tbody></table></div>`;
-            let win = window.open(); win.document.write(html); win.document.close(); win.print();
+            await adicionarLog('EXCLUIU USUÁRIO', u.nome);
+            mostrar('usuarios');
+        } catch (error) {
+            console.error('Erro ao excluir usuário:', error);
+            alert('❌ Erro ao excluir!');
         }
+    }
+}
 
-        // ==================== FUNÇÃO PRINCIPAL ====================
-        function mostrar(tela) {
-            if (!usuarioAtual) return;
-            if (tela === 'clientes') telaClientes();
-            else if (tela === 'arquitetos') telaArquitetos();
-            else if (tela === 'consultores') telaConsultores();
-            else if (tela === 'vendas') telaVendas();
-            else if (tela === 'dashboard') telaDashboard();
-            else if (tela === 'comissoes') telaComissoes();
-            else if (tela === 'usuarios') { if (usuarioPermissao !== 'admin') { alert('Acesso negado'); mostrar('dashboard'); return; } telaUsuarios(); }
-            else if (tela === 'logs') { if (usuarioPermissao !== 'admin') { alert('Acesso negado'); mostrar('dashboard'); return; } telaLogs(); }
-            else telaDashboard();
-            setActiveMenu(tela);
+function telaLogs() {
+    return topBar() + `<div class="box"><h2>📋 Logs</h2><div class="log-viewer">${logs.slice().reverse().map(l=>`<div class="log-entry"><span class="log-time">[${new Date(l.data).toLocaleString()}]</span> <span class="log-user">${escapeHtml(l.usuario)}</span> <span class="log-action">${escapeHtml(l.acao)}</span>${l.detalhe?` - ${escapeHtml(l.detalhe)}`:''}</div>`).join('')}${logs.length===0?'<div>Nenhum log.</div>':''}</div><div class="mt-20"><button class="danger" onclick="limparLogs()">🗑️ Limpar Logs</button></div></div>`;
+}
+
+async function limparLogs() {
+    if (confirm('Limpar todos os logs?')) {
+        try {
+            const snapshot = await db.collection('logs').get();
+            for (const doc of snapshot.docs) {
+                await db.collection('logs').doc(doc.id).delete();
+            }
+            logs = [];
+            await adicionarLog('LIMPOUS LOGS');
+            mostrar('logs');
+        } catch (error) {
+            console.error('Erro ao limpar logs:', error);
+            alert('❌ Erro ao limpar!');
         }
+    }
+}
 
-        carregarDados();
+// ============================================
+// FUNÇÃO PRINCIPAL
+// ============================================
+async function mostrar(tela) {
+    if (!usuarioAtual) { mostrarLogin(); return; }
+    const main = getElement('main-content');
+    if (!main) return;
+    
+    switch(tela) {
+        case 'clientes': main.innerHTML = telaClientes(); break;
+        case 'fornecedores': main.innerHTML = telaFornecedores(); break;
+        case 'lancamentos': main.innerHTML = telaLancamentos(); setTimeout(() => renderLancamentos(), 100); break;
+        case 'relatorios': main.innerHTML = telaRelatorios(); setTimeout(()=>aplicarFiltrosRelatorio(),100); break;
+        case 'dashboard': main.innerHTML = telaDashboard(); setTimeout(()=>aplicarFiltroDashboard(),100); break;
+        case 'anexos': main.innerHTML = telaAnexos(); break;
+        case 'usuarios': if (usuarioPermissao !== 'admin') { alert('Acesso negado!'); mostrar('dashboard'); return; } main.innerHTML = telaUsuarios(); break;
+        case 'logs': if (usuarioPermissao !== 'admin') { alert('Acesso negado!'); mostrar('dashboard'); return; } main.innerHTML = telaLogs(); break;
+        default: main.innerHTML = telaClientes();
+    }
+    await adicionarLog('VISUALIZOU', tela);
+}
+
+// ============================================
+// INICIALIZAÇÃO
+// ============================================
+carregarDados().then(() => {
+    if (restaurarSessao()) {
+        const usuario = usuarios.find(u => u.nome === usuarioAtual);
+        if (usuario) {
+            const permissao = localStorage.getItem('breton_permissao');
+            if (permissao) usuarioPermissao = permissao;
+            const menuUsuarios = getElement('menuUsuarios');
+            const menuLogs = getElement('menuLogs');
+            const sidebar = getElement('sidebar');
+            const footer = getElement('footer');
+            const footerVerse = getElement('footerVerse');
+            if (menuUsuarios) menuUsuarios.style.display = usuarioAtual === 'Admin' ? 'block' : 'none';
+            if (menuLogs) menuLogs.style.display = usuarioAtual === 'Admin' ? 'block' : 'none';
+            if (sidebar) sidebar.style.display = 'block';
+            if (footer) footer.style.display = 'block';
+            if (footerVerse) footerVerse.style.display = 'block';
+            mostrar('clientes');
+        } else {
+            limparSessao();
+            mostrarLogin();
+        }
+    } else {
         mostrarLogin();
-    </script>
+    }
+});
+</script>
 </body>
 </html>
