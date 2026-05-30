@@ -445,6 +445,40 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        
+        /* Paginação */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+            padding: 10px;
+        }
+        .pagination button {
+            padding: 6px 12px;
+            background: #8B5A5A;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .pagination span {
+            font-size: 13px;
+            color: #5C2A2A;
+        }
+        
+        /* Campo etiqueta condicional */
+        .etiqueta-field {
+            display: none;
+        }
+        .etiqueta-field.visible {
+            display: flex;
+        }
     </style>
 </head>
 <body>
@@ -531,6 +565,11 @@ let usuarioPermissao = null;
 let currentFilterType = "TODOS";
 let currentOrder = "data";
 let currentOrderDirection = "desc";
+
+// Paginação
+let currentPage = 1;
+const rowsPerPage = 30;
+let dadosFiltradosCache = [];
 
 const categorias = [
     "ACESSORIO", "ADORNOS", "ALMOFADA", "ALMOFADAS", "APARADOR", "APOIO P/ MESA",
@@ -1215,7 +1254,7 @@ function atualizarContadorCaracteres(textarea, maxChars = 100) {
 }
 
 // ============================================
-// TELA DE LANÇAMENTOS (com busca por OC, NF, pedido, cliente)
+// TELA DE LANÇAMENTOS (com busca por OC, NF, pedido, cliente, fornecedor)
 // ============================================
 function telaLancamentos() {
     let optionsCat = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
@@ -1267,13 +1306,17 @@ function telaLancamentos() {
                             <div class="form-group"><label class="required">Nº Pedido</label><input type="number" id="lan_pedido" onchange="preencherClienteAuto()"></div>
                             <div class="form-group"><label>Data Pedido</label><input type="date" id="lan_data" readonly style="background:#f5f5f5"></div>
                             <div class="form-group"><label>Mês/Ano</label><select id="lan_mes"><option value="">Selecione</option>${optionsMeses}</select></div>
-                            <div class="form-group"><label>Tipo</label><select id="lan_tipo"><option value="">Selecione</option>${optionsTipo}</select></div>
+                            <div class="form-group"><label>Tipo</label><select id="lan_tipo" onchange="toggleEtiquetaField()"><option value="">Selecione</option>${optionsTipo}</select></div>
                             <div class="form-group"><label>Cliente</label><input type="text" id="lan_cliente" readonly></div>
                             <div class="form-group"><label>OC</label><input type="text" id="lan_oc" style="text-transform:uppercase"></div>
                             <div class="form-group"><label>Fornecedor</label><select id="lan_fornecedor"><option value="">Selecione</option>${optionsForn}</select></div>
                             <div class="form-group"><label class="required">Categoria</label><select id="lan_categoria" required><option value="">Selecione</option>${optionsCat}</select></div>
                             <div class="form-group"><label>Itens</label><input type="number" id="lan_itens"></div>
                             <div class="form-group"><label>Produtos</label><input type="text" id="lan_produtos" style="text-transform:uppercase"></div>
+                            <div class="form-group etiqueta-field" id="etiquetaField">
+                                <label>🏷️ Etiqueta</label>
+                                <input type="text" id="lan_etiqueta" style="text-transform:uppercase" placeholder="Digite a etiqueta (ex: VIP, URGENTE)">
+                            </div>
                         </div>
                     </div>
                     <div id="tab2" class="tab-content">
@@ -1306,18 +1349,32 @@ function telaLancamentos() {
                 </div>
             </details>
             
-            <div class="search-box"><input type="text" id="buscaLancamento" placeholder="🔍 Buscar por pedido, cliente, OC ou NF..." onkeyup="filtrarLancamentos()"></div>
+            <div class="search-box"><input type="text" id="buscaLancamento" placeholder="🔍 Buscar por pedido, cliente, fornecedor, OC ou NF..." onkeyup="filtrarLancamentos()"></div>
             <div class="table-container"><table class="lancamentos-table" id="tabelaLancamentos"><thead>
                 <th>#</th><th>Pedido</th><th>Data</th><th>Mês</th><th>Tipo</th><th>Cliente</th><th>OC</th><th>Fornecedor</th><th>Categoria</th>
-                <th>Itens</th><th>Produtos</th><th>Valor</th><th>Data Pagto</th><th>Condição</th><th>Prev.Fat</th>
+                <th>Itens</th><th>Produtos</th><th>ETIQUETAS</th><th>Valor</th><th>Data Pagto</th><th>Condição</th><th>Prev.Fat</th>
                 <th>Data Fat</th><th>Prev.Chegada</th><th>Novo Prazo</th><th>Status</th><th>Nº NF</th><th>Transportadora</th><th>Chegada</th><th>Conf</th>
                 <th>Entrega</th><th>Prazo Final</th><th>Usuário</th><th>Editado</th><th>Obs</th><th>Ações</th>
             </thead>
                 <tbody id="lancamentosBody"></tbody>
                 <tfoot id="lancamentosFooter"></tfoot>
              </div>
+            <div class="pagination" id="paginationControls"></div>
         </div>
     `;
+}
+
+function toggleEtiquetaField() {
+    const tipoSelect = document.getElementById('lan_tipo');
+    const etiquetaField = document.getElementById('etiquetaField');
+    if (tipoSelect && etiquetaField) {
+        if (tipoSelect.value === 'SHOWROOM') {
+            etiquetaField.classList.add('visible');
+        } else {
+            etiquetaField.classList.remove('visible');
+            document.getElementById('lan_etiqueta').value = '';
+        }
+    }
 }
 
 function renderLancamentos() {
@@ -1329,22 +1386,33 @@ function renderLancamentos() {
         dadosFiltrados = dadosFiltrados.filter(l => 
             (l.pedido?.toString().includes(busca)) ||
             (l.cliente?.toLowerCase().includes(busca)) ||
+            (l.fornecedor?.toLowerCase().includes(busca)) ||
             (l.oc?.toLowerCase().includes(busca)) ||
             (l.nf?.toLowerCase().includes(busca))
         );
     }
     
-    const totaisFiltrados = calcularTotais(dadosFiltrados);
+    dadosFiltradosCache = dadosFiltrados;
+    
+    const totalPages = Math.ceil(dadosFiltradosCache.length / rowsPerPage);
+    if (currentPage > totalPages) currentPage = 1;
+    
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const dadosPagina = dadosFiltradosCache.slice(start, end);
+    
+    const totaisFiltrados = calcularTotais(dadosFiltradosCache);
     
     const tbody = document.getElementById('lancamentosBody');
     if (!tbody) return;
     
-    tbody.innerHTML = dadosFiltrados.map((l, idx) => {
+    tbody.innerHTML = dadosPagina.map((l, idx) => {
         const atrasado = isPedidoAtrasado(l);
         const rowClass = atrasado ? 'atrasado-row' : '';
+        const etiqueta = l.etiqueta || '';
         
         return `<tr class="${rowClass}" data-id="${l.id}">
-            <td class="center">${idx + 1}<\/td>
+            <td class="center">${start + idx + 1}<\/td>
             <td>${l.pedido || '-'}<\/td>
             <td>${formatarData(l.data)}<\/td>
             <td>${l.mes || '-'}<\/td>
@@ -1355,6 +1423,7 @@ function renderLancamentos() {
             <td>${l.categoria || '-'}<\/td>
             <td>${l.itens || '-'}<\/td>
             <td>${l.produtos || '-'}<\/td>
+            <td>${escapeHtml(etiqueta) || '-'}<\/td>
             <td>${formatarValor(l.valor)}<\/td>
             <td>${formatarData(l.data_pagto)}<\/td>
             <td>${l.condicao || '-'}<\/td>
@@ -1384,7 +1453,7 @@ function renderLancamentos() {
     const tfoot = document.getElementById('lancamentosFooter');
     if (tfoot) {
         tfoot.innerHTML = `<tr style="background:#FAF0F0; font-weight:bold;">
-            <td colspan="11" style="text-align:right;">TOTAL:<\/td>
+            <td colspan="12" style="text-align:right;">TOTAL:<\/td>
             <td>${formatarValor(totaisFiltrados.totalValor)}<\/td>
             <td colspan="9"><\/td>
             <td>${totaisFiltrados.totalItens} itens<\/td>
@@ -1393,10 +1462,38 @@ function renderLancamentos() {
             <td colspan="4"><\/td>
          <\/tr>`;
     }
+    
+    renderPagination(totalPages);
+}
+
+function renderPagination(totalPages) {
+    const paginationDiv = document.getElementById('paginationControls');
+    if (!paginationDiv) return;
+    
+    if (totalPages <= 1) {
+        paginationDiv.innerHTML = '';
+        return;
+    }
+    
+    paginationDiv.innerHTML = `
+        <button onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''}>◀ Anterior</button>
+        <span>Página ${currentPage} de ${totalPages}</span>
+        <button onclick="changePage(1)" ${currentPage === totalPages ? 'disabled' : ''}>Próxima ▶</button>
+    `;
+}
+
+function changePage(delta) {
+    const totalPages = Math.ceil(dadosFiltradosCache.length / rowsPerPage);
+    const newPage = currentPage + delta;
+    if (newPage >= 1 && newPage <= totalPages) {
+        currentPage = newPage;
+        renderLancamentos();
+    }
 }
 
 function setFilterType(tipo) {
     currentFilterType = tipo;
+    currentPage = 1;
     renderLancamentos();
     const totais = calcularTotais(getLancamentosFiltrados());
     const resumoDiv = document.querySelector('.resumo-rapido');
@@ -1414,6 +1511,7 @@ function setFilterType(tipo) {
 
 function setOrder(order) {
     currentOrder = order;
+    currentPage = 1;
     renderLancamentos();
     document.querySelectorAll('.ordem-btn').forEach(btn => btn.classList.remove('active'));
     if (event && event.target) event.target.classList.add('active');
@@ -1421,6 +1519,7 @@ function setOrder(order) {
 
 function toggleOrderDirection() {
     currentOrderDirection = currentOrderDirection === 'asc' ? 'desc' : 'asc';
+    currentPage = 1;
     renderLancamentos();
     const btn = document.querySelector('.ordenacao-btns button:last-child');
     if (btn) btn.textContent = currentOrderDirection === 'asc' ? '⬆️ Crescente' : '⬇️ Decrescente';
@@ -1460,17 +1559,24 @@ async function adicionarLancamento() {
         let observacoes = document.getElementById('lan_observacoes')?.value || '';
         if (observacoes.length > 100) observacoes = observacoes.substring(0, 100);
         
+        let etiqueta = '';
+        const tipoSelecionado = document.getElementById('lan_tipo')?.value;
+        if (tipoSelecionado === 'SHOWROOM') {
+            etiqueta = document.getElementById('lan_etiqueta')?.value?.toUpperCase() || '';
+        }
+        
         let l = {
             pedido: document.getElementById('lan_pedido')?.value,
             data: document.getElementById('lan_data')?.value,
             mes: document.getElementById('lan_mes')?.value,
-            tipo: document.getElementById('lan_tipo')?.value,
+            tipo: tipoSelecionado,
             cliente: document.getElementById('lan_cliente')?.value,
             oc: document.getElementById('lan_oc')?.value?.toUpperCase(),
             fornecedor: document.getElementById('lan_fornecedor')?.value,
             categoria: document.getElementById('lan_categoria')?.value,
             itens: parseInt(document.getElementById('lan_itens')?.value) || 0,
             produtos: document.getElementById('lan_produtos')?.value?.toUpperCase(),
+            etiqueta: etiqueta,
             valor: valorNumerico,
             data_pagto: document.getElementById('lan_data_pagto')?.value,
             condicao: document.getElementById('lan_condicao')?.value,
@@ -1548,17 +1654,18 @@ async function duplicarLancamento(id) {
 }
 
 function filtrarLancamentos() {
+    currentPage = 1;
     renderLancamentos();
 }
 
 function exportarLancamentosExcel() {
     if (lancamentos.length === 0) { alert('Não há dados!'); return; }
-    const wsData = [['#','Pedido','Data','Mês','Tipo','Cliente','OC','Fornecedor','Categoria','Itens','Produtos','Valor','Data Pagto','Condição','Prev.Fat','Data Fat','Prev.Chegada','Novo Prazo','Status','Nº NF','Transportadora','Chegada','Conf','Entrega','Prazo Final','Usuário','Editado','Observações']];
+    const wsData = [['#','Pedido','Data','Mês','Tipo','Cliente','OC','Fornecedor','Categoria','Itens','Produtos','Etiqueta','Valor','Data Pagto','Condição','Prev.Fat','Data Fat','Prev.Chegada','Novo Prazo','Status','Nº NF','Transportadora','Chegada','Conf','Entrega','Prazo Final','Usuário','Editado','Observações']];
     const lancamentosFiltrados = getLancamentosFiltrados();
     lancamentosFiltrados.forEach((l, idx) => { 
         wsData.push([
             idx+1, l.pedido||'', l.data||'', l.mes||'', l.tipo||'', l.cliente||'', l.oc||'', l.fornecedor||'', 
-            l.categoria||'', l.itens||'', l.produtos||'', l.valor||'', l.data_pagto||'', l.condicao||'', 
+            l.categoria||'', l.itens||'', l.produtos||'', l.etiqueta||'', l.valor||'', l.data_pagto||'', l.condicao||'', 
             l.prev_fat||'', l.data_fat||'', l.prev_chegada||'', l.novo_prazo||'', l.status||'', l.nf||'', 
             l.transportadora||'', l.chegada||'', l.conferencia||'', l.entrega||'', l.prazo_final||'', 
             l.usuario||'', l.editadoPor||'', (l.observacoes||'').substring(0, 100)
@@ -1583,35 +1690,36 @@ function abrirModalEdicaoLancamento(id) {
     let optionsTipo = tiposPedido.map(t => `<option value="${t}" ${l.tipo===t?'selected':''}>${t}</option>`).join('');
     let optionsStatus = statusLista.map(s => `<option value="${s}" ${l.status===s?'selected':''}>${s}</option>`).join('');
     
-    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Pedido</label><input type="number" id="edit_lan_pedido" value="${l.pedido||''}"></div>
-        <div class="form-group"><label>Data</label><input type="date" id="edit_lan_data" value="${l.data||''}"></div>
-        <div class="form-group"><label>Mês</label><input type="text" id="edit_lan_mes" value="${l.mes||''}"></div>
-        <div class="form-group"><label>Tipo</label><select id="edit_lan_tipo"><option value="">Selecione</option>${optionsTipo}</select></div>
-        <div class="form-group"><label>Cliente</label><input type="text" id="edit_lan_cliente" value="${escapeHtml(l.cliente||'')}" readonly></div>
-        <div class="form-group"><label>OC</label><input type="text" id="edit_lan_oc" value="${l.oc||''}"></div>
-        <div class="form-group"><label>Fornecedor</label><select id="edit_lan_fornecedor"><option value="">Selecione</option>${optionsForn}</select></div>
-        <div class="form-group"><label>Categoria</label><select id="edit_lan_categoria"><option value="">Selecione</option>${optionsCat}</select></div>
-        <div class="form-group"><label>Itens</label><input type="number" id="edit_lan_itens" value="${l.itens||''}"></div>
-        <div class="form-group"><label>Produtos</label><input type="text" id="edit_lan_produtos" value="${l.produtos||''}"></div>
-        <div class="form-group"><label>Valor</label><input type="text" id="edit_lan_valor" value="${formatarValor(l.valor)}" onblur="formatarValorInput(this)"></div>
-        <div class="form-group"><label>Data Pagto</label><input type="date" id="edit_lan_data_pagto" value="${l.data_pagto||''}"></div>
-        <div class="form-group"><label>Condição</label><select id="edit_lan_condicao"><option value="">Selecione</option><option value="Em aberto" ${l.condicao==='Em aberto'?'selected':''}>EM ABERTO</option><option value="Em produção" ${l.condicao==='Em produção'?'selected':''}>EM PRODUÇÃO</option><option value="Cancelado" ${l.condicao==='Cancelado'?'selected':''}>CANCELADO</option><option value="Entregue" ${l.condicao==='Entregue'?'selected':''}>ENTREGUE</option><option value="Em Rota" ${l.condicao==='Em Rota'?'selected':''}>EM ROTA</option><option value="Entregue em fábrica" ${l.condicao==='Entregue em fábrica'?'selected':''}>ENTREGUE EM FÁBRICA</option><option value="Entregue - Pag. Pendente" ${l.condicao==='Entregue - Pag. Pendente'?'selected':''}>ENTREGUE - PAG. PENDENTE</option><option value="Pedido Retido" ${l.condicao==='Pedido Retido'?'selected':''}>PEDIDO RETIDO</option></select></div>
-        <div class="form-group"><label>Prev. Fat</label><input type="date" id="edit_lan_prev_fat" value="${l.prev_fat||''}"></div>
-        <div class="form-group"><label>Data Fat</label><input type="date" id="edit_lan_data_fat" value="${l.data_fat||''}" onchange="calcularPrevisaoChegadaEdicao()"></div>
-        <div class="form-group"><label>Prev. Chegada</label><input type="date" id="edit_lan_prev_chegada" value="${l.prev_chegada||''}" readonly style="background:#f5f5f5"></div>
-        <div class="form-group"><label>Novo Prazo</label><input type="date" id="edit_lan_novo_prazo" value="${l.novo_prazo||''}"></div>
-        <div class="form-group"><label>Status</label><select id="edit_lan_status">${optionsStatus}</select></div>
-        <div class="form-group"><label>Nº NF</label><input type="text" id="edit_lan_nf" value="${l.nf||''}"></div>
-        <div class="form-group"><label>Transportadora</label><input type="text" id="edit_lan_transportadora" value="${l.transportadora||''}"></div>
-        <div class="form-group"><label>Chegada</label><input type="date" id="edit_lan_chegada" value="${l.chegada||''}"></div>
-        <div class="form-group"><label>Conferência</label><input type="date" id="edit_lan_conferencia" value="${l.conferencia||''}"></div>
-        <div class="form-group"><label>Entrega</label><input type="date" id="edit_lan_entrega" value="${l.entrega||''}"></div>
-        <div class="form-group"><label>Prazo Final</label><input type="date" id="edit_lan_prazo_final" value="${l.prazo_final||''}"></div>
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Pedido</label><input type="number" id="edit_lan_pedido" value="${l.pedido||''}"><\/div>
+        <div class="form-group"><label>Data</label><input type="date" id="edit_lan_data" value="${l.data||''}"><\/div>
+        <div class="form-group"><label>Mês</label><input type="text" id="edit_lan_mes" value="${l.mes||''}"><\/div>
+        <div class="form-group"><label>Tipo</label><select id="edit_lan_tipo"><option value="">Selecione</option>${optionsTipo}<\/select><\/div>
+        <div class="form-group"><label>Cliente</label><input type="text" id="edit_lan_cliente" value="${escapeHtml(l.cliente||'')}" readonly><\/div>
+        <div class="form-group"><label>OC</label><input type="text" id="edit_lan_oc" value="${l.oc||''}"><\/div>
+        <div class="form-group"><label>Fornecedor</label><select id="edit_lan_fornecedor"><option value="">Selecione</option>${optionsForn}<\/select><\/div>
+        <div class="form-group"><label>Categoria</label><select id="edit_lan_categoria"><option value="">Selecione</option>${optionsCat}<\/select><\/div>
+        <div class="form-group"><label>Itens</label><input type="number" id="edit_lan_itens" value="${l.itens||''}"><\/div>
+        <div class="form-group"><label>Produtos</label><input type="text" id="edit_lan_produtos" value="${l.produtos||''}"><\/div>
+        <div class="form-group"><label>🏷️ Etiqueta</label><input type="text" id="edit_lan_etiqueta" value="${escapeHtml(l.etiqueta||'')}" style="text-transform:uppercase"><\/div>
+        <div class="form-group"><label>Valor</label><input type="text" id="edit_lan_valor" value="${formatarValor(l.valor)}" onblur="formatarValorInput(this)"><\/div>
+        <div class="form-group"><label>Data Pagto</label><input type="date" id="edit_lan_data_pagto" value="${l.data_pagto||''}"><\/div>
+        <div class="form-group"><label>Condição</label><select id="edit_lan_condicao"><option value="">Selecione</option><option value="Em aberto" ${l.condicao==='Em aberto'?'selected':''}>EM ABERTO</option><option value="Em produção" ${l.condicao==='Em produção'?'selected':''}>EM PRODUÇÃO</option><option value="Cancelado" ${l.condicao==='Cancelado'?'selected':''}>CANCELADO</option><option value="Entregue" ${l.condicao==='Entregue'?'selected':''}>ENTREGUE</option><option value="Em Rota" ${l.condicao==='Em Rota'?'selected':''}>EM ROTA</option><option value="Entregue em fábrica" ${l.condicao==='Entregue em fábrica'?'selected':''}>ENTREGUE EM FÁBRICA</option><option value="Entregue - Pag. Pendente" ${l.condicao==='Entregue - Pag. Pendente'?'selected':''}>ENTREGUE - PAG. PENDENTE</option><option value="Pedido Retido" ${l.condicao==='Pedido Retido'?'selected':''}>PEDIDO RETIDO</option><\/select><\/div>
+        <div class="form-group"><label>Prev. Fat</label><input type="date" id="edit_lan_prev_fat" value="${l.prev_fat||''}"><\/div>
+        <div class="form-group"><label>Data Fat</label><input type="date" id="edit_lan_data_fat" value="${l.data_fat||''}" onchange="calcularPrevisaoChegadaEdicao()"><\/div>
+        <div class="form-group"><label>Prev. Chegada</label><input type="date" id="edit_lan_prev_chegada" value="${l.prev_chegada||''}" readonly style="background:#f5f5f5"><\/div>
+        <div class="form-group"><label>Novo Prazo</label><input type="date" id="edit_lan_novo_prazo" value="${l.novo_prazo||''}"><\/div>
+        <div class="form-group"><label>Status</label><select id="edit_lan_status">${optionsStatus}<\/select><\/div>
+        <div class="form-group"><label>Nº NF</label><input type="text" id="edit_lan_nf" value="${l.nf||''}"><\/div>
+        <div class="form-group"><label>Transportadora</label><input type="text" id="edit_lan_transportadora" value="${l.transportadora||''}"><\/div>
+        <div class="form-group"><label>Chegada</label><input type="date" id="edit_lan_chegada" value="${l.chegada||''}"><\/div>
+        <div class="form-group"><label>Conferência</label><input type="date" id="edit_lan_conferencia" value="${l.conferencia||''}"><\/div>
+        <div class="form-group"><label>Entrega</label><input type="date" id="edit_lan_entrega" value="${l.entrega||''}"><\/div>
+        <div class="form-group"><label>Prazo Final</label><input type="date" id="edit_lan_prazo_final" value="${l.prazo_final||''}"><\/div>
         <div class="form-group"><label>Observações</label>
-            <textarea id="edit_lan_observacoes" rows="2" maxlength="100" oninput="atualizarContadorCaracteres(this, 100)">${escapeHtml(l.observacoes || '')}</textarea>
-            <div class="char-counter" id="editObsCharCounter">${(l.observacoes || '').length}/100</div>
-        </div>
-    </div><div style="text-align:right; margin-top:20px"><p>Editando como: ${escapeHtml(usuarioAtual)}</p><button class="success" id="btnSalvarEdicaoLancamento" onclick="salvarEdicaoLancamento('${id}')">💾 SALVAR</button></div>`;
+            <textarea id="edit_lan_observacoes" rows="2" maxlength="100" oninput="atualizarContadorCaracteres(this, 100)">${escapeHtml(l.observacoes || '')}<\/textarea>
+            <div class="char-counter" id="editObsCharCounter">${(l.observacoes || '').length}/100<\/div>
+        <\/div>
+    <\/div><div style="text-align:right; margin-top:20px"><p>Editando como: ${escapeHtml(usuarioAtual)}<\/p><button class="success" id="btnSalvarEdicaoLancamento" onclick="salvarEdicaoLancamento('${id}')">💾 SALVAR<\/button><\/div>`;
     
     setTimeout(() => {
         const editTextarea = document.getElementById('edit_lan_observacoes');
@@ -1658,6 +1766,7 @@ async function salvarEdicaoLancamento(id) {
         l.categoria = getValue('edit_lan_categoria') || l.categoria;
         l.itens = parseInt(getValue('edit_lan_itens')) || 0;
         l.produtos = getValue('edit_lan_produtos').toUpperCase() || l.produtos;
+        l.etiqueta = getValue('edit_lan_etiqueta').toUpperCase() || l.etiqueta || '';
         
         let valorRaw = getValue('edit_lan_valor', '0,00');
         let valorNumerico = parseFloat(valorRaw.replace(/\./g, '').replace(',', '.'));
@@ -1678,7 +1787,7 @@ async function salvarEdicaoLancamento(id) {
         l.editadoPor = usuarioAtual;
         l.editadoEm = new Date().toISOString();
         
-        const camposString = ['data', 'mes', 'tipo', 'cliente', 'oc', 'fornecedor', 'categoria', 'produtos', 'condicao', 'status', 'nf', 'transportadora', 'observacoes'];
+        const camposString = ['data', 'mes', 'tipo', 'cliente', 'oc', 'fornecedor', 'categoria', 'produtos', 'etiqueta', 'condicao', 'status', 'nf', 'transportadora', 'observacoes'];
         camposString.forEach(campo => {
             if (l[campo] === undefined) l[campo] = null;
             if (l[campo] === '') l[campo] = null;
@@ -1866,7 +1975,7 @@ function gerarRelatorios(dados) {
         <div class="chart-container"><h4>📌 Pedidos por Status</h4> <table style="width:100%">${Object.entries(status).map(([s,q])=>`<tr><td>${s}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
         <div class="chart-container"><h4>💰 Pedidos por Condição</h4> <table style="width:100%">${Object.entries(cond).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
         <div class="chart-container"><h4>🏷️ Pedidos por Categoria</h4> <table style="width:100%">${Object.entries(cat).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div><\/div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px"><div class="chart-container"><h4>🏆 Top Clientes</h4> <table style="width:100%">${topClientes.map(([c,q])=>`<tr><td>${c}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px"><div class="chart-container"><h4>🏆 Top Clientes</h4> <table style="width:100%">${topClientes.map(([c,q])=>`<td>${c}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div>
         <div class="chart-container"><h4>🏭 Top Fornecedores</h4> <table style="width:100%">${topForn.map(([f,q])=>`<tr><td>${f}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div><\/div>
     `;
 }
@@ -1971,7 +2080,7 @@ function gerarDashboard(dados) {
     document.getElementById('conteudoDashboard').innerHTML = `
         <div class="lembretes-bar">${lembretes.map(l=>`<span class="lembrete-item ${l.tipo}">${l.icon} ${l.msg}</span>`).join(' | ')}${lembretes.length===0?'✅ Nenhum lembrete':''}</div>
         <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${entregues}</div></div><div class="kpi-card"><h4>Atrasados</h4><div class="value">${atrasados}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${pendentes}</div></div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px"><div class="kpi-card"><h4>⏱️ Tempo Médio Pagamento</h4><div class="value">${tempoMedioPagamento} dias</div><div class="value" style="font-size:10px; color:#666;">*Exclui SHOWROOM</div></div><div class="kpi-card"><h4>⏱️ Tempo Médio Entrega</h4><div class="value">${tempoMedioEntrega} dias</div><div class="value" style="font-size:10px; color:#666;">*Exclui SHOWROOM</div></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px"><div class="kpi-card"><h4>⏱️ Tempo Médio Pagamento</h4><div class="value">${tempoMedioPagamento} dias</div><div class="sub" style="font-size:10px; color:#666;">*Exclui SHOWROOM</div></div><div class="kpi-card"><h4>⏱️ Tempo Médio Entrega</h4><div class="value">${tempoMedioEntrega} dias</div><div class="sub" style="font-size:10px; color:#666;">*Exclui SHOWROOM</div></div></div>
         <div class="charts-grid"><div class="chart-container"><canvas id="graficoStatus"></canvas></div><div class="chart-container"><canvas id="graficoTipo"></canvas></div><div class="chart-container"><canvas id="graficoCondicao"></canvas></div></div>
         <h3>⏱️ Tempo Médio de Entrega por Fornecedor</h3><div class="table-container"><table class="auto-layout"><thead><th>Fornecedor</th><th>Pedidos</th><th>Prazo Médio (dias)</th></thead><tbody>${rankingFornecedores.map(f=>`<tr><td>${f.fornecedor}<\/td><td>${f.pedidos}<\/td><td>${f.prazoMedio}<\/td><\/tr>`).join('')}</tbody><\/table><\/div>
     `;
@@ -2113,7 +2222,10 @@ async function mostrar(tela) {
     switch(tela) {
         case 'clientes': main.innerHTML = telaClientes(); break;
         case 'fornecedores': main.innerHTML = telaFornecedores(); break;
-        case 'lancamentos': main.innerHTML = telaLancamentos(); setTimeout(() => renderLancamentos(), 100); break;
+        case 'lancamentos': main.innerHTML = telaLancamentos(); setTimeout(() => {
+            renderLancamentos();
+            toggleEtiquetaField();
+        }, 100); break;
         case 'relatorios': main.innerHTML = telaRelatorios(); setTimeout(()=>aplicarFiltrosRelatorio(),100); break;
         case 'dashboard': main.innerHTML = telaDashboard(); setTimeout(()=>aplicarFiltroDashboard(),100); break;
         case 'anexos': main.innerHTML = telaAnexos(); break;
