@@ -217,11 +217,22 @@
         .resumo-item { display: inline-flex; align-items: center; gap: 5px; }
         .resumo-item strong { color: #5C2A2A; }
         
+        .atrasados-count {
+            background: #ffebee;
+            padding: 2px 10px;
+            border-radius: 12px;
+            color: #c62828;
+            font-weight: bold;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        
         .filtros-rapidos {
             display: flex;
             gap: 8px;
             margin-bottom: 15px;
             flex-wrap: wrap;
+            align-items: center;
         }
         .filtro-tipo-btn {
             background: #f5f5f5;
@@ -235,6 +246,15 @@
         }
         .filtro-tipo-btn:hover { background: #e0e0e0; }
         .filtro-tipo-btn.active { background: #8B5A5A; color: white; border-color: #8B5A5A; }
+        
+        .filtro-etiqueta-select {
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid #e0e0e0;
+            font-size: 12px;
+            background: #f5f5f5;
+            color: #666;
+        }
         
         .ordenacao-btns {
             display: flex;
@@ -446,7 +466,6 @@
             to { transform: rotate(360deg); }
         }
         
-        /* Paginação */
         .pagination {
             display: flex;
             justify-content: center;
@@ -472,12 +491,25 @@
             color: #5C2A2A;
         }
         
-        /* Campo etiqueta condicional */
         .etiqueta-field {
             display: none;
         }
         .etiqueta-field.visible {
             display: flex;
+        }
+        
+        .loading-overlay {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+        .loading-overlay.active {
+            display: block;
+        }
+        
+        .time-ago {
+            font-size: 11px;
+            color: #888;
         }
     </style>
 </head>
@@ -540,9 +572,6 @@ function getElement(id) {
     return DOMCache[id];
 }
 
-// ============================================
-// FUNÇÃO DE SANITIZAÇÃO
-// ============================================
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
@@ -565,6 +594,8 @@ let usuarioPermissao = null;
 let currentFilterType = "TODOS";
 let currentOrder = "data";
 let currentOrderDirection = "desc";
+let currentEtiquetaFilter = "TODAS";
+let isLoading = false;
 
 // Paginação
 let currentPage = 1;
@@ -583,7 +614,6 @@ const categorias = [
 
 const tiposPedido = ['OC', 'SHOWROOM', 'ESTOQUE', 'ASSISTENCIA'];
 
-// Gera meses de janeiro/2025 a dezembro/2027
 const mesesLista = (() => {
     const meses = [];
     const anos = [2025, 2026, 2027];
@@ -606,9 +636,6 @@ const statusLista = [
     'PRORROGADO'
 ];
 
-// ============================================
-// FUNÇÃO QUE CALCULA PREV. CHEGADA = DATA FAT + 20 DIAS
-// ============================================
 function calcularPrevisaoChegada() {
     const dataFat = document.getElementById('lan_data_fat')?.value;
     if (dataFat) {
@@ -618,28 +645,45 @@ function calcularPrevisaoChegada() {
         const mes = String(data.getMonth() + 1).padStart(2, '0');
         const dia = String(data.getDate()).padStart(2, '0');
         const prevChegadaInput = document.getElementById('lan_prev_chegada');
-        if (prevChegadaInput) prevChegadaInput.value = `${ano}-${mes}-${dia}`;
+        if (prevChegadaInput && !prevChegadaInput.dataset.manual) {
+            prevChegadaInput.value = `${ano}-${mes}-${dia}`;
+        }
+    }
+}
+
+function calcularPrevisaoChegadaEdicao() {
+    const dataFat = document.getElementById('edit_lan_data_fat')?.value;
+    if (dataFat) {
+        const data = new Date(dataFat);
+        data.setDate(data.getDate() + 20);
+        const ano = data.getFullYear();
+        const mes = String(data.getMonth() + 1).padStart(2, '0');
+        const dia = String(data.getDate()).padStart(2, '0');
+        const prevChegadaInput = document.getElementById('edit_lan_prev_chegada');
+        if (prevChegadaInput && !prevChegadaInput.dataset.manual) {
+            prevChegadaInput.value = `${ano}-${mes}-${dia}`;
+        }
+    }
+}
+
+function manualPrevChegada(input) {
+    input.dataset.manual = 'true';
+}
+
+function showLoadingOverlay(show) {
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) {
+        overlay.classList.toggle('active', show);
     }
 }
 
 // ============================================
-// FUNÇÃO DE VALIDAÇÃO DE DATAS (APENAS ENTREGA NÃO PODE SER ANTES DO PAGAMENTO)
+// VALIDAÇÃO DE DATAS DESATIVADA
 // ============================================
 function validarDatas(lancamento) {
-    if (lancamento.data_pagto && lancamento.entrega) {
-        const dataPagto = new Date(lancamento.data_pagto);
-        const dataEntrega = new Date(lancamento.entrega);
-        if (dataEntrega < dataPagto) {
-            alert('⚠️ Atenção: Data de entrega não pode ser anterior à data de pagamento!');
-            return false;
-        }
-    }
     return true;
 }
 
-// ============================================
-// FUNÇÃO DE LOADING
-// ============================================
 function showLoading(button, text = 'Salvando...') {
     const originalText = button.innerHTML;
     button.disabled = true;
@@ -652,9 +696,6 @@ function hideLoading(button, originalText) {
     button.innerHTML = originalText;
 }
 
-// ============================================
-// CORREÇÃO: DESTACA SE STATUS NÃO FOR ENTREGUE E DATA VENCIDA OU PRÓXIMA (≤ 7 DIAS)
-// ============================================
 function isPedidoAtrasado(lancamento) {
     const status = (lancamento.status || '').toUpperCase().trim();
     if (status === 'ENTREGUE') return false;
@@ -665,10 +706,8 @@ function isPedidoAtrasado(lancamento) {
     return diffDias <= 7;
 }
 
-// ============================================
-// FUNÇÕES DO FIREBASE
-// ============================================
 async function carregarDados() {
+    showLoadingOverlay(true);
     try {
         const [clientesSnap, fornecedoresSnap, lancamentosSnap, anexosSnap, usuariosSnap, logsSnap] = await Promise.all([
             db.collection('clientes').get(),
@@ -745,86 +784,42 @@ async function carregarDados() {
         }
         
         console.log("✅ Dados carregados do Firebase!");
+        showLoadingOverlay(false);
         return true;
     } catch (error) {
         console.error("❌ Erro ao carregar dados:", error);
         alert("❌ Erro ao conectar com o Firebase. Verifique sua internet e tente novamente.");
+        showLoadingOverlay(false);
         return false;
     }
 }
 
-async function adicionarLog(acao, detalhe = '') {
-    try {
-        const log = { data: new Date().toISOString(), usuario: usuarioAtual || 'Sistema', acao, detalhe };
-        await db.collection('logs').add(log);
-        logs.push(log);
-        if (logs.length > 100) logs = logs.slice(-100);
-    } catch (error) {
-        console.error("Erro ao adicionar log:", error);
-    }
+function timeAgo(dateStr) {
+    if (!dateStr) return '-';
+    const now = new Date();
+    const past = new Date(dateStr);
+    const diff = Math.floor((now - past) / 60000);
+    if (diff < 1) return 'agora mesmo';
+    if (diff < 60) return `há ${diff} min`;
+    if (diff < 1440) return `há ${Math.floor(diff/60)}h`;
+    if (diff < 43200) return `há ${Math.floor(diff/1440)}d`;
+    return past.toLocaleDateString('pt-BR');
 }
 
-function formatarData(dataStr) {
-    if (!dataStr) return '-';
-    try { const [a,m,d] = dataStr.split('-'); return `${d}/${m}/${a}`; } catch { return dataStr; }
+function gerarProximoNumeroPedido() {
+    if (lancamentos.length === 0) return 1000;
+    const maxPedido = lancamentos.reduce((max, l) => Math.max(max, parseInt(l.pedido) || 0), 0);
+    return maxPedido + 1;
 }
 
-function formatarValor(valor) {
-    if (valor === undefined || valor === null) return '-';
-    return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function formatarValorInput(input) {
-    let valor = input.value;
-    if (!valor) { input.value = '0,00'; return; }
-    valor = valor.replace(/\./g, '').replace(',', '.');
-    let num = parseFloat(valor);
-    if (!isNaN(num)) input.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-    else input.value = '0,00';
-}
-
-function converterValorParaNumero(valorStr) {
-    if (!valorStr) return 0;
-    return parseFloat(valorStr.replace(/\./g, '').replace(',', '.')) || 0;
-}
-
-function gerarProximoCodFornecedor() {
-    const nums = fornecedores.map(f => parseInt(f.cod.replace('FOR',''))).filter(n => !isNaN(n));
-    return 'FOR' + String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3,'0');
-}
-
-function buscarClientePorPedido(pedido) { return clientes.find(c => c.pedido == pedido); }
-
-function calcularPrazoMedio(pagto, entrega) {
-    if (!pagto || !entrega) return null;
-    return Math.round((new Date(entrega) - new Date(pagto)) / 86400000);
-}
-
-function calcularTempoPagamento(dataPedido, dataPagto) {
-    if (!dataPedido || !dataPagto) return null;
-    return Math.round((new Date(dataPagto) - new Date(dataPedido)) / 86400000);
-}
-
-function getStatusClass(status) {
-    if (!status) return 'pendente';
-    const map = { 
-        'FATURADO':'faturado', 
-        'AG. FATURAMENTO':'ag-faturamento', 
-        'PRORROGADO':'prorrogado', 
-        'EM ABERTO':'em-aberto', 
-        'ATRASADO':'atrasado', 
-        'ENTREGUE':'entregue', 
-        'EM ROTA':'em-rota', 
-        'CANCELADO':'cancelado' 
-    };
-    return map[status.toUpperCase()] || 'pendente';
-}
-
-function getStatusBadge(status) {
-    if (!status) return '<span class="status-badge pendente">PENDENTE</span>';
-    const classe = getStatusClass(status);
-    const up = status.toUpperCase();
-    return `<span class="status-badge ${classe}">${up}</span>`;
+function getEtiquetas() {
+    const etiquetas = new Set();
+    lancamentos.forEach(l => {
+        if (l.etiqueta && l.etiqueta.trim() !== '') {
+            etiquetas.add(l.etiqueta);
+        }
+    });
+    return Array.from(etiquetas).sort();
 }
 
 function topBar() {
@@ -834,26 +829,6 @@ function topBar() {
 function fecharModal(modalId) { 
     const modal = getElement(modalId);
     if (modal) modal.classList.remove('active'); 
-}
-
-function gerarLembretes() {
-    const lembretes = [], hoje = new Date(); hoje.setHours(0,0,0,0);
-    lancamentos.forEach(l => {
-        if (l.prev_chegada) {
-            const diff = Math.round((new Date(l.prev_chegada) - hoje) / 86400000);
-            if (diff === 0) lembretes.push({tipo:'urgente', icon:'🔴', msg:`HOJE: Pedido #${l.pedido} - CHEGADA`});
-            else if (diff === 1) lembretes.push({tipo:'alerta-1d', icon:'🟠', msg:`AMANHÃ: Pedido #${l.pedido} - Chegada`});
-            else if (diff <= 7 && diff > 1) lembretes.push({tipo:'alerta-7d', icon:'🟡', msg:`${diff}d: Pedido #${l.pedido} - Chegada`});
-        }
-        if (l.entrega && l.status !== 'ENTREGUE') {
-            const diff = Math.round((new Date(l.entrega) - hoje) / 86400000);
-            if (diff === 0) lembretes.push({tipo:'urgente', icon:'🔴', msg:`HOJE: Pedido #${l.pedido} - ENTREGA`});
-            else if (diff === 1) lembretes.push({tipo:'alerta-1d', icon:'🟠', msg:`AMANHÃ: Pedido #${l.pedido} - Entrega`});
-            else if (diff <= 7 && diff > 1) lembretes.push({tipo:'alerta-7d', icon:'🟡', msg:`${diff}d: Pedido #${l.pedido} - Entrega`});
-        }
-        if (l.status === 'ATRASADO') lembretes.push({tipo:'urgente', icon:'⚠️', msg:`ATRASADO: Pedido #${l.pedido}`});
-    });
-    return lembretes.slice(0,8);
 }
 
 // ============================================
@@ -897,8 +872,14 @@ function aplicarFiltroTipo(lista) {
     return lista.filter(l => l.tipo === currentFilterType);
 }
 
+function aplicarFiltroEtiqueta(lista) {
+    if (currentEtiquetaFilter === "TODAS") return lista;
+    return lista.filter(l => l.etiqueta === currentEtiquetaFilter);
+}
+
 function getLancamentosFiltrados() {
     let filtrados = aplicarFiltroTipo(lancamentos);
+    filtrados = aplicarFiltroEtiqueta(filtrados);
     filtrados = aplicarOrdenacao(filtrados);
     return filtrados;
 }
@@ -1108,9 +1089,6 @@ async function salvarEdicaoCliente(id) {
     }
 }
 
-// ============================================
-// TELA DE FORNECEDORES (validação de nome e CNPJ únicos)
-// ============================================
 function telaFornecedores() {
     return topBar() + `
         <div class="box">
@@ -1235,9 +1213,6 @@ async function salvarEdicaoFornecedor(id) {
     }
 }
 
-// ============================================
-// FUNÇÃO PARA ATUALIZAR CONTADOR DE CARACTERES
-// ============================================
 function atualizarContadorCaracteres(textarea, maxChars = 100) {
     const length = textarea.value.length;
     const counter = document.getElementById('obsCharCounter');
@@ -1253,9 +1228,95 @@ function atualizarContadorCaracteres(textarea, maxChars = 100) {
     }
 }
 
-// ============================================
-// TELA DE LANÇAMENTOS (com busca por OC, NF, pedido, cliente, fornecedor)
-// ============================================
+function gerarProximoCodFornecedor() {
+    const nums = fornecedores.map(f => parseInt(f.cod.replace('FOR',''))).filter(n => !isNaN(n));
+    return 'FOR' + String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3,'0');
+}
+
+function buscarClientePorPedido(pedido) { return clientes.find(c => c.pedido == pedido); }
+
+function formatarData(dataStr) {
+    if (!dataStr) return '-';
+    try { const [a,m,d] = dataStr.split('-'); return `${d}/${m}/${a}`; } catch { return dataStr; }
+}
+
+function formatarValor(valor) {
+    if (valor === undefined || valor === null) return '-';
+    return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatarValorInput(input) {
+    let valor = input.value;
+    if (!valor) { input.value = '0,00'; return; }
+    valor = valor.replace(/\./g, '').replace(',', '.');
+    let num = parseFloat(valor);
+    if (!isNaN(num)) input.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    else input.value = '0,00';
+}
+
+function converterValorParaNumero(valorStr) {
+    if (!valorStr) return 0;
+    return parseFloat(valorStr.replace(/\./g, '').replace(',', '.')) || 0;
+}
+
+function getStatusClass(status) {
+    if (!status) return 'pendente';
+    const map = { 
+        'FATURADO':'faturado', 
+        'AG. FATURAMENTO':'ag-faturamento', 
+        'PRORROGADO':'prorrogado', 
+        'EM ABERTO':'em-aberto', 
+        'ATRASADO':'atrasado', 
+        'ENTREGUE':'entregue', 
+        'EM ROTA':'em-rota', 
+        'CANCELADO':'cancelado' 
+    };
+    return map[status.toUpperCase()] || 'pendente';
+}
+
+function getStatusBadge(status) {
+    if (!status) return '<span class="status-badge pendente">PENDENTE</span>';
+    const classe = getStatusClass(status);
+    const up = status.toUpperCase();
+    return `<span class="status-badge ${classe}">${up}</span>`;
+}
+
+function gerarLembretes() {
+    const lembretes = [], hoje = new Date(); hoje.setHours(0,0,0,0);
+    lancamentos.forEach(l => {
+        if (l.prev_chegada) {
+            const diff = Math.round((new Date(l.prev_chegada) - hoje) / 86400000);
+            if (diff === 0) lembretes.push({tipo:'urgente', icon:'🔴', msg:`HOJE: Pedido #${l.pedido} - CHEGADA`});
+            else if (diff === 1) lembretes.push({tipo:'alerta-1d', icon:'🟠', msg:`AMANHÃ: Pedido #${l.pedido} - Chegada`});
+            else if (diff <= 7 && diff > 1) lembretes.push({tipo:'alerta-7d', icon:'🟡', msg:`${diff}d: Pedido #${l.pedido} - Chegada`});
+        }
+        if (l.entrega && l.status !== 'ENTREGUE') {
+            const diff = Math.round((new Date(l.entrega) - hoje) / 86400000);
+            if (diff === 0) lembretes.push({tipo:'urgente', icon:'🔴', msg:`HOJE: Pedido #${l.pedido} - ENTREGA`});
+            else if (diff === 1) lembretes.push({tipo:'alerta-1d', icon:'🟠', msg:`AMANHÃ: Pedido #${l.pedido} - Entrega`});
+            else if (diff <= 7 && diff > 1) lembretes.push({tipo:'alerta-7d', icon:'🟡', msg:`${diff}d: Pedido #${l.pedido} - Entrega`});
+        }
+        if (l.status === 'ATRASADO') lembretes.push({tipo:'urgente', icon:'⚠️', msg:`ATRASADO: Pedido #${l.pedido}`});
+    });
+    return lembretes.slice(0,8);
+}
+
+function adicionarLog(acao, detalhe = '') {
+    try {
+        const log = { data: new Date().toISOString(), usuario: usuarioAtual || 'Sistema', acao, detalhe };
+        db.collection('logs').add(log);
+        logs.push(log);
+        if (logs.length > 100) logs = logs.slice(-100);
+    } catch (error) {
+        console.error("Erro ao adicionar log:", error);
+    }
+}
+
+function calcularTempoPagamento(dataPedido, dataPagto) {
+    if (!dataPedido || !dataPagto) return null;
+    return Math.round((new Date(dataPagto) - new Date(dataPedido)) / 86400000);
+}
+
 function telaLancamentos() {
     let optionsCat = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
     let optionsForn = fornecedores.map(f => `<option value="${escapeHtml(f.nome)}">${escapeHtml(f.nome)} (${f.cod})</option>`).join('');
@@ -1265,6 +1326,9 @@ function telaLancamentos() {
     
     const lancamentosFiltrados = getLancamentosFiltrados();
     const totais = calcularTotais(lancamentosFiltrados);
+    const etiquetas = getEtiquetas();
+    const etiquetaOptions = etiquetas.map(e => `<option value="${e}">${e}</option>`).join('');
+    const proximoPedido = gerarProximoNumeroPedido();
     
     return topBar() + `
         <div class="box">
@@ -1274,7 +1338,7 @@ function telaLancamentos() {
                 <span class="resumo-item">📊 <strong>${totais.totalPedidos}</strong> pedidos</span>
                 <span class="resumo-item">💰 <strong>${formatarValor(totais.totalValor)}</strong></span>
                 <span class="resumo-item">📦 <strong>${totais.totalItens}</strong> itens</span>
-                <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados</span>
+                <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados <span class="atrasados-count">${totais.totalAtrasados}</span></span>
             </div>
             
             <div class="filtros-rapidos">
@@ -1283,6 +1347,11 @@ function telaLancamentos() {
                 <button class="filtro-tipo-btn ${currentFilterType === 'SHOWROOM' ? 'active' : ''}" onclick="setFilterType('SHOWROOM')">🖼️ SHOWROOM</button>
                 <button class="filtro-tipo-btn ${currentFilterType === 'ESTOQUE' ? 'active' : ''}" onclick="setFilterType('ESTOQUE')">📦 ESTOQUE</button>
                 <button class="filtro-tipo-btn ${currentFilterType === 'ASSISTENCIA' ? 'active' : ''}" onclick="setFilterType('ASSISTENCIA')">🔧 ASSISTENCIA</button>
+                
+                <select class="filtro-etiqueta-select" id="filtroEtiqueta" onchange="setFilterEtiqueta(this.value)">
+                    <option value="TODAS">🏷️ Todas etiquetas</option>
+                    ${etiquetaOptions}
+                </select>
             </div>
             
             <div class="ordenacao-btns">
@@ -1303,7 +1372,7 @@ function telaLancamentos() {
                     </div>
                     <div id="tab1" class="tab-content active">
                         <div class="form-grid">
-                            <div class="form-group"><label class="required">Nº Pedido</label><input type="number" id="lan_pedido" onchange="preencherClienteAuto()"></div>
+                            <div class="form-group"><label class="required">Nº Pedido</label><input type="number" id="lan_pedido" value="${proximoPedido}" onchange="preencherClienteAuto()"></div>
                             <div class="form-group"><label>Data Pedido</label><input type="date" id="lan_data" readonly style="background:#f5f5f5"></div>
                             <div class="form-group"><label>Mês/Ano</label><select id="lan_mes"><option value="">Selecione</option>${optionsMeses}</select></div>
                             <div class="form-group"><label>Tipo</label><select id="lan_tipo" onchange="toggleEtiquetaField()"><option value="">Selecione</option>${optionsTipo}</select></div>
@@ -1324,7 +1393,7 @@ function telaLancamentos() {
                             <div class="form-group"><label>Data Pagamento</label><input type="date" id="lan_data_pagto"></div>
                             <div class="form-group"><label>Prev. Faturamento</label><input type="date" id="lan_prev_fat"></div>
                             <div class="form-group"><label>Data Faturamento</label><input type="date" id="lan_data_fat" onchange="calcularPrevisaoChegada()"></div>
-                            <div class="form-group"><label>Prev. Chegada</label><input type="date" id="lan_prev_chegada" readonly style="background:#f5f5f5"></div>
+                            <div class="form-group"><label>Prev. Chegada</label><input type="date" id="lan_prev_chegada" onchange="manualPrevChegada(this)"></div>
                             <div class="form-group"><label>Novo Prazo</label><input type="date" id="lan_novo_prazo"></div>
                             <div class="form-group"><label>Data Chegada</label><input type="date" id="lan_chegada"></div>
                             <div class="form-group"><label>Data Conferência</label><input type="date" id="lan_conferencia"></div>
@@ -1350,6 +1419,9 @@ function telaLancamentos() {
             </details>
             
             <div class="search-box"><input type="text" id="buscaLancamento" placeholder="🔍 Buscar por pedido, cliente, fornecedor, OC ou NF..." onkeyup="filtrarLancamentos()"></div>
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="loading-spinner"></div> Carregando dados...
+            </div>
             <div class="table-container"><table class="lancamentos-table" id="tabelaLancamentos"><thead>
                 <th>#</th><th>Pedido</th><th>Data</th><th>Mês</th><th>Tipo</th><th>Cliente</th><th>OC</th><th>Fornecedor</th><th>Categoria</th>
                 <th>Itens</th><th>Produtos</th><th>ETIQUETAS</th><th>Valor</th><th>Data Pagto</th><th>Condição</th><th>Prev.Fat</th>
@@ -1410,6 +1482,7 @@ function renderLancamentos() {
         const atrasado = isPedidoAtrasado(l);
         const rowClass = atrasado ? 'atrasado-row' : '';
         const etiqueta = l.etiqueta || '';
+        const editado = l.editadoEm ? timeAgo(l.editadoEm) : '-';
         
         return `<tr class="${rowClass}" data-id="${l.id}">
             <td class="center">${start + idx + 1}<\/td>
@@ -1439,7 +1512,7 @@ function renderLancamentos() {
             <td>${formatarData(l.entrega)}<\/td>
             <td>${formatarData(l.prazo_final) || '-'}<\/td>
             <td>${l.usuario || '-'}<\/td>
-            <td>${l.editadoPor ? l.editadoPor + ' ' + new Date(l.editadoEm).toLocaleDateString() : '-'}<\/td>
+            <td><span class="time-ago" title="${new Date(l.editadoEm).toLocaleString()}">${editado}</span><\/td>
             <td>${l.observacoes ? `<span class="tooltip-icon" data-tooltip="${escapeHtml(l.observacoes.replace(/"/g, '&quot;'))}">💬<\/span>` : '-'}<\/td>
             <td class="acoes-cell">
                 <button class="small" data-tooltip="Editar lançamento" onclick="abrirModalEdicaoLancamento('${l.id}')">✏️<\/button>
@@ -1502,11 +1575,17 @@ function setFilterType(tipo) {
             <span class="resumo-item">📊 <strong>${totais.totalPedidos}</strong> pedidos</span>
             <span class="resumo-item">💰 <strong>${formatarValor(totais.totalValor)}</strong></span>
             <span class="resumo-item">📦 <strong>${totais.totalItens}</strong> itens</span>
-            <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados</span>
+            <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados <span class="atrasados-count">${totais.totalAtrasados}</span></span>
         `;
     }
     document.querySelectorAll('.filtro-tipo-btn').forEach(btn => btn.classList.remove('active'));
     if (event && event.target) event.target.classList.add('active');
+}
+
+function setFilterEtiqueta(valor) {
+    currentEtiquetaFilter = valor;
+    currentPage = 1;
+    renderLancamentos();
 }
 
 function setOrder(order) {
@@ -1598,8 +1677,6 @@ async function adicionarLancamento() {
         
         if (!l.pedido) { alert('Pedido obrigatório!'); return; }
         
-        if (!validarDatas(l)) return;
-        
         const docRef = await db.collection('lancamentos').add(l);
         lancamentos.push({ id: docRef.id, ...l });
         await adicionarLog('ADICIONOU LANÇAMENTO', `Pedido ${l.pedido}`);
@@ -1658,26 +1735,6 @@ function filtrarLancamentos() {
     renderLancamentos();
 }
 
-function exportarLancamentosExcel() {
-    if (lancamentos.length === 0) { alert('Não há dados!'); return; }
-    const wsData = [['#','Pedido','Data','Mês','Tipo','Cliente','OC','Fornecedor','Categoria','Itens','Produtos','Etiqueta','Valor','Data Pagto','Condição','Prev.Fat','Data Fat','Prev.Chegada','Novo Prazo','Status','Nº NF','Transportadora','Chegada','Conf','Entrega','Prazo Final','Usuário','Editado','Observações']];
-    const lancamentosFiltrados = getLancamentosFiltrados();
-    lancamentosFiltrados.forEach((l, idx) => { 
-        wsData.push([
-            idx+1, l.pedido||'', l.data||'', l.mes||'', l.tipo||'', l.cliente||'', l.oc||'', l.fornecedor||'', 
-            l.categoria||'', l.itens||'', l.produtos||'', l.etiqueta||'', l.valor||'', l.data_pagto||'', l.condicao||'', 
-            l.prev_fat||'', l.data_fat||'', l.prev_chegada||'', l.novo_prazo||'', l.status||'', l.nf||'', 
-            l.transportadora||'', l.chegada||'', l.conferencia||'', l.entrega||'', l.prazo_final||'', 
-            l.usuario||'', l.editadoPor||'', (l.observacoes||'').substring(0, 100)
-        ]); 
-    });
-    const wb = XLSX.utils.book_new(); 
-    const ws = XLSX.utils.aoa_to_sheet(wsData); 
-    XLSX.utils.book_append_sheet(wb, ws, 'Lançamentos'); 
-    XLSX.writeFile(wb, `lancamentos_${new Date().toISOString().slice(0,10)}.xlsx`);
-    alert('✅ Arquivo exportado!');
-}
-
 function abrirModalEdicaoLancamento(id) {
     const l = lancamentos.find(l => l.id === id);
     if (!l) return;
@@ -1706,7 +1763,7 @@ function abrirModalEdicaoLancamento(id) {
         <div class="form-group"><label>Condição</label><select id="edit_lan_condicao"><option value="">Selecione</option><option value="Em aberto" ${l.condicao==='Em aberto'?'selected':''}>EM ABERTO</option><option value="Em produção" ${l.condicao==='Em produção'?'selected':''}>EM PRODUÇÃO</option><option value="Cancelado" ${l.condicao==='Cancelado'?'selected':''}>CANCELADO</option><option value="Entregue" ${l.condicao==='Entregue'?'selected':''}>ENTREGUE</option><option value="Em Rota" ${l.condicao==='Em Rota'?'selected':''}>EM ROTA</option><option value="Entregue em fábrica" ${l.condicao==='Entregue em fábrica'?'selected':''}>ENTREGUE EM FÁBRICA</option><option value="Entregue - Pag. Pendente" ${l.condicao==='Entregue - Pag. Pendente'?'selected':''}>ENTREGUE - PAG. PENDENTE</option><option value="Pedido Retido" ${l.condicao==='Pedido Retido'?'selected':''}>PEDIDO RETIDO</option><\/select><\/div>
         <div class="form-group"><label>Prev. Fat</label><input type="date" id="edit_lan_prev_fat" value="${l.prev_fat||''}"><\/div>
         <div class="form-group"><label>Data Fat</label><input type="date" id="edit_lan_data_fat" value="${l.data_fat||''}" onchange="calcularPrevisaoChegadaEdicao()"><\/div>
-        <div class="form-group"><label>Prev. Chegada</label><input type="date" id="edit_lan_prev_chegada" value="${l.prev_chegada||''}" readonly style="background:#f5f5f5"><\/div>
+        <div class="form-group"><label>Prev. Chegada</label><input type="date" id="edit_lan_prev_chegada" value="${l.prev_chegada||''}" onchange="manualPrevChegada(this)"><\/div>
         <div class="form-group"><label>Novo Prazo</label><input type="date" id="edit_lan_novo_prazo" value="${l.novo_prazo||''}"><\/div>
         <div class="form-group"><label>Status</label><select id="edit_lan_status">${optionsStatus}<\/select><\/div>
         <div class="form-group"><label>Nº NF</label><input type="text" id="edit_lan_nf" value="${l.nf||''}"><\/div>
@@ -1727,19 +1784,6 @@ function abrirModalEdicaoLancamento(id) {
     }, 50);
     
     modal.classList.add('active');
-}
-
-function calcularPrevisaoChegadaEdicao() {
-    const dataFat = document.getElementById('edit_lan_data_fat')?.value;
-    if (dataFat) {
-        const data = new Date(dataFat);
-        data.setDate(data.getDate() + 20);
-        const ano = data.getFullYear();
-        const mes = String(data.getMonth() + 1).padStart(2, '0');
-        const dia = String(data.getDate()).padStart(2, '0');
-        const prevChegadaInput = document.getElementById('edit_lan_prev_chegada');
-        if (prevChegadaInput) prevChegadaInput.value = `${ano}-${mes}-${dia}`;
-    }
 }
 
 async function salvarEdicaoLancamento(id) {
@@ -1793,8 +1837,6 @@ async function salvarEdicaoLancamento(id) {
             if (l[campo] === '') l[campo] = null;
         });
         
-        if (!validarDatas(l)) throw new Error('Datas inválidas');
-        
         await db.collection('lancamentos').doc(id).update(l);
         
         const index = lancamentos.findIndex(item => item.id === id);
@@ -1812,8 +1854,28 @@ async function salvarEdicaoLancamento(id) {
     }
 }
 
+function exportarLancamentosExcel() {
+    if (lancamentos.length === 0) { alert('Não há dados!'); return; }
+    const wsData = [['#','Pedido','Data','Mês','Tipo','Cliente','OC','Fornecedor','Categoria','Itens','Produtos','Etiqueta','Valor','Data Pagto','Condição','Prev.Fat','Data Fat','Prev.Chegada','Novo Prazo','Status','Nº NF','Transportadora','Chegada','Conf','Entrega','Prazo Final','Usuário','Editado','Observações']];
+    const lancamentosFiltrados = getLancamentosFiltrados();
+    lancamentosFiltrados.forEach((l, idx) => { 
+        wsData.push([
+            idx+1, l.pedido||'', l.data||'', l.mes||'', l.tipo||'', l.cliente||'', l.oc||'', l.fornecedor||'', 
+            l.categoria||'', l.itens||'', l.produtos||'', l.etiqueta||'', l.valor||'', l.data_pagto||'', l.condicao||'', 
+            l.prev_fat||'', l.data_fat||'', l.prev_chegada||'', l.novo_prazo||'', l.status||'', l.nf||'', 
+            l.transportadora||'', l.chegada||'', l.conferencia||'', l.entrega||'', l.prazo_final||'', 
+            l.usuario||'', l.editadoPor||'', (l.observacoes||'').substring(0, 100)
+        ]); 
+    });
+    const wb = XLSX.utils.book_new(); 
+    const ws = XLSX.utils.aoa_to_sheet(wsData); 
+    XLSX.utils.book_append_sheet(wb, ws, 'Lançamentos'); 
+    XLSX.writeFile(wb, `lancamentos_${new Date().toISOString().slice(0,10)}.xlsx`);
+    alert('✅ Arquivo exportado!');
+}
+
 // ============================================
-// ANEXOS, RELATÓRIOS, DASHBOARD, USUÁRIOS E LOGS
+// ANEXOS
 // ============================================
 function abrirModalAnexos(pedido) {
     const modal = getElement('modalAnexos');
@@ -1907,7 +1969,13 @@ function filtrarAnexosPorOC() {
 }
 function limparBuscaAnexos() { document.getElementById('buscaAnexoPedido').value = ''; document.getElementById('buscaAnexoOC').value = ''; document.querySelectorAll('#anexosLista > div').forEach(d => d.style.display = ''); }
 
+// ============================================
+// RELATÓRIOS
+// ============================================
 function telaRelatorios() {
+    const etiquetas = getEtiquetas();
+    const etiquetaOptions = etiquetas.map(e => `<option value="${e}">${e}</option>`).join('');
+    
     return topBar() + `
         <div class="box">
             <h2>📊 Relatórios</h2>
@@ -1918,6 +1986,7 @@ function telaRelatorios() {
                 <div class="filtro-item"><label>OC</label><input type="text" id="filtroOC" placeholder="Nº OC"></div>
                 <div class="filtro-item"><label>Pedido</label><input type="number" id="filtroPedido" placeholder="Nº Pedido"></div>
                 <div class="filtro-item"><label>Condição</label><select id="filtroCondicao"><option value="">Todas</option><option value="Em aberto">Em aberto</option><option value="Em produção">Em produção</option><option value="Cancelado">Cancelado</option><option value="Entregue">Entregue</option><option value="Em Rota">Em rota</option><option value="Pedido Retido">Pedido Retido</option></select></div>
+                <div class="filtro-item"><label>Etiqueta</label><select id="filtroRelatorioEtiqueta"><option value="">Todas</option>${etiquetaOptions}</select></div>
                 <div class="filtro-actions"><button class="info" onclick="aplicarFiltrosRelatorio()">🔍 Filtrar</button><button class="success" onclick="exportarRelatoriosExcel()">📥 Excel</button><button onclick="gerarPDF()">🖨️ PDF</button></div>
             </div>
             <div id="conteudoRelatorios"></div>
@@ -1955,6 +2024,7 @@ function aplicarFiltrosRelatorio() {
     const filtroOC = document.getElementById('filtroOC')?.value; if (filtroOC) dados = dados.filter(l => l.oc && l.oc.toLowerCase().includes(filtroOC.toLowerCase()));
     const filtroPedido = document.getElementById('filtroPedido')?.value; if (filtroPedido) dados = dados.filter(l => l.pedido == filtroPedido);
     const filtroCondicao = document.getElementById('filtroCondicao')?.value; if (filtroCondicao) dados = dados.filter(l => l.condicao === filtroCondicao);
+    const filtroEtiqueta = document.getElementById('filtroRelatorioEtiqueta')?.value; if (filtroEtiqueta) dados = dados.filter(l => l.etiqueta === filtroEtiqueta);
     gerarRelatorios(dados);
 }
 
@@ -1975,15 +2045,15 @@ function gerarRelatorios(dados) {
         <div class="chart-container"><h4>📌 Pedidos por Status</h4> <table style="width:100%">${Object.entries(status).map(([s,q])=>`<tr><td>${s}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
         <div class="chart-container"><h4>💰 Pedidos por Condição</h4> <table style="width:100%">${Object.entries(cond).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
         <div class="chart-container"><h4>🏷️ Pedidos por Categoria</h4> <table style="width:100%">${Object.entries(cat).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div><\/div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px"><div class="chart-container"><h4>🏆 Top Clientes</h4> <table style="width:100%">${topClientes.map(([c,q])=>`<td>${c}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px"><div class="chart-container"><h4>🏆 Top Clientes</h4> <table style="width:100%">${topClientes.map(([c,q])=>`<tr><td>${c}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div>
         <div class="chart-container"><h4>🏭 Top Fornecedores</h4> <table style="width:100%">${topForn.map(([f,q])=>`<tr><td>${f}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div><\/div>
     `;
 }
 
 function exportarRelatoriosExcel() {
     if (lancamentos.length === 0) { alert('Não há dados!'); return; }
-    const wsData = [['Nº Pedido','Data','Cliente','OC','Fornecedor','Categoria','Itens','Status','Condição','Entrega','Observações']];
-    lancamentos.forEach(l => { wsData.push([l.pedido||'', formatarData(l.data), l.cliente||'', l.oc||'', l.fornecedor||'', l.categoria||'', l.itens||'', l.status||'', l.condicao||'', formatarData(l.entrega), (l.observacoes||'').substring(0,100)]); });
+    const wsData = [['Nº Pedido','Data','Cliente','OC','Fornecedor','Categoria','Itens','Status','Condição','Entrega','Etiqueta','Observações']];
+    lancamentos.forEach(l => { wsData.push([l.pedido||'', formatarData(l.data), l.cliente||'', l.oc||'', l.fornecedor||'', l.categoria||'', l.itens||'', l.status||'', l.condicao||'', formatarData(l.entrega), l.etiqueta||'', (l.observacoes||'').substring(0,100)]); });
     const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(wsData); XLSX.utils.book_append_sheet(wb, ws, 'Relatório'); XLSX.writeFile(wb, `relatorio_${new Date().toISOString().slice(0,10)}.xlsx`);
     alert('Exportado!');
 }
@@ -2002,6 +2072,9 @@ function gerarPDF() {
     });
 }
 
+// ============================================
+// DASHBOARD
+// ============================================
 function telaDashboard() {
     return topBar() + `
         <div class="box">
@@ -2048,7 +2121,6 @@ function aplicarFiltroDashboard() {
 }
 
 function gerarDashboard(dados) {
-    // Remove pedidos SHOWROOM dos cálculos de tempo médio
     const dadosParaCalculo = dados.filter(l => l.tipo !== 'SHOWROOM');
     
     const lembretes = gerarLembretes();
@@ -2066,6 +2138,21 @@ function gerarDashboard(dados) {
     const tempoMedioPagamento = countPagamento > 0 ? (totalDiasPagamento / countPagamento).toFixed(1) : 0;
     const tempoMedioEntrega = countEntrega > 0 ? (totalDiasEntrega / countEntrega).toFixed(1) : 0;
     
+    // Comparativo mensal
+    const mesesMap = {};
+    dados.forEach(l => {
+        if (l.data && l.valor) {
+            const data = new Date(l.data);
+            const mesAno = `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}`;
+            if (!mesesMap[mesAno]) mesesMap[mesAno] = { total: 0, count: 0 };
+            mesesMap[mesAno].total += l.valor;
+            mesesMap[mesAno].count += 1;
+        }
+    });
+    const labelsMeses = Object.keys(mesesMap).sort().slice(-6);
+    const valoresMeses = labelsMeses.map(m => mesesMap[m].total);
+    const countMeses = labelsMeses.map(m => mesesMap[m].count);
+    
     const fornecedoresTempos = {};
     dados.forEach(l => {
         if (!l.fornecedor) return;
@@ -2076,13 +2163,33 @@ function gerarDashboard(dados) {
     if (window.graficoStatus) window.graficoStatus.destroy();
     if (window.graficoTipo) window.graficoTipo.destroy();
     if (window.graficoCondicao) window.graficoCondicao.destroy();
+    if (window.graficoMensal) window.graficoMensal.destroy();
     
     document.getElementById('conteudoDashboard').innerHTML = `
         <div class="lembretes-bar">${lembretes.map(l=>`<span class="lembrete-item ${l.tipo}">${l.icon} ${l.msg}</span>`).join(' | ')}${lembretes.length===0?'✅ Nenhum lembrete':''}</div>
-        <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${entregues}</div></div><div class="kpi-card"><h4>Atrasados</h4><div class="value">${atrasados}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${pendentes}</div></div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px"><div class="kpi-card"><h4>⏱️ Tempo Médio Pagamento</h4><div class="value">${tempoMedioPagamento} dias</div><div class="sub" style="font-size:10px; color:#666;">*Exclui SHOWROOM</div></div><div class="kpi-card"><h4>⏱️ Tempo Médio Entrega</h4><div class="value">${tempoMedioEntrega} dias</div><div class="sub" style="font-size:10px; color:#666;">*Exclui SHOWROOM</div></div></div>
-        <div class="charts-grid"><div class="chart-container"><canvas id="graficoStatus"></canvas></div><div class="chart-container"><canvas id="graficoTipo"></canvas></div><div class="chart-container"><canvas id="graficoCondicao"></canvas></div></div>
-        <h3>⏱️ Tempo Médio de Entrega por Fornecedor</h3><div class="table-container"><table class="auto-layout"><thead><th>Fornecedor</th><th>Pedidos</th><th>Prazo Médio (dias)</th></thead><tbody>${rankingFornecedores.map(f=>`<tr><td>${f.fornecedor}<\/td><td>${f.pedidos}<\/td><td>${f.prazoMedio}<\/td><\/tr>`).join('')}</tbody><\/table><\/div>
+        <div class="kpi-grid">
+            <div class="kpi-card"><h4>📊 TOTAL PEDIDOS</h4><div class="value">${total}</div></div>
+            <div class="kpi-card"><h4>✅ ENTREGUES</h4><div class="value">${entregues}</div></div>
+            <div class="kpi-card"><h4>⚠️ ATRASADOS</h4><div class="value">${atrasados}</div></div>
+            <div class="kpi-card"><h4>⏳ PENDENTES</h4><div class="value">${pendentes}</div></div>
+        </div>
+        <div class="kpi-grid">
+            <div class="kpi-card"><h4>💰 TEMPO MÉDIO PAGAMENTO</h4><div class="value">${tempoMedioPagamento} dias</div><div class="sub" style="font-size:10px; color:#666;">*Exclui SHOWROOM</div></div>
+            <div class="kpi-card"><h4>⏱️ TEMPO MÉDIO ENTREGA</h4><div class="value">${tempoMedioEntrega} dias</div><div class="sub" style="font-size:10px; color:#666;">*Exclui SHOWROOM</div></div>
+        </div>
+        <div class="charts-grid">
+            <div class="chart-container"><canvas id="graficoStatus"></canvas></div>
+            <div class="chart-container"><canvas id="graficoTipo"></canvas></div>
+            <div class="chart-container"><canvas id="graficoCondicao"></canvas></div>
+            <div class="chart-container"><canvas id="graficoMensal"></canvas></div>
+        </div>
+        <h3>⏱️ Tempo Médio de Entrega por Fornecedor</h3>
+        <div class="table-container">
+            <table class="auto-layout">
+                <thead><tr><th>Fornecedor</th><th>Pedidos</th><th>Prazo Médio (dias)</th></tr></thead>
+                <tbody>${rankingFornecedores.map(f=>`<tr><td>${f.fornecedor}<\/td><td>${f.pedidos}<\/td><td>${f.prazoMedio}<\/td><\/tr>`).join('')}</tbody>
+            </table>
+        </div>
     `;
     
     const statusCount = {}; dados.forEach(l => { let s = l.status || 'PENDENTE'; statusCount[s] = (statusCount[s] || 0) + 1; });
@@ -2093,13 +2200,43 @@ function gerarDashboard(dados) {
     
     const condCount = {}; dados.forEach(l => { let c = l.condicao || 'SEM CONDIÇÃO'; condCount[c] = (condCount[c] || 0) + 1; });
     const ctx3 = document.getElementById('graficoCondicao')?.getContext('2d'); if(ctx3) window.graficoCondicao = new Chart(ctx3, { type: 'bar', data: { labels: Object.keys(condCount), datasets: [{ label: 'Quantidade', data: Object.values(condCount), backgroundColor: '#8B5A5A' }] }, options: { plugins: { title: { display: true, text: 'Pedidos por Condição' } } } });
+    
+    const ctx4 = document.getElementById('graficoMensal')?.getContext('2d'); if(ctx4) {
+        const labelsFormatadas = labelsMeses.map(m => {
+            const [ano, mes] = m.split('-');
+            const mesesNomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+            return `${mesesNomes[parseInt(mes)-1]}/${ano.substring(2)}`;
+        });
+        window.graficoMensal = new Chart(ctx4, {
+            type: 'bar',
+            data: {
+                labels: labelsFormatadas,
+                datasets: [
+                    { label: 'Valor Total (R$)', data: valoresMeses, backgroundColor: '#5C2A2A', yAxisID: 'y' },
+                    { label: 'Quantidade', data: countMeses, backgroundColor: '#8B5A5A', yAxisID: 'y1' }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: { title: { display: true, text: '📊 Comparativo Mensal (últimos 6 meses)' } },
+                scales: { y: { beginAtZero: true, position: 'left' }, y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false } } }
+            }
+        });
+    }
 }
 
+// ============================================
+// USUÁRIOS E LOGS
+// ============================================
 function telaUsuarios() {
     return topBar() + `
         <div class="box">
             <h2>👤 Gerenciar Usuários</h2>
-            <div class="form-grid"><div class="form-group"><label class="required">Novo Usuário</label><input type="text" id="novo_usuario"></div><div class="form-group"><label>Senha</label><input type="password" id="nova_senha" placeholder="Deixe em branco"></div><div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarUsuario" onclick="adicionarUsuario()">➕ Adicionar</button></div></div>
+            <div class="form-grid">
+                <div class="form-group"><label class="required">Novo Usuário</label><input type="text" id="novo_usuario"></div>
+                <div class="form-group"><label>Senha</label><input type="password" id="nova_senha" placeholder="Deixe em branco"></div>
+                <div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarUsuario" onclick="adicionarUsuario()">➕ Adicionar</button></div>
+            </div>
             <div class="table-container"><table class="auto-layout"><thead><th>#</th><th>Usuário</th><th>Senha</th><th>Ações</th></thead><tbody>
                 ${usuarios.map((u,i)=>`<tr><td>${i+1}<\/td><td>${escapeHtml(u.nome)}<\/td><td>${u.senha?'••••••':'Sem senha'}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar usuário" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️<\/button><button class="small danger" data-tooltip="Excluir usuário" onclick="excluirUsuario('${u.id}')">🗑️<\/button><\/td><\/tr>`).join('')}
             </tbody><\/table><\/div>
@@ -2112,7 +2249,7 @@ function abrirModalEdicaoUsuario(id) {
     const modal = getElement('modalUsuarios');
     const content = getElement('modalUsuarioContent');
     if (!modal || !content) return;
-    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nome</label><input type="text" id="edit_user_nome" value="${escapeHtml(u.nome)}"></div><div class="form-group"><label>Nova Senha</label><input type="password" id="edit_user_senha" placeholder="Deixe em branco"></div><div class="form-group"><label>Confirmar</label><input type="password" id="edit_user_confirm" placeholder="Digite novamente"></div></div><div style="text-align:right"><button class="success" id="btnSalvarUsuario" onclick="salvarEdicaoUsuario('${id}')">💾 SALVAR</button></div>`;
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nome</label><input type="text" id="edit_user_nome" value="${escapeHtml(u.nome)}"><\/div><div class="form-group"><label>Nova Senha</label><input type="password" id="edit_user_senha" placeholder="Deixe em branco"><\/div><div class="form-group"><label>Confirmar</label><input type="password" id="edit_user_confirm" placeholder="Digite novamente"><\/div><\/div><div style="text-align:right"><button class="success" id="btnSalvarUsuario" onclick="salvarEdicaoUsuario('${id}')">💾 SALVAR<\/button><\/div>`;
     modal.classList.add('active');
 }
 
@@ -2236,9 +2373,6 @@ async function mostrar(tela) {
     await adicionarLog('VISUALIZOU', tela);
 }
 
-// ============================================
-// INICIALIZAÇÃO
-// ============================================
 carregarDados().then(() => {
     if (restaurarSessao()) {
         const usuario = usuarios.find(u => u.nome === usuarioAtual);
