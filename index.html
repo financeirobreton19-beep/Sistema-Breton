@@ -183,6 +183,7 @@
         td { border: 1px solid #ddd; padding: 8px; white-space: nowrap; }
         tr:hover { background: #fafafa; }
         
+        /* Status com cores */
         .status-badge {
             padding: 3px 8px;
             border-radius: 20px;
@@ -193,11 +194,11 @@
         .status-badge.faturado { background: #e3f2fd; color: #0b5e7e; border: 1px solid #bbdef5; }
         .status-badge.ag-faturamento { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
         .status-badge.prorrogado { background: #fff8e1; color: #ff8f00; border: 1px solid #ffecb3; }
-        .status-badge.em-aberto { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+        .status-badge.em-aberto { background: #fffde7; color: #f57f17; border: 1px solid #fff9c4; }
         .status-badge.atrasado { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
         .status-badge.entregue { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
-        .status-badge.em-rota { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
-        .status-badge.cancelado { background: #eeeeee; color: #616161; border: 1px solid #e0e0e0; }
+        .status-badge.em-rota { background: #e3f2fd; color: #0b5e7e; border: 1px solid #bbdef5; }
+        .status-badge.cancelado { background: #f5f5f5; color: #616161; border: 1px solid #e0e0e0; }
         .status-badge.pendente { background: #f5f5f5; color: #616161; border: 1px solid #e0e0e0; }
         
         tr.atrasado-row { background-color: #ffebee !important; }
@@ -511,6 +512,28 @@
             font-size: 11px;
             color: #888;
         }
+        
+        .export-btn {
+            background: #1e6f3f;
+            font-weight: bold;
+        }
+        .export-btn:hover {
+            background: #145a32;
+        }
+        
+        .btn-excel {
+            background: #1e6f3f;
+            font-weight: bold;
+            padding: 6px 14px;
+            border-radius: 4px;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-excel:hover {
+            background: #145a32;
+        }
     </style>
 </head>
 <body>
@@ -520,7 +543,7 @@
         <div class="logo-main">BRETON BELÉM</div>
         <div class="logo-sub">Hong Possas Mov. de Decoração</div>
     </div>
-    <button onclick="mostrar('clientes')">👥 Clientes</button>
+    <button onclick="mostrar('pedidos')">📋 Pedidos</button>
     <button onclick="mostrar('fornecedores')">📦 Fornecedores</button>
     <button onclick="mostrar('lancamentos')">📝 Lançamentos</button>
     <button onclick="mostrar('relatorios')">📊 Relatórios</button>
@@ -540,7 +563,7 @@
 <div class="footer-verse" id="footerVerse" style="display: none;">Provérbios 16:3: "Confie ao Senhor as suas obras, e os seus planos serão bem-sucedidos."</div>
 
 <div class="modal" id="modalEditarFornecedor"><div class="modal-content"><div class="modal-header"><h3>✏️ Editar Fornecedor</h3><span class="close-modal" onclick="fecharModal('modalEditarFornecedor')">&times;</span></div><div id="modalEditarFornecedorContent"></div></div></div>
-<div class="modal" id="modalEditarCliente"><div class="modal-content"><div class="modal-header"><h3>✏️ Editar Cliente</h3><span class="close-modal" onclick="fecharModal('modalEditarCliente')">&times;</span></div><div id="modalEditarClienteContent"></div></div></div>
+<div class="modal" id="modalEditarPedido"><div class="modal-content"><div class="modal-header"><h3>✏️ Editar Pedido</h3><span class="close-modal" onclick="fecharModal('modalEditarPedido')">&times;</span></div><div id="modalEditarPedidoContent"></div></div></div>
 <div class="modal" id="modalEditarLancamento"><div class="modal-content"><div class="modal-header"><h3>✏️ Editar Lançamento</h3><span class="close-modal" onclick="fecharModal('modalEditarLancamento')">&times;</span></div><div id="modalEditarLancamentoContent"></div></div></div>
 <div class="modal" id="modalAnexos"><div class="modal-content"><div class="modal-header"><h3>📎 Gerenciar Anexos</h3><span class="close-modal" onclick="fecharModal('modalAnexos')">&times;</span></div><div id="modalAnexosContent"></div></div></div>
 <div class="modal" id="modalUsuarios"><div class="modal-content"><div class="modal-header"><h3>👤 Editar Usuário</h3><span class="close-modal" onclick="fecharModal('modalUsuarios')">&times;</span></div><div id="modalUsuarioContent"></div></div></div>
@@ -597,7 +620,12 @@ let currentOrderDirection = "desc";
 let currentEtiquetaFilter = "TODAS";
 let isLoading = false;
 
-// Paginação
+// Paginação - Pedidos
+let currentPagePedidos = 1;
+const rowsPerPagePedidos = 20;
+let dadosPedidosCache = [];
+
+// Paginação - Lançamentos
 let currentPage = 1;
 const rowsPerPage = 30;
 let dadosFiltradosCache = [];
@@ -677,9 +705,6 @@ function showLoadingOverlay(show) {
     }
 }
 
-// ============================================
-// VALIDAÇÃO DE DATAS DESATIVADA
-// ============================================
 function validarDatas(lancamento) {
     return true;
 }
@@ -737,6 +762,13 @@ async function carregarDados() {
         usuarios = usuariosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         logs = logsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
+        // Alterar Cristiane para Victor Hugo
+        const cristiane = usuarios.find(u => u.nome === 'Cristiane');
+        if (cristiane) {
+            cristiane.nome = 'Victor Hugo';
+            await db.collection('usuarios').doc(cristiane.id).update({ nome: 'Victor Hugo' });
+        }
+        
         if (clientes.length === 0) {
             const clientesIniciais = [
                 { pedido: 1035, data: '2026-01-07', cliente: 'PAULA REGINA CASTRO MARTINS', cpf_cnpj: '616507732-34', contato: '(91) 99999-1234' },
@@ -750,8 +782,8 @@ async function carregarDados() {
         
         if (fornecedores.length === 0) {
             const fornecedoresIniciais = [
-                { cod: 'FOR001', nome: 'FEFER', cpf_cnpj: '', condicao: '28D', colecao: 'VERÃO 2026' },
-                { cod: 'FOR002', nome: 'BRETON MÓVEIS', cpf_cnpj: '12.345.678/0001-90', condicao: 'FATURADO', colecao: 'INVERNO 2026' }
+                { cod: 'FOR001', nome: 'FEFER', cpf_cnpj: '', contato: '(11) 99999-1111', condicao: '28D', colecao: 'VERÃO 2026' },
+                { cod: 'FOR002', nome: 'BRETON MÓVEIS', cpf_cnpj: '12.345.678/0001-90', contato: '(11) 99999-2222', condicao: 'FATURADO', colecao: 'INVERNO 2026' }
             ];
             for (const f of fornecedoresIniciais) {
                 await db.collection('fornecedores').add(f);
@@ -774,7 +806,7 @@ async function carregarDados() {
             const usuariosIniciais = [
                 { nome: 'Admin', senha: '123' },
                 { nome: 'Joana', senha: '' },
-                { nome: 'Carlos', senha: '' },
+                { nome: 'Victor Hugo', senha: '' },
                 { nome: 'Mariana', senha: '' }
             ];
             for (const u of usuariosIniciais) {
@@ -967,7 +999,7 @@ async function fazerLogin() {
     if (footerVerse) footerVerse.style.display = 'block';
     
     await adicionarLog('LOGIN', nome);
-    mostrar('clientes');
+    mostrar('pedidos');
 }
 
 function logout() {
@@ -984,12 +1016,17 @@ function logout() {
 }
 
 // ============================================
-// TELA DE CLIENTES (validação de pedido único)
+// TELA DE PEDIDOS (CLIENTES) COM PAGINAÇÃO
 // ============================================
-function telaClientes() {
+function telaPedidos() {
+    const totalPages = Math.ceil(clientes.length / rowsPerPagePedidos);
+    const start = (currentPagePedidos - 1) * rowsPerPagePedidos;
+    const end = start + rowsPerPagePedidos;
+    const clientesPagina = clientes.slice(start, end);
+    
     return topBar() + `
         <div class="box">
-            <h2>👥 Clientes</h2>
+            <h2>📋 Pedidos</h2>
             <div class="form-grid">
                 <div class="form-group"><label class="required">Nº Pedido</label><input type="number" id="cli_pedido"></div>
                 <div class="form-group"><label class="required">Data</label><input type="date" id="cli_data"></div>
@@ -1000,12 +1037,111 @@ function telaClientes() {
             </div>
             <div class="search-box"><input type="text" id="buscaCliente" placeholder="🔍 Buscar..." onkeyup="filtrarClientes()"></div>
             <div class="table-container"><table class="auto-layout" id="tabelaClientes"><thead><th>#</th><th>Pedido</th><th>Data</th><th>Cliente</th><th>CPF/CNPJ</th><th>Contato</th><th>Ações</th></thead>
-                <tbody>${clientes.map((c,i)=>`<tr><td>${i+1}<\/td><td>${c.pedido}<\/td><td>${formatarData(c.data)}<\/td><td>${escapeHtml(c.cliente)}<\/td><td>${escapeHtml(c.cpf_cnpj||'-')}<\/td><td>${escapeHtml(c.contato||'-')}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar cliente" onclick="abrirModalEdicaoCliente('${c.id}')">✏️<\/button><button class="small danger" data-tooltip="Excluir cliente" onclick="excluirCliente('${c.id}')">🗑️<\/button><\/td><\/tr>`).join('')}
-            </tbody><\/table><\/div>
-        <\/div>
+                <tbody id="clientesBody">${clientesPagina.map((c,i)=>`<tr><td>${start + i + 1}</td><td>${c.pedido}</td><td>${formatarData(c.data)}</td><td>${escapeHtml(c.cliente)}</td><td>${escapeHtml(c.cpf_cnpj||'-')}</td><td>${escapeHtml(c.contato||'-')}</td><td class="acoes-cell"><button class="small" data-tooltip="Editar pedido" onclick="abrirModalEdicaoPedido('${c.id}')">✏️</button><button class="small danger" data-tooltip="Excluir pedido" onclick="excluirCliente('${c.id}')">🗑️</button></td></tr>`).join('')}
+            </tbody></table></div>
+            <div class="pagination" id="paginationPedidos"></div>
+        </div>
     `;
 }
 
+function renderPaginacaoPedidos() {
+    const totalPages = Math.ceil(clientes.length / rowsPerPagePedidos);
+    const paginationDiv = document.getElementById('paginationPedidos');
+    if (!paginationDiv) return;
+    
+    if (totalPages <= 1) {
+        paginationDiv.innerHTML = '';
+        return;
+    }
+    
+    paginationDiv.innerHTML = `
+        <button onclick="changePagePedidos(-1)" ${currentPagePedidos === 1 ? 'disabled' : ''}>◀ Anterior</button>
+        <span>Página ${currentPagePedidos} de ${totalPages}</span>
+        <button onclick="changePagePedidos(1)" ${currentPagePedidos === totalPages ? 'disabled' : ''}>Próxima ▶</button>
+    `;
+}
+
+function changePagePedidos(delta) {
+    const totalPages = Math.ceil(clientes.length / rowsPerPagePedidos);
+    const newPage = currentPagePedidos + delta;
+    if (newPage >= 1 && newPage <= totalPages) {
+        currentPagePedidos = newPage;
+        mostrar('pedidos');
+    }
+}
+
+function adicionarLog(acao, detalhe = '') {
+    try {
+        const log = { data: new Date().toISOString(), usuario: usuarioAtual || 'Sistema', acao, detalhe };
+        db.collection('logs').add(log);
+        logs.push(log);
+        if (logs.length > 100) logs = logs.slice(-100);
+    } catch (error) {
+        console.error("Erro ao adicionar log:", error);
+    }
+}
+
+function formatarData(dataStr) {
+    if (!dataStr) return '-';
+    try { const [a,m,d] = dataStr.split('-'); return `${d}/${m}/${a}`; } catch { return dataStr; }
+}
+
+function formatarValor(valor) {
+    if (valor === undefined || valor === null) return '-';
+    return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatarValorInput(input) {
+    let valor = input.value;
+    if (!valor) { input.value = '0,00'; return; }
+    valor = valor.replace(/\./g, '').replace(',', '.');
+    let num = parseFloat(valor);
+    if (!isNaN(num)) input.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    else input.value = '0,00';
+}
+
+function converterValorParaNumero(valorStr) {
+    if (!valorStr) return 0;
+    return parseFloat(valorStr.replace(/\./g, '').replace(',', '.')) || 0;
+}
+
+function gerarProximoCodFornecedor() {
+    const nums = fornecedores.map(f => parseInt(f.cod.replace('FOR',''))).filter(n => !isNaN(n));
+    return 'FOR' + String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3,'0');
+}
+
+function buscarClientePorPedido(pedido) { return clientes.find(c => c.pedido == pedido); }
+
+function getStatusClass(status) {
+    if (!status) return 'pendente';
+    const map = { 
+        'FATURADO':'faturado', 
+        'AG. FATURAMENTO':'ag-faturamento', 
+        'PRORROGADO':'prorrogado', 
+        'EM ABERTO':'em-aberto', 
+        'ATRASADO':'atrasado', 
+        'ENTREGUE':'entregue', 
+        'EM ROTA':'em-rota', 
+        'CANCELADO':'cancelado' 
+    };
+    return map[status.toUpperCase()] || 'pendente';
+}
+
+function getStatusBadge(status) {
+    if (!status) return '<span class="status-badge pendente">PENDENTE</span>';
+    const classe = getStatusClass(status);
+    const up = status.toUpperCase();
+    return `<span class="status-badge ${classe}">${up}</span>`;
+}
+
+function calcularTempoPagamento(dataPedido, dataPagto) {
+    if (!dataPedido || !dataPagto) return null;
+    return Math.round((new Date(dataPagto) - new Date(dataPedido)) / 86400000);
+}
+
+// ============================================
+// FUNÇÕES DE CLIENTES/PEDIDOS
+// ============================================
 async function adicionarCliente() {
     const btn = getElement('btnAdicionarCliente');
     if (!btn) return;
@@ -1022,7 +1158,7 @@ async function adicionarCliente() {
         const docRef = await db.collection('clientes').add(novo);
         clientes.push({ id: docRef.id, ...novo });
         await adicionarLog('ADICIONOU CLIENTE', n);
-        mostrar('clientes');
+        mostrar('pedidos');
     } catch (error) {
         console.error('Erro ao adicionar cliente:', error);
         alert('❌ Erro ao salvar! Tente novamente.');
@@ -1038,7 +1174,7 @@ async function excluirCliente(id) {
             await db.collection('clientes').doc(id).delete();
             clientes = clientes.filter(c => c.id !== id);
             await adicionarLog('EXCLUIU CLIENTE', c.cliente);
-            mostrar('clientes');
+            mostrar('pedidos');
         } catch (error) {
             console.error('Erro ao excluir cliente:', error);
             alert('❌ Erro ao excluir! Tente novamente.');
@@ -1048,15 +1184,16 @@ async function excluirCliente(id) {
 
 function filtrarClientes() {
     let b = document.getElementById('buscaCliente')?.value.toLowerCase() || '';
-    document.querySelectorAll('#tabelaClientes tbody tr').forEach(l => l.style.display = l.textContent.toLowerCase().includes(b) ? '' : 'none');
+    const rows = document.querySelectorAll('#clientesBody tr');
+    rows.forEach(l => l.style.display = l.textContent.toLowerCase().includes(b) ? '' : 'none');
 }
 
-function abrirModalEdicaoCliente(id) {
+function abrirModalEdicaoPedido(id) {
     const c = clientes.find(c => c.id === id);
-    const modal = getElement('modalEditarCliente');
-    const content = getElement('modalEditarClienteContent');
+    const modal = getElement('modalEditarPedido');
+    const content = getElement('modalEditarPedidoContent');
     if (!modal || !content) return;
-    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nº Pedido</label><input type="number" id="edit_cli_pedido" value="${c.pedido}"><\/div><div class="form-group"><label>Data</label><input type="date" id="edit_cli_data" value="${c.data}"><\/div><div class="form-group"><label>Cliente</label><input type="text" id="edit_cli_nome" value="${escapeHtml(c.cliente)}" style="text-transform:uppercase"><\/div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_cli_cpf" value="${escapeHtml(c.cpf_cnpj||'')}"><\/div><div class="form-group"><label>Contato</label><input type="text" id="edit_cli_contato" value="${escapeHtml(c.contato||'')}"><\/div><\/div><div style="text-align:right; margin-top:20px"><button class="success" id="btnSalvarCliente" onclick="salvarEdicaoCliente('${id}')">💾 SALVAR<\/button><\/div>`;
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nº Pedido</label><input type="number" id="edit_cli_pedido" value="${c.pedido}"></div><div class="form-group"><label>Data</label><input type="date" id="edit_cli_data" value="${c.data}"></div><div class="form-group"><label>Cliente</label><input type="text" id="edit_cli_nome" value="${escapeHtml(c.cliente)}" style="text-transform:uppercase"></div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_cli_cpf" value="${escapeHtml(c.cpf_cnpj||'')}"></div><div class="form-group"><label>Contato</label><input type="text" id="edit_cli_contato" value="${escapeHtml(c.contato||'')}"></div></div><div style="text-align:right; margin-top:20px"><button class="success" id="btnSalvarCliente" onclick="salvarEdicaoCliente('${id}')">💾 SALVAR</button></div>`;
     modal.classList.add('active');
 }
 
@@ -1079,8 +1216,8 @@ async function salvarEdicaoCliente(id) {
         c.contato = document.getElementById('edit_cli_contato')?.value || '';
         await db.collection('clientes').doc(id).update(c);
         await adicionarLog('EDITOU CLIENTE', c.cliente);
-        fecharModal('modalEditarCliente');
-        mostrar('clientes');
+        fecharModal('modalEditarPedido');
+        mostrar('pedidos');
     } catch (error) {
         console.error('Erro ao editar cliente:', error);
         alert('❌ Erro ao salvar! Tente novamente.');
@@ -1089,6 +1226,9 @@ async function salvarEdicaoCliente(id) {
     }
 }
 
+// ============================================
+// TELA DE FORNECEDORES (COM CONTATO)
+// ============================================
 function telaFornecedores() {
     return topBar() + `
         <div class="box">
@@ -1097,15 +1237,16 @@ function telaFornecedores() {
                 <div class="form-group"><label>Código</label><input type="text" id="for_cod" value="${gerarProximoCodFornecedor()}" readonly></div>
                 <div class="form-group"><label class="required">Fornecedor</label><input type="text" id="for_nome" style="text-transform:uppercase"></div>
                 <div class="form-group"><label>CPF/CNPJ</label><input type="text" id="for_cpf"></div>
+                <div class="form-group"><label>Contato</label><input type="text" id="for_contato" placeholder="Telefone/Email"></div>
                 <div class="form-group"><label>Condição</label><select id="for_condicao"><option value="">Selecione</option><option value="FATURADO">FATURADO</option><option value="28D">28D</option><option value="ENTRADA + ENTREGA">ENTRADA + ENTREGA</option><option value="ANTECIPADO">ANTECIPADO</option></select></div>
                 <div class="form-group"><label>Coleção</label><input type="text" id="for_colecao" style="text-transform:uppercase"></div>
                 <div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarFornecedor" onclick="adicionarFornecedor()">➕ Adicionar</button></div>
             </div>
             <div class="search-box"><input type="text" id="buscaFornecedor" placeholder="🔍 Buscar..." onkeyup="filtrarFornecedores()"></div>
-            <div class="table-container"><table class="auto-layout" id="tabelaFornecedores"><thead><th>#</th><th>COD</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Condição</th><th>Coleção</th><th>Ações</th></thead>
-                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}<\/td><td>${f.cod}<\/td><td>${escapeHtml(f.nome)}<\/td><td>${escapeHtml(f.cpf_cnpj||'-')}<\/td><td>${escapeHtml(f.condicao||'-')}<\/td><td>${escapeHtml(f.colecao||'-')}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar fornecedor" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️<\/button><button class="small danger" data-tooltip="Excluir fornecedor" onclick="excluirFornecedor('${f.id}')">🗑️<\/button><\/td><\/tr>`).join('')}
-            </tbody><\/table><\/div>
-        <\/div>
+            <div class="table-container"><table class="auto-layout" id="tabelaFornecedores"><thead><th>#</th><th>COD</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Contato</th><th>Condição</th><th>Coleção</th><th>Ações</th></thead>
+                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}</td><td>${f.cod}</td><td>${escapeHtml(f.nome)}</td><td>${escapeHtml(f.cpf_cnpj||'-')}</td><td>${escapeHtml(f.contato||'-')}</td><td>${escapeHtml(f.condicao||'-')}</td><td>${escapeHtml(f.colecao||'-')}</td><td class="acoes-cell"><button class="small" data-tooltip="Editar fornecedor" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" data-tooltip="Excluir fornecedor" onclick="excluirFornecedor('${f.id}')">🗑️</button></td></tr>`).join('')}
+            </tbody></table></div>
+        </div>
     `;
 }
 
@@ -1125,6 +1266,7 @@ async function adicionarFornecedor() {
         nome = nome.toUpperCase().trim();
         const cnpjRaw = document.getElementById('for_cpf')?.value || '';
         const cnpjNorm = normalizarCNPJ(cnpjRaw);
+        const contato = document.getElementById('for_contato')?.value || '';
         
         if (fornecedores.some(f => f.nome.toUpperCase() === nome)) {
             alert(`❌ Já existe um fornecedor com o nome "${nome}".`);
@@ -1135,7 +1277,14 @@ async function adicionarFornecedor() {
             return;
         }
         
-        const novo = { cod: document.getElementById('for_cod')?.value || gerarProximoCodFornecedor(), nome, cpf_cnpj: cnpjRaw, condicao: document.getElementById('for_condicao')?.value || '', colecao: (document.getElementById('for_colecao')?.value || '').toUpperCase() };
+        const novo = { 
+            cod: document.getElementById('for_cod')?.value || gerarProximoCodFornecedor(), 
+            nome, 
+            cpf_cnpj: cnpjRaw,
+            contato: contato,
+            condicao: document.getElementById('for_condicao')?.value || '', 
+            colecao: (document.getElementById('for_colecao')?.value || '').toUpperCase() 
+        };
         const docRef = await db.collection('fornecedores').add(novo);
         fornecedores.push({ id: docRef.id, ...novo });
         await adicionarLog('ADICIONOU FORNECEDOR', nome);
@@ -1173,7 +1322,7 @@ function abrirModalEdicaoFornecedor(id) {
     const modal = getElement('modalEditarFornecedor');
     const content = getElement('modalEditarFornecedorContent');
     if (!modal || !content) return;
-    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Código</label><input type="text" id="edit_for_cod" value="${f.cod}" readonly><\/div><div class="form-group"><label>Fornecedor</label><input type="text" id="edit_for_nome" value="${escapeHtml(f.nome)}" style="text-transform:uppercase"><\/div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_for_cpf" value="${escapeHtml(f.cpf_cnpj||'')}"><\/div><div class="form-group"><label>Condição</label><select id="edit_for_condicao"><option value="">Selecione</option><option value="FATURADO" ${f.condicao==='FATURADO'?'selected':''}>FATURADO</option><option value="28D" ${f.condicao==='28D'?'selected':''}>28D</option><option value="ENTRADA + ENTREGA" ${f.condicao==='ENTRADA + ENTREGA'?'selected':''}>ENTRADA + ENTREGA</option><option value="ANTECIPADO" ${f.condicao==='ANTECIPADO'?'selected':''}>ANTECIPADO</option><\/select><\/div><div class="form-group"><label>Coleção</label><input type="text" id="edit_for_colecao" value="${escapeHtml(f.colecao||'')}" style="text-transform:uppercase"><\/div><\/div><div style="text-align:right; margin-top:20px"><button class="success" id="btnSalvarFornecedor" onclick="salvarEdicaoFornecedor('${id}')">💾 SALVAR<\/button><\/div>`;
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Código</label><input type="text" id="edit_for_cod" value="${f.cod}" readonly></div><div class="form-group"><label>Fornecedor</label><input type="text" id="edit_for_nome" value="${escapeHtml(f.nome)}" style="text-transform:uppercase"></div><div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_for_cpf" value="${escapeHtml(f.cpf_cnpj||'')}"></div><div class="form-group"><label>Contato</label><input type="text" id="edit_for_contato" value="${escapeHtml(f.contato||'')}"></div><div class="form-group"><label>Condição</label><select id="edit_for_condicao"><option value="">Selecione</option><option value="FATURADO" ${f.condicao==='FATURADO'?'selected':''}>FATURADO</option><option value="28D" ${f.condicao==='28D'?'selected':''}>28D</option><option value="ENTRADA + ENTREGA" ${f.condicao==='ENTRADA + ENTREGA'?'selected':''}>ENTRADA + ENTREGA</option><option value="ANTECIPADO" ${f.condicao==='ANTECIPADO'?'selected':''}>ANTECIPADO</option></select></div><div class="form-group"><label>Coleção</label><input type="text" id="edit_for_colecao" value="${escapeHtml(f.colecao||'')}" style="text-transform:uppercase"></div></div><div style="text-align:right; margin-top:20px"><button class="success" id="btnSalvarFornecedor" onclick="salvarEdicaoFornecedor('${id}')">💾 SALVAR</button></div>`;
     modal.classList.add('active');
 }
 
@@ -1187,6 +1336,7 @@ async function salvarEdicaoFornecedor(id) {
         const novoNome = document.getElementById('edit_for_nome')?.value?.toUpperCase().trim() || f.nome;
         const novoCnpj = document.getElementById('edit_for_cpf')?.value || '';
         const novoCnpjNorm = normalizarCNPJ(novoCnpj);
+        const novoContato = document.getElementById('edit_for_contato')?.value || '';
         
         if (fornecedores.some(f2 => f2.id !== id && f2.nome.toUpperCase() === novoNome)) {
             alert(`❌ Já existe um fornecedor com o nome "${novoNome}".`);
@@ -1199,6 +1349,7 @@ async function salvarEdicaoFornecedor(id) {
         
         f.nome = novoNome;
         f.cpf_cnpj = novoCnpj;
+        f.contato = novoContato;
         f.condicao = document.getElementById('edit_for_condicao')?.value || '';
         f.colecao = document.getElementById('edit_for_colecao')?.value?.toUpperCase() || '';
         await db.collection('fornecedores').doc(id).update(f);
@@ -1228,57 +1379,31 @@ function atualizarContadorCaracteres(textarea, maxChars = 100) {
     }
 }
 
-function gerarProximoCodFornecedor() {
-    const nums = fornecedores.map(f => parseInt(f.cod.replace('FOR',''))).filter(n => !isNaN(n));
-    return 'FOR' + String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3,'0');
+function toggleEtiquetaField() {
+    const tipoSelect = document.getElementById('lan_tipo');
+    const etiquetaField = document.getElementById('etiquetaField');
+    if (tipoSelect && etiquetaField) {
+        if (tipoSelect.value === 'SHOWROOM') {
+            etiquetaField.classList.add('visible');
+        } else {
+            etiquetaField.classList.remove('visible');
+            document.getElementById('lan_etiqueta').value = '';
+        }
+    }
 }
 
-function buscarClientePorPedido(pedido) { return clientes.find(c => c.pedido == pedido); }
-
-function formatarData(dataStr) {
-    if (!dataStr) return '-';
-    try { const [a,m,d] = dataStr.split('-'); return `${d}/${m}/${a}`; } catch { return dataStr; }
-}
-
-function formatarValor(valor) {
-    if (valor === undefined || valor === null) return '-';
-    return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function formatarValorInput(input) {
-    let valor = input.value;
-    if (!valor) { input.value = '0,00'; return; }
-    valor = valor.replace(/\./g, '').replace(',', '.');
-    let num = parseFloat(valor);
-    if (!isNaN(num)) input.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-    else input.value = '0,00';
-}
-
-function converterValorParaNumero(valorStr) {
-    if (!valorStr) return 0;
-    return parseFloat(valorStr.replace(/\./g, '').replace(',', '.')) || 0;
-}
-
-function getStatusClass(status) {
-    if (!status) return 'pendente';
-    const map = { 
-        'FATURADO':'faturado', 
-        'AG. FATURAMENTO':'ag-faturamento', 
-        'PRORROGADO':'prorrogado', 
-        'EM ABERTO':'em-aberto', 
-        'ATRASADO':'atrasado', 
-        'ENTREGUE':'entregue', 
-        'EM ROTA':'em-rota', 
-        'CANCELADO':'cancelado' 
-    };
-    return map[status.toUpperCase()] || 'pendente';
-}
-
-function getStatusBadge(status) {
-    if (!status) return '<span class="status-badge pendente">PENDENTE</span>';
-    const classe = getStatusClass(status);
-    const up = status.toUpperCase();
-    return `<span class="status-badge ${classe}">${up}</span>`;
+function preencherClienteAuto() {
+    let pedido = document.getElementById('lan_pedido')?.value;
+    let cliente = buscarClientePorPedido(pedido);
+    const clienteInput = document.getElementById('lan_cliente');
+    const dataInput = document.getElementById('lan_data');
+    if (cliente) {
+        if (clienteInput) clienteInput.value = cliente.cliente;
+        if (dataInput) dataInput.value = cliente.data;
+    } else {
+        if (clienteInput) clienteInput.value = 'NÃO ENCONTRADO';
+        if (dataInput) dataInput.value = '';
+    }
 }
 
 function gerarLembretes() {
@@ -1301,22 +1426,9 @@ function gerarLembretes() {
     return lembretes.slice(0,8);
 }
 
-function adicionarLog(acao, detalhe = '') {
-    try {
-        const log = { data: new Date().toISOString(), usuario: usuarioAtual || 'Sistema', acao, detalhe };
-        db.collection('logs').add(log);
-        logs.push(log);
-        if (logs.length > 100) logs = logs.slice(-100);
-    } catch (error) {
-        console.error("Erro ao adicionar log:", error);
-    }
-}
-
-function calcularTempoPagamento(dataPedido, dataPagto) {
-    if (!dataPedido || !dataPagto) return null;
-    return Math.round((new Date(dataPagto) - new Date(dataPedido)) / 86400000);
-}
-
+// ============================================
+// TELA DE LANÇAMENTOS (com busca por produto, categoria, export Excel)
+// ============================================
 function telaLancamentos() {
     let optionsCat = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
     let optionsForn = fornecedores.map(f => `<option value="${escapeHtml(f.nome)}">${escapeHtml(f.nome)} (${f.cod})</option>`).join('');
@@ -1339,6 +1451,7 @@ function telaLancamentos() {
                 <span class="resumo-item">💰 <strong>${formatarValor(totais.totalValor)}</strong></span>
                 <span class="resumo-item">📦 <strong>${totais.totalItens}</strong> itens</span>
                 <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados <span class="atrasados-count">${totais.totalAtrasados}</span></span>
+                <button class="btn-excel" onclick="exportarLancamentosExcel()">📊 Exportar Excel</button>
             </div>
             
             <div class="filtros-rapidos">
@@ -1374,8 +1487,8 @@ function telaLancamentos() {
                         <div class="form-grid">
                             <div class="form-group"><label class="required">Nº Pedido</label><input type="number" id="lan_pedido" value="${proximoPedido}" onchange="preencherClienteAuto()"></div>
                             <div class="form-group"><label>Data Pedido</label><input type="date" id="lan_data" readonly style="background:#f5f5f5"></div>
-                            <div class="form-group"><label>Mês/Ano</label><select id="lan_mes"><option value="">Selecione</option>${optionsMeses}</select></div>
-                            <div class="form-group"><label>Tipo</label><select id="lan_tipo" onchange="toggleEtiquetaField()"><option value="">Selecione</option>${optionsTipo}</select></div>
+                            <div class="form-group"><label class="required">Mês/Ano</label><select id="lan_mes"><option value="">Selecione</option>${optionsMeses}</select></div>
+                            <div class="form-group"><label class="required">Tipo</label><select id="lan_tipo" onchange="toggleEtiquetaField()"><option value="">Selecione</option>${optionsTipo}</select></div>
                             <div class="form-group"><label>Cliente</label><input type="text" id="lan_cliente" readonly></div>
                             <div class="form-group"><label>OC</label><input type="text" id="lan_oc" style="text-transform:uppercase"></div>
                             <div class="form-group"><label>Fornecedor</label><select id="lan_fornecedor"><option value="">Selecione</option>${optionsForn}</select></div>
@@ -1418,7 +1531,7 @@ function telaLancamentos() {
                 </div>
             </details>
             
-            <div class="search-box"><input type="text" id="buscaLancamento" placeholder="🔍 Buscar por pedido, cliente, fornecedor, OC ou NF..." onkeyup="filtrarLancamentos()"></div>
+            <div class="search-box"><input type="text" id="buscaLancamento" placeholder="🔍 Buscar por pedido, cliente, fornecedor, OC, NF, produto ou categoria..." onkeyup="filtrarLancamentos()"></div>
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="loading-spinner"></div> Carregando dados...
             </div>
@@ -1436,19 +1549,6 @@ function telaLancamentos() {
     `;
 }
 
-function toggleEtiquetaField() {
-    const tipoSelect = document.getElementById('lan_tipo');
-    const etiquetaField = document.getElementById('etiquetaField');
-    if (tipoSelect && etiquetaField) {
-        if (tipoSelect.value === 'SHOWROOM') {
-            etiquetaField.classList.add('visible');
-        } else {
-            etiquetaField.classList.remove('visible');
-            document.getElementById('lan_etiqueta').value = '';
-        }
-    }
-}
-
 function renderLancamentos() {
     const lancamentosFiltrados = getLancamentosFiltrados();
     const busca = document.getElementById('buscaLancamento')?.value.toLowerCase() || '';
@@ -1460,7 +1560,9 @@ function renderLancamentos() {
             (l.cliente?.toLowerCase().includes(busca)) ||
             (l.fornecedor?.toLowerCase().includes(busca)) ||
             (l.oc?.toLowerCase().includes(busca)) ||
-            (l.nf?.toLowerCase().includes(busca))
+            (l.nf?.toLowerCase().includes(busca)) ||
+            (l.produtos?.toLowerCase().includes(busca)) ||
+            (l.categoria?.toLowerCase().includes(busca))
         );
     }
     
@@ -1485,55 +1587,55 @@ function renderLancamentos() {
         const editado = l.editadoEm ? timeAgo(l.editadoEm) : '-';
         
         return `<tr class="${rowClass}" data-id="${l.id}">
-            <td class="center">${start + idx + 1}<\/td>
-            <td>${l.pedido || '-'}<\/td>
-            <td>${formatarData(l.data)}<\/td>
-            <td>${l.mes || '-'}<\/td>
-            <td>${l.tipo || '-'}<\/td>
-            <td>${escapeHtml(l.cliente || '-')}<\/td>
-            <td>${l.oc || '-'}<\/td>
-            <td>${escapeHtml(l.fornecedor || '-')}<\/td>
-            <td>${l.categoria || '-'}<\/td>
-            <td>${l.itens || '-'}<\/td>
-            <td>${l.produtos || '-'}<\/td>
-            <td>${escapeHtml(etiqueta) || '-'}<\/td>
-            <td>${formatarValor(l.valor)}<\/td>
-            <td>${formatarData(l.data_pagto)}<\/td>
-            <td>${l.condicao || '-'}<\/td>
-            <td>${formatarData(l.prev_fat)}<\/td>
-            <td>${formatarData(l.data_fat)}<\/td>
-            <td>${formatarData(l.prev_chegada)}<\/td>
-            <td>${formatarData(l.novo_prazo)}<\/td>
-            <td>${getStatusBadge(l.status)}<\/td>
-            <td>${l.nf || '-'}<\/td>
-            <td>${l.transportadora || '-'}<\/td>
-            <td>${formatarData(l.chegada)}<\/td>
-            <td>${formatarData(l.conferencia)}<\/td>
-            <td>${formatarData(l.entrega)}<\/td>
-            <td>${formatarData(l.prazo_final) || '-'}<\/td>
-            <td>${l.usuario || '-'}<\/td>
-            <td><span class="time-ago" title="${new Date(l.editadoEm).toLocaleString()}">${editado}</span><\/td>
-            <td>${l.observacoes ? `<span class="tooltip-icon" data-tooltip="${escapeHtml(l.observacoes.replace(/"/g, '&quot;'))}">💬<\/span>` : '-'}<\/td>
+            <td class="center">${start + idx + 1}</td>
+            <td>${l.pedido || '-'}</td>
+            <td>${formatarData(l.data)}</td>
+            <td>${l.mes || '-'}</td>
+            <td>${l.tipo || '-'}</td>
+            <td>${escapeHtml(l.cliente || '-')}</td>
+            <td>${l.oc || '-'}</td>
+            <td>${escapeHtml(l.fornecedor || '-')}</td>
+            <td>${l.categoria || '-'}</td>
+            <td>${l.itens || '-'}</td>
+            <td>${l.produtos || '-'}</td>
+            <td>${escapeHtml(etiqueta) || '-'}</td>
+            <td>${formatarValor(l.valor)}</td>
+            <td>${formatarData(l.data_pagto)}</td>
+            <td>${l.condicao || '-'}</td>
+            <td>${formatarData(l.prev_fat)}</td>
+            <td>${formatarData(l.data_fat)}</td>
+            <td>${formatarData(l.prev_chegada)}</td>
+            <td>${formatarData(l.novo_prazo)}</td>
+            <td>${getStatusBadge(l.status)}</td>
+            <td>${l.nf || '-'}</td>
+            <td>${l.transportadora || '-'}</td>
+            <td>${formatarData(l.chegada)}</td>
+            <td>${formatarData(l.conferencia)}</td>
+            <td>${formatarData(l.entrega)}</td>
+            <td>${formatarData(l.prazo_final) || '-'}</td>
+            <td>${l.usuario || '-'}</td>
+            <td><span class="time-ago" title="${new Date(l.editadoEm).toLocaleString()}">${editado}</span></td>
+            <td>${l.observacoes ? `<span class="tooltip-icon" data-tooltip="${escapeHtml(l.observacoes.replace(/"/g, '&quot;'))}">💬</span>` : '-'}</td>
             <td class="acoes-cell">
-                <button class="small" data-tooltip="Editar lançamento" onclick="abrirModalEdicaoLancamento('${l.id}')">✏️<\/button>
-                <button class="small" data-tooltip="Duplicar lançamento" onclick="duplicarLancamento('${l.id}')">📋<\/button>
-                <button class="small info" data-tooltip="Gerenciar anexos" onclick="abrirModalAnexos(${l.pedido})">📎<\/button>
-                <button class="small danger" data-tooltip="Excluir lançamento" onclick="excluirLancamento('${l.id}')">🗑️<\/button>
-             <\/td>
-         <\/tr>`;
+                <button class="small" data-tooltip="Editar lançamento" onclick="abrirModalEdicaoLancamento('${l.id}')">✏️</button>
+                <button class="small" data-tooltip="Duplicar lançamento" onclick="duplicarLancamento('${l.id}')">📋</button>
+                <button class="small info" data-tooltip="Gerenciar anexos" onclick="abrirModalAnexos(${l.pedido})">📎</button>
+                <button class="small danger" data-tooltip="Excluir lançamento" onclick="excluirLancamento('${l.id}')">🗑️</button>
+             </td>
+         </tr>`;
     }).join('');
     
     const tfoot = document.getElementById('lancamentosFooter');
     if (tfoot) {
         tfoot.innerHTML = `<tr style="background:#FAF0F0; font-weight:bold;">
-            <td colspan="12" style="text-align:right;">TOTAL:<\/td>
-            <td>${formatarValor(totaisFiltrados.totalValor)}<\/td>
-            <td colspan="9"><\/td>
-            <td>${totaisFiltrados.totalItens} itens<\/td>
-            <td colspan="5"><\/td>
-            <td>${totaisFiltrados.totalPedidos} pedidos<\/td>
-            <td colspan="4"><\/td>
-         <\/tr>`;
+            <td colspan="12" style="text-align:right;">TOTAL:</td>
+            <td>${formatarValor(totaisFiltrados.totalValor)}</td>
+            <td colspan="9"></td>
+            <td>${totaisFiltrados.totalItens} itens</td>
+            <td colspan="5"></td>
+            <td>${totaisFiltrados.totalPedidos} pedidos</td>
+            <td colspan="4"></td>
+         </tr>`;
     }
     
     renderPagination(totalPages);
@@ -1576,6 +1678,7 @@ function setFilterType(tipo) {
             <span class="resumo-item">💰 <strong>${formatarValor(totais.totalValor)}</strong></span>
             <span class="resumo-item">📦 <strong>${totais.totalItens}</strong> itens</span>
             <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados <span class="atrasados-count">${totais.totalAtrasados}</span></span>
+            <button class="btn-excel" onclick="exportarLancamentosExcel()">📊 Exportar Excel</button>
         `;
     }
     document.querySelectorAll('.filtro-tipo-btn').forEach(btn => btn.classList.remove('active'));
@@ -1612,18 +1715,55 @@ function mudarAba(aba, event) {
     if (event && event.target) event.target.classList.add('active');
 }
 
-function preencherClienteAuto() {
-    let pedido = document.getElementById('lan_pedido')?.value;
-    let cliente = buscarClientePorPedido(pedido);
-    const clienteInput = document.getElementById('lan_cliente');
-    const dataInput = document.getElementById('lan_data');
-    if (cliente) {
-        if (clienteInput) clienteInput.value = cliente.cliente;
-        if (dataInput) dataInput.value = cliente.data;
-    } else {
-        if (clienteInput) clienteInput.value = 'NÃO ENCONTRADO';
-        if (dataInput) dataInput.value = '';
+function filtrarLancamentos() {
+    currentPage = 1;
+    renderLancamentos();
+}
+
+function exportarLancamentosExcel() {
+    if (lancamentos.length === 0) { alert('Não há dados para exportar!'); return; }
+    
+    const dados = getLancamentosFiltrados();
+    const busca = document.getElementById('buscaLancamento')?.value.toLowerCase() || '';
+    let dadosFiltrados = dados;
+    if (busca) {
+        dadosFiltrados = dadosFiltrados.filter(l => 
+            (l.pedido?.toString().includes(busca)) ||
+            (l.cliente?.toLowerCase().includes(busca)) ||
+            (l.fornecedor?.toLowerCase().includes(busca)) ||
+            (l.oc?.toLowerCase().includes(busca)) ||
+            (l.nf?.toLowerCase().includes(busca)) ||
+            (l.produtos?.toLowerCase().includes(busca)) ||
+            (l.categoria?.toLowerCase().includes(busca))
+        );
     }
+    
+    if (dadosFiltrados.length === 0) { alert('Não há dados com os filtros atuais!'); return; }
+    
+    const wsData = [
+        ['#','Pedido','Data','Mês','Tipo','Cliente','OC','Fornecedor','Categoria','Itens','Produtos','Etiqueta','Valor',
+         'Data Pagto','Condição','Prev.Fat','Data Fat','Prev.Chegada','Novo Prazo','Status','Nº NF','Transportadora',
+         'Chegada','Conf','Entrega','Prazo Final','Usuário','Editado','Observações']
+    ];
+    
+    dadosFiltrados.forEach((l, idx) => { 
+        wsData.push([
+            idx+1, 
+            l.pedido||'', l.data||'', l.mes||'', l.tipo||'', l.cliente||'', l.oc||'', l.fornecedor||'', 
+            l.categoria||'', l.itens||'', l.produtos||'', l.etiqueta||'', 
+            l.valor !== undefined && l.valor !== null ? l.valor.toFixed(2).replace('.', ',') : '',
+            l.data_pagto||'', l.condicao||'', l.prev_fat||'', l.data_fat||'', l.prev_chegada||'', 
+            l.novo_prazo||'', l.status||'', l.nf||'', l.transportadora||'', l.chegada||'', 
+            l.conferencia||'', l.entrega||'', l.prazo_final||'', l.usuario||'', 
+            l.editadoPor||'', (l.observacoes||'').substring(0, 100)
+        ]); 
+    });
+    
+    const wb = XLSX.utils.book_new(); 
+    const ws = XLSX.utils.aoa_to_sheet(wsData); 
+    XLSX.utils.book_append_sheet(wb, ws, 'Lançamentos'); 
+    XLSX.writeFile(wb, `lancamentos_${new Date().toISOString().slice(0,10)}.xlsx`);
+    alert('✅ Arquivo exportado com sucesso!');
 }
 
 async function adicionarLancamento() {
@@ -1633,6 +1773,9 @@ async function adicionarLancamento() {
     
     try {
         if (!document.getElementById('lan_categoria')?.value) { alert('Categoria obrigatória!'); return; }
+        if (!document.getElementById('lan_tipo')?.value) { alert('Tipo obrigatório!'); return; }
+        if (!document.getElementById('lan_mes')?.value) { alert('Mês/Ano obrigatório!'); return; }
+        
         let valorRaw = document.getElementById('lan_valor')?.value || '0,00';
         let valorNumerico = converterValorParaNumero(valorRaw);
         let observacoes = document.getElementById('lan_observacoes')?.value || '';
@@ -1730,11 +1873,6 @@ async function duplicarLancamento(id) {
     }
 }
 
-function filtrarLancamentos() {
-    currentPage = 1;
-    renderLancamentos();
-}
-
 function abrirModalEdicaoLancamento(id) {
     const l = lancamentos.find(l => l.id === id);
     if (!l) return;
@@ -1747,36 +1885,36 @@ function abrirModalEdicaoLancamento(id) {
     let optionsTipo = tiposPedido.map(t => `<option value="${t}" ${l.tipo===t?'selected':''}>${t}</option>`).join('');
     let optionsStatus = statusLista.map(s => `<option value="${s}" ${l.status===s?'selected':''}>${s}</option>`).join('');
     
-    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Pedido</label><input type="number" id="edit_lan_pedido" value="${l.pedido||''}"><\/div>
-        <div class="form-group"><label>Data</label><input type="date" id="edit_lan_data" value="${l.data||''}"><\/div>
-        <div class="form-group"><label>Mês</label><input type="text" id="edit_lan_mes" value="${l.mes||''}"><\/div>
-        <div class="form-group"><label>Tipo</label><select id="edit_lan_tipo"><option value="">Selecione</option>${optionsTipo}<\/select><\/div>
-        <div class="form-group"><label>Cliente</label><input type="text" id="edit_lan_cliente" value="${escapeHtml(l.cliente||'')}" readonly><\/div>
-        <div class="form-group"><label>OC</label><input type="text" id="edit_lan_oc" value="${l.oc||''}"><\/div>
-        <div class="form-group"><label>Fornecedor</label><select id="edit_lan_fornecedor"><option value="">Selecione</option>${optionsForn}<\/select><\/div>
-        <div class="form-group"><label>Categoria</label><select id="edit_lan_categoria"><option value="">Selecione</option>${optionsCat}<\/select><\/div>
-        <div class="form-group"><label>Itens</label><input type="number" id="edit_lan_itens" value="${l.itens||''}"><\/div>
-        <div class="form-group"><label>Produtos</label><input type="text" id="edit_lan_produtos" value="${l.produtos||''}"><\/div>
-        <div class="form-group"><label>🏷️ Etiqueta</label><input type="text" id="edit_lan_etiqueta" value="${escapeHtml(l.etiqueta||'')}" style="text-transform:uppercase"><\/div>
-        <div class="form-group"><label>Valor</label><input type="text" id="edit_lan_valor" value="${formatarValor(l.valor)}" onblur="formatarValorInput(this)"><\/div>
-        <div class="form-group"><label>Data Pagto</label><input type="date" id="edit_lan_data_pagto" value="${l.data_pagto||''}"><\/div>
-        <div class="form-group"><label>Condição</label><select id="edit_lan_condicao"><option value="">Selecione</option><option value="Em aberto" ${l.condicao==='Em aberto'?'selected':''}>EM ABERTO</option><option value="Em produção" ${l.condicao==='Em produção'?'selected':''}>EM PRODUÇÃO</option><option value="Cancelado" ${l.condicao==='Cancelado'?'selected':''}>CANCELADO</option><option value="Entregue" ${l.condicao==='Entregue'?'selected':''}>ENTREGUE</option><option value="Em Rota" ${l.condicao==='Em Rota'?'selected':''}>EM ROTA</option><option value="Entregue em fábrica" ${l.condicao==='Entregue em fábrica'?'selected':''}>ENTREGUE EM FÁBRICA</option><option value="Entregue - Pag. Pendente" ${l.condicao==='Entregue - Pag. Pendente'?'selected':''}>ENTREGUE - PAG. PENDENTE</option><option value="Pedido Retido" ${l.condicao==='Pedido Retido'?'selected':''}>PEDIDO RETIDO</option><\/select><\/div>
-        <div class="form-group"><label>Prev. Fat</label><input type="date" id="edit_lan_prev_fat" value="${l.prev_fat||''}"><\/div>
-        <div class="form-group"><label>Data Fat</label><input type="date" id="edit_lan_data_fat" value="${l.data_fat||''}" onchange="calcularPrevisaoChegadaEdicao()"><\/div>
-        <div class="form-group"><label>Prev. Chegada</label><input type="date" id="edit_lan_prev_chegada" value="${l.prev_chegada||''}" onchange="manualPrevChegada(this)"><\/div>
-        <div class="form-group"><label>Novo Prazo</label><input type="date" id="edit_lan_novo_prazo" value="${l.novo_prazo||''}"><\/div>
-        <div class="form-group"><label>Status</label><select id="edit_lan_status">${optionsStatus}<\/select><\/div>
-        <div class="form-group"><label>Nº NF</label><input type="text" id="edit_lan_nf" value="${l.nf||''}"><\/div>
-        <div class="form-group"><label>Transportadora</label><input type="text" id="edit_lan_transportadora" value="${l.transportadora||''}"><\/div>
-        <div class="form-group"><label>Chegada</label><input type="date" id="edit_lan_chegada" value="${l.chegada||''}"><\/div>
-        <div class="form-group"><label>Conferência</label><input type="date" id="edit_lan_conferencia" value="${l.conferencia||''}"><\/div>
-        <div class="form-group"><label>Entrega</label><input type="date" id="edit_lan_entrega" value="${l.entrega||''}"><\/div>
-        <div class="form-group"><label>Prazo Final</label><input type="date" id="edit_lan_prazo_final" value="${l.prazo_final||''}"><\/div>
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Pedido</label><input type="number" id="edit_lan_pedido" value="${l.pedido||''}"></div>
+        <div class="form-group"><label>Data</label><input type="date" id="edit_lan_data" value="${l.data||''}"></div>
+        <div class="form-group"><label>Mês</label><input type="text" id="edit_lan_mes" value="${l.mes||''}"></div>
+        <div class="form-group"><label>Tipo</label><select id="edit_lan_tipo"><option value="">Selecione</option>${optionsTipo}</select></div>
+        <div class="form-group"><label>Cliente</label><input type="text" id="edit_lan_cliente" value="${escapeHtml(l.cliente||'')}" readonly></div>
+        <div class="form-group"><label>OC</label><input type="text" id="edit_lan_oc" value="${l.oc||''}"></div>
+        <div class="form-group"><label>Fornecedor</label><select id="edit_lan_fornecedor"><option value="">Selecione</option>${optionsForn}</select></div>
+        <div class="form-group"><label>Categoria</label><select id="edit_lan_categoria"><option value="">Selecione</option>${optionsCat}</select></div>
+        <div class="form-group"><label>Itens</label><input type="number" id="edit_lan_itens" value="${l.itens||''}"></div>
+        <div class="form-group"><label>Produtos</label><input type="text" id="edit_lan_produtos" value="${l.produtos||''}"></div>
+        <div class="form-group"><label>🏷️ Etiqueta</label><input type="text" id="edit_lan_etiqueta" value="${escapeHtml(l.etiqueta||'')}" style="text-transform:uppercase"></div>
+        <div class="form-group"><label>Valor</label><input type="text" id="edit_lan_valor" value="${formatarValor(l.valor)}" onblur="formatarValorInput(this)"></div>
+        <div class="form-group"><label>Data Pagto</label><input type="date" id="edit_lan_data_pagto" value="${l.data_pagto||''}"></div>
+        <div class="form-group"><label>Condição</label><select id="edit_lan_condicao"><option value="">Selecione</option><option value="Em aberto" ${l.condicao==='Em aberto'?'selected':''}>EM ABERTO</option><option value="Em produção" ${l.condicao==='Em produção'?'selected':''}>EM PRODUÇÃO</option><option value="Cancelado" ${l.condicao==='Cancelado'?'selected':''}>CANCELADO</option><option value="Entregue" ${l.condicao==='Entregue'?'selected':''}>ENTREGUE</option><option value="Em Rota" ${l.condicao==='Em Rota'?'selected':''}>EM ROTA</option><option value="Entregue em fábrica" ${l.condicao==='Entregue em fábrica'?'selected':''}>ENTREGUE EM FÁBRICA</option><option value="Entregue - Pag. Pendente" ${l.condicao==='Entregue - Pag. Pendente'?'selected':''}>ENTREGUE - PAG. PENDENTE</option><option value="Pedido Retido" ${l.condicao==='Pedido Retido'?'selected':''}>PEDIDO RETIDO</option></select></div>
+        <div class="form-group"><label>Prev. Fat</label><input type="date" id="edit_lan_prev_fat" value="${l.prev_fat||''}"></div>
+        <div class="form-group"><label>Data Fat</label><input type="date" id="edit_lan_data_fat" value="${l.data_fat||''}" onchange="calcularPrevisaoChegadaEdicao()"></div>
+        <div class="form-group"><label>Prev. Chegada</label><input type="date" id="edit_lan_prev_chegada" value="${l.prev_chegada||''}" onchange="manualPrevChegada(this)"></div>
+        <div class="form-group"><label>Novo Prazo</label><input type="date" id="edit_lan_novo_prazo" value="${l.novo_prazo||''}"></div>
+        <div class="form-group"><label>Status</label><select id="edit_lan_status">${optionsStatus}</select></div>
+        <div class="form-group"><label>Nº NF</label><input type="text" id="edit_lan_nf" value="${l.nf||''}"></div>
+        <div class="form-group"><label>Transportadora</label><input type="text" id="edit_lan_transportadora" value="${l.transportadora||''}"></div>
+        <div class="form-group"><label>Chegada</label><input type="date" id="edit_lan_chegada" value="${l.chegada||''}"></div>
+        <div class="form-group"><label>Conferência</label><input type="date" id="edit_lan_conferencia" value="${l.conferencia||''}"></div>
+        <div class="form-group"><label>Entrega</label><input type="date" id="edit_lan_entrega" value="${l.entrega||''}"></div>
+        <div class="form-group"><label>Prazo Final</label><input type="date" id="edit_lan_prazo_final" value="${l.prazo_final||''}"></div>
         <div class="form-group"><label>Observações</label>
-            <textarea id="edit_lan_observacoes" rows="2" maxlength="100" oninput="atualizarContadorCaracteres(this, 100)">${escapeHtml(l.observacoes || '')}<\/textarea>
-            <div class="char-counter" id="editObsCharCounter">${(l.observacoes || '').length}/100<\/div>
-        <\/div>
-    <\/div><div style="text-align:right; margin-top:20px"><p>Editando como: ${escapeHtml(usuarioAtual)}<\/p><button class="success" id="btnSalvarEdicaoLancamento" onclick="salvarEdicaoLancamento('${id}')">💾 SALVAR<\/button><\/div>`;
+            <textarea id="edit_lan_observacoes" rows="2" maxlength="100" oninput="atualizarContadorCaracteres(this, 100)">${escapeHtml(l.observacoes || '')}</textarea>
+            <div class="char-counter" id="editObsCharCounter">${(l.observacoes || '').length}/100</div>
+        </div>
+    </div><div style="text-align:right; margin-top:20px"><p>Editando como: ${escapeHtml(usuarioAtual)}</p><button class="success" id="btnSalvarEdicaoLancamento" onclick="salvarEdicaoLancamento('${id}')">💾 SALVAR</button></div>`;
     
     setTimeout(() => {
         const editTextarea = document.getElementById('edit_lan_observacoes');
@@ -1852,26 +1990,6 @@ async function salvarEdicaoLancamento(id) {
     } finally {
         hideLoading(btn, originalText);
     }
-}
-
-function exportarLancamentosExcel() {
-    if (lancamentos.length === 0) { alert('Não há dados!'); return; }
-    const wsData = [['#','Pedido','Data','Mês','Tipo','Cliente','OC','Fornecedor','Categoria','Itens','Produtos','Etiqueta','Valor','Data Pagto','Condição','Prev.Fat','Data Fat','Prev.Chegada','Novo Prazo','Status','Nº NF','Transportadora','Chegada','Conf','Entrega','Prazo Final','Usuário','Editado','Observações']];
-    const lancamentosFiltrados = getLancamentosFiltrados();
-    lancamentosFiltrados.forEach((l, idx) => { 
-        wsData.push([
-            idx+1, l.pedido||'', l.data||'', l.mes||'', l.tipo||'', l.cliente||'', l.oc||'', l.fornecedor||'', 
-            l.categoria||'', l.itens||'', l.produtos||'', l.etiqueta||'', l.valor||'', l.data_pagto||'', l.condicao||'', 
-            l.prev_fat||'', l.data_fat||'', l.prev_chegada||'', l.novo_prazo||'', l.status||'', l.nf||'', 
-            l.transportadora||'', l.chegada||'', l.conferencia||'', l.entrega||'', l.prazo_final||'', 
-            l.usuario||'', l.editadoPor||'', (l.observacoes||'').substring(0, 100)
-        ]); 
-    });
-    const wb = XLSX.utils.book_new(); 
-    const ws = XLSX.utils.aoa_to_sheet(wsData); 
-    XLSX.utils.book_append_sheet(wb, ws, 'Lançamentos'); 
-    XLSX.writeFile(wb, `lancamentos_${new Date().toISOString().slice(0,10)}.xlsx`);
-    alert('✅ Arquivo exportado!');
 }
 
 // ============================================
@@ -1970,7 +2088,7 @@ function filtrarAnexosPorOC() {
 function limparBuscaAnexos() { document.getElementById('buscaAnexoPedido').value = ''; document.getElementById('buscaAnexoOC').value = ''; document.querySelectorAll('#anexosLista > div').forEach(d => d.style.display = ''); }
 
 // ============================================
-// RELATÓRIOS
+// RELATÓRIOS (com Top 8 Produtos e Pedidos por Fornecedor)
 // ============================================
 function telaRelatorios() {
     const etiquetas = getEtiquetas();
@@ -2034,6 +2152,28 @@ function gerarRelatorios(dados) {
     const status = {}; dados.forEach(l=>{ let s=l.status||'PENDENTE'; status[s]=(status[s]||0)+1; });
     const cond = {}; dados.forEach(l=>{ let c=l.condicao||'SEM CONDIÇÃO'; cond[c]=(cond[c]||0)+1; });
     const cat = {}; dados.forEach(l=>{ let c=l.categoria||'SEM CATEGORIA'; cat[c]=(cat[c]||0)+1; });
+    
+    // Top 8 Produtos mais pedidos
+    const produtos = {};
+    dados.forEach(l => {
+        if (l.produtos) {
+            const nome = l.produtos.trim();
+            if (!produtos[nome]) produtos[nome] = 0;
+            produtos[nome] += parseInt(l.itens) || 0;
+        }
+    });
+    const top8 = Object.entries(produtos).sort((a,b) => b[1] - a[1]).slice(0,8);
+    
+    // Pedidos por Fornecedor
+    const fornecedorCount = {};
+    dados.forEach(l => {
+        if (l.fornecedor) {
+            if (!fornecedorCount[l.fornecedor]) fornecedorCount[l.fornecedor] = 0;
+            fornecedorCount[l.fornecedor] += 1;
+        }
+    });
+    const topFornecedores = Object.entries(fornecedorCount).sort((a,b) => b[1] - a[1]);
+    
     const clientesRank = {}; dados.forEach(l=>{ if(l.cliente) clientesRank[l.cliente]=(clientesRank[l.cliente]||0)+1; });
     const topClientes = Object.entries(clientesRank).sort((a,b)=>b[1]-a[1]).slice(0,5);
     const fornRank = {}; dados.forEach(l=>{ if(l.fornecedor) fornRank[l.fornecedor]=(fornRank[l.fornecedor]||0)+1; });
@@ -2041,12 +2181,35 @@ function gerarRelatorios(dados) {
     
     document.getElementById('conteudoRelatorios').innerHTML = `
         <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Total Itens</h4><div class="value">${dados.reduce((a,l)=>a+(l.itens||0),0)}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${dados.filter(l=>l.status==='ENTREGUE').length}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${dados.filter(l=>l.status==='EM ABERTO' || !l.status).length}</div></div></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0"><div class="chart-container"><h4>📅 Pedidos por Mês</h4> <table style="width:100%">${Object.entries(meses).map(([m,q])=>`<tr><td>${m}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
-        <div class="chart-container"><h4>📌 Pedidos por Status</h4> <table style="width:100%">${Object.entries(status).map(([s,q])=>`<tr><td>${s}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
-        <div class="chart-container"><h4>💰 Pedidos por Condição</h4> <table style="width:100%">${Object.entries(cond).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div>
-        <div class="chart-container"><h4>🏷️ Pedidos por Categoria</h4> <table style="width:100%">${Object.entries(cat).map(([c,q])=>`<tr><td>${c}<\/td><td>${q}<\/td><\/tr>`).join('')}<\/table><\/div><\/div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px"><div class="chart-container"><h4>🏆 Top Clientes</h4> <table style="width:100%">${topClientes.map(([c,q])=>`<tr><td>${c}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div>
-        <div class="chart-container"><h4>🏭 Top Fornecedores</h4> <table style="width:100%">${topForn.map(([f,q])=>`<tr><td>${f}<\/td><td>${q} pedidos<\/td><\/tr>`).join('')}<\/table><\/div><\/div>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0">
+            <div class="chart-container"><h4>📅 Pedidos por Mês</h4> <table style="width:100%">${Object.entries(meses).map(([m,q])=>`<tr><td>${m}</td><td>${q}</td></tr>`).join('')}</table></div>
+            <div class="chart-container"><h4>📌 Pedidos por Status</h4> <table style="width:100%">${Object.entries(status).map(([s,q])=>`<tr><td>${s}</td><td>${q}</td></tr>`).join('')}</table></div>
+            <div class="chart-container"><h4>💰 Pedidos por Condição</h4> <table style="width:100%">${Object.entries(cond).map(([c,q])=>`<tr><td>${c}</td><td>${q}</td></tr>`).join('')}</table></div>
+            <div class="chart-container"><h4>🏷️ Pedidos por Categoria</h4> <table style="width:100%">${Object.entries(cat).map(([c,q])=>`<tr><td>${c}</td><td>${q}</td></tr>`).join('')}</table></div>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px">
+            <div class="chart-container">
+                <h4>🏆 TOP 8 PRODUTOS MAIS PEDIDOS</h4>
+                <table style="width:100%">
+                    <thead><tr><th>#</th><th>Produto</th><th>Quantidade</th></tr></thead>
+                    <tbody>${top8.map(([prod, qtd], i) => `<tr><td>${i+1}</td><td>${prod}</td><td>${qtd}</td></tr>`).join('')}</tbody>
+                </table>
+            </div>
+            <div class="chart-container">
+                <h4>🏭 PEDIDOS POR FORNECEDOR</h4>
+                <table style="width:100%">
+                    <thead><tr><th>Fornecedor</th><th>Pedidos</th></tr></thead>
+                    <tbody>${topFornecedores.map(([forn, qtd]) => `<tr><td>${forn}</td><td>${qtd}</td></tr>`).join('')}</tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px">
+            <div class="chart-container"><h4>🏆 Top Clientes</h4> <table style="width:100%">${topClientes.map(([c,q])=>`<tr><td>${c}</td><td>${q} pedidos</td></tr>`).join('')}</table></div>
+            <div class="chart-container"><h4>🏭 Top Fornecedores (Geral)</h4> <table style="width:100%">${topForn.map(([f,q])=>`<tr><td>${f}</td><td>${q} pedidos</td></tr>`).join('')}</table></div>
+        </div>
     `;
 }
 
@@ -2122,6 +2285,7 @@ function aplicarFiltroDashboard() {
 
 function gerarDashboard(dados) {
     const dadosParaCalculo = dados.filter(l => l.tipo !== 'SHOWROOM');
+    const dadosOC = dados.filter(l => l.tipo === 'OC');
     
     const lembretes = gerarLembretes();
     const total = dados.length;
@@ -2138,6 +2302,21 @@ function gerarDashboard(dados) {
     const tempoMedioPagamento = countPagamento > 0 ? (totalDiasPagamento / countPagamento).toFixed(1) : 0;
     const tempoMedioEntrega = countEntrega > 0 ? (totalDiasEntrega / countEntrega).toFixed(1) : 0;
     
+    // Tempo Médio por Fornecedor - apenas OC
+    const fornecedoresTempos = {};
+    dadosOC.forEach(l => {
+        if (!l.fornecedor) return;
+        if (l.data && l.entrega) { 
+            const dias = Math.round((new Date(l.entrega) - new Date(l.data)) / 86400000); 
+            if (dias >= 0) { 
+                if (!fornecedoresTempos[l.fornecedor]) fornecedoresTempos[l.fornecedor] = { total: 0, count: 0 }; 
+                fornecedoresTempos[l.fornecedor].total += dias; 
+                fornecedoresTempos[l.fornecedor].count++; 
+            } 
+        }
+    });
+    const rankingFornecedores = Object.entries(fornecedoresTempos).map(([n,d]) => ({ fornecedor: n, pedidos: d.count, prazoMedio: (d.total / d.count).toFixed(1) })).sort((a,b)=>a.prazoMedio-b.prazoMedio);
+    
     // Comparativo mensal
     const mesesMap = {};
     dados.forEach(l => {
@@ -2152,13 +2331,6 @@ function gerarDashboard(dados) {
     const labelsMeses = Object.keys(mesesMap).sort().slice(-6);
     const valoresMeses = labelsMeses.map(m => mesesMap[m].total);
     const countMeses = labelsMeses.map(m => mesesMap[m].count);
-    
-    const fornecedoresTempos = {};
-    dados.forEach(l => {
-        if (!l.fornecedor) return;
-        if (l.data && l.entrega) { const dias = Math.round((new Date(l.entrega) - new Date(l.data)) / 86400000); if (dias >= 0) { if (!fornecedoresTempos[l.fornecedor]) fornecedoresTempos[l.fornecedor] = { total: 0, count: 0 }; fornecedoresTempos[l.fornecedor].total += dias; fornecedoresTempos[l.fornecedor].count++; } }
-    });
-    const rankingFornecedores = Object.entries(fornecedoresTempos).map(([n,d]) => ({ fornecedor: n, pedidos: d.count, prazoMedio: (d.total / d.count).toFixed(1) })).sort((a,b)=>a.prazoMedio-b.prazoMedio);
     
     if (window.graficoStatus) window.graficoStatus.destroy();
     if (window.graficoTipo) window.graficoTipo.destroy();
@@ -2183,11 +2355,12 @@ function gerarDashboard(dados) {
             <div class="chart-container"><canvas id="graficoCondicao"></canvas></div>
             <div class="chart-container"><canvas id="graficoMensal"></canvas></div>
         </div>
-        <h3>⏱️ Tempo Médio de Entrega por Fornecedor</h3>
+        
+        <h3>⏱️ Tempo Médio de Entrega por Fornecedor (apenas OC)</h3>
         <div class="table-container">
             <table class="auto-layout">
                 <thead><tr><th>Fornecedor</th><th>Pedidos</th><th>Prazo Médio (dias)</th></tr></thead>
-                <tbody>${rankingFornecedores.map(f=>`<tr><td>${f.fornecedor}<\/td><td>${f.pedidos}<\/td><td>${f.prazoMedio}<\/td><\/tr>`).join('')}</tbody>
+                <tbody>${rankingFornecedores.map(f=>`<tr><td>${f.fornecedor}</td><td>${f.pedidos}</td><td>${f.prazoMedio}</td></tr>`).join('')}</tbody>
             </table>
         </div>
     `;
@@ -2238,9 +2411,9 @@ function telaUsuarios() {
                 <div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarUsuario" onclick="adicionarUsuario()">➕ Adicionar</button></div>
             </div>
             <div class="table-container"><table class="auto-layout"><thead><th>#</th><th>Usuário</th><th>Senha</th><th>Ações</th></thead><tbody>
-                ${usuarios.map((u,i)=>`<tr><td>${i+1}<\/td><td>${escapeHtml(u.nome)}<\/td><td>${u.senha?'••••••':'Sem senha'}<\/td><td class="acoes-cell"><button class="small" data-tooltip="Editar usuário" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️<\/button><button class="small danger" data-tooltip="Excluir usuário" onclick="excluirUsuario('${u.id}')">🗑️<\/button><\/td><\/tr>`).join('')}
-            </tbody><\/table><\/div>
-        <\/div>
+                ${usuarios.map((u,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(u.nome)}</td><td>${u.senha?'••••••':'Sem senha'}</td><td class="acoes-cell"><button class="small" data-tooltip="Editar usuário" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️</button><button class="small danger" data-tooltip="Excluir usuário" onclick="excluirUsuario('${u.id}')">🗑️</button></td></tr>`).join('')}
+            </tbody></table></div>
+        </div>
     `;
 }
 
@@ -2249,7 +2422,7 @@ function abrirModalEdicaoUsuario(id) {
     const modal = getElement('modalUsuarios');
     const content = getElement('modalUsuarioContent');
     if (!modal || !content) return;
-    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nome</label><input type="text" id="edit_user_nome" value="${escapeHtml(u.nome)}"><\/div><div class="form-group"><label>Nova Senha</label><input type="password" id="edit_user_senha" placeholder="Deixe em branco"><\/div><div class="form-group"><label>Confirmar</label><input type="password" id="edit_user_confirm" placeholder="Digite novamente"><\/div><\/div><div style="text-align:right"><button class="success" id="btnSalvarUsuario" onclick="salvarEdicaoUsuario('${id}')">💾 SALVAR<\/button><\/div>`;
+    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nome</label><input type="text" id="edit_user_nome" value="${escapeHtml(u.nome)}"></div><div class="form-group"><label>Nova Senha</label><input type="password" id="edit_user_senha" placeholder="Deixe em branco"></div><div class="form-group"><label>Confirmar</label><input type="password" id="edit_user_confirm" placeholder="Digite novamente"></div></div><div style="text-align:right"><button class="success" id="btnSalvarUsuario" onclick="salvarEdicaoUsuario('${id}')">💾 SALVAR</button></div>`;
     modal.classList.add('active');
 }
 
@@ -2357,7 +2530,7 @@ async function mostrar(tela) {
     if (!main) return;
     
     switch(tela) {
-        case 'clientes': main.innerHTML = telaClientes(); break;
+        case 'pedidos': main.innerHTML = telaPedidos(); setTimeout(() => renderPaginacaoPedidos(), 100); break;
         case 'fornecedores': main.innerHTML = telaFornecedores(); break;
         case 'lancamentos': main.innerHTML = telaLancamentos(); setTimeout(() => {
             renderLancamentos();
@@ -2368,7 +2541,7 @@ async function mostrar(tela) {
         case 'anexos': main.innerHTML = telaAnexos(); break;
         case 'usuarios': if (usuarioPermissao !== 'admin') { alert('Acesso negado!'); mostrar('dashboard'); return; } main.innerHTML = telaUsuarios(); break;
         case 'logs': if (usuarioPermissao !== 'admin') { alert('Acesso negado!'); mostrar('dashboard'); return; } main.innerHTML = telaLogs(); break;
-        default: main.innerHTML = telaClientes();
+        default: main.innerHTML = telaPedidos();
     }
     await adicionarLog('VISUALIZOU', tela);
 }
@@ -2389,7 +2562,7 @@ carregarDados().then(() => {
             if (sidebar) sidebar.style.display = 'block';
             if (footer) footer.style.display = 'block';
             if (footerVerse) footerVerse.style.display = 'block';
-            mostrar('clientes');
+            mostrar('pedidos');
         } else {
             limparSessao();
             mostrarLogin();
