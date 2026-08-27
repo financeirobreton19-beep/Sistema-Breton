@@ -12,6 +12,7 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -136,6 +137,8 @@
         button.excel { background: #1e6f3f; font-weight: bold; }
         button.salvar { background: #2e7d32; font-weight: bold; padding: 10px 20px; }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
+        button.outline { background: transparent; color: #d32f2f; border: 1px solid #d32f2f; }
+        button.outline:hover { background: #d32f2f; color: white; }
         
         .acoes-cell {
             white-space: nowrap;
@@ -183,7 +186,6 @@
         td { border: 1px solid #ddd; padding: 8px; white-space: nowrap; }
         tr:hover { background: #fafafa; }
         
-        /* Status com cores */
         .status-badge {
             padding: 3px 8px;
             border-radius: 20px;
@@ -200,6 +202,7 @@
         .status-badge.em-rota { background: #e3f2fd; color: #0b5e7e; border: 1px solid #bbdef5; }
         .status-badge.cancelado { background: #f5f5f5; color: #616161; border: 1px solid #e0e0e0; }
         .status-badge.pendente { background: #f5f5f5; color: #616161; border: 1px solid #e0e0e0; }
+        .status-badge.finalizado { background: #c8e6c9; color: #1b5e20; border: 1px solid #a5d6a7; }
         
         tr.atrasado-row { background-color: #ffebee !important; }
         tr.atrasado-row:hover { background-color: #ffcdd2 !important; }
@@ -395,7 +398,7 @@
             background: white;
             padding: 20px;
             border-radius: 8px;
-            max-width: 600px;
+            max-width: 700px;
             width: 90%;
             max-height: 80vh;
             overflow-y: auto;
@@ -513,14 +516,6 @@
             color: #888;
         }
         
-        .export-btn {
-            background: #1e6f3f;
-            font-weight: bold;
-        }
-        .export-btn:hover {
-            background: #145a32;
-        }
-        
         .btn-excel {
             background: #1e6f3f;
             font-weight: bold;
@@ -533,6 +528,115 @@
         }
         .btn-excel:hover {
             background: #145a32;
+        }
+        
+        .estoque-thumb {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .estoque-thumb:hover {
+            transform: scale(1.1);
+        }
+        
+        .estoque-resumo {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            background: #FAF0F0;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        .estoque-resumo-item {
+            font-size: 13px;
+        }
+        .estoque-resumo-item strong {
+            color: #5C2A2A;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+        .error-message-box {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #ffcdd2;
+            text-align: center;
+        }
+        .error-message-box strong {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .image-preview-float {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            max-width: 400px;
+            max-height: 400px;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            border: 3px solid #5C2A2A;
+            background: white;
+            padding: 5px;
+            display: none;
+            object-fit: contain;
+        }
+
+        .permissoes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            background: #faf0f0;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .permissao-item {
+            display: flex;
+            flex-direction: column;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .permissao-item .guia-nome {
+            font-weight: bold;
+            font-size: 13px;
+            color: #5C2A2A;
+            margin-bottom: 4px;
+        }
+        .permissao-item select {
+            padding: 4px 6px;
+            font-size: 12px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .permissao-item select:focus {
+            border-color: #8B5A5A;
+            outline: none;
+        }
+
+        .imagem-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 5px;
+        }
+        .imagem-actions button {
+            font-size: 12px;
+            padding: 4px 12px;
         }
     </style>
 </head>
@@ -548,6 +652,7 @@
     <button onclick="mostrar('lancamentos')">📝 Lançamentos</button>
     <button onclick="mostrar('relatorios')">📊 Relatórios</button>
     <button onclick="mostrar('dashboard')">📈 Dashboard</button>
+    <button id="menuEstoque" onclick="mostrar('estoque')" style="display: none;">🏷️ Estoque ShowRoom</button>
     <button onclick="mostrar('anexos')">📎 Anexos</button>
     <button id="menuUsuarios" onclick="mostrar('usuarios')" style="display: none;">👤 Usuários</button>
     <button id="menuLogs" onclick="mostrar('logs')" style="display: none;">📋 Logs</button>
@@ -567,6 +672,9 @@
 <div class="modal" id="modalEditarLancamento"><div class="modal-content"><div class="modal-header"><h3>✏️ Editar Lançamento</h3><span class="close-modal" onclick="fecharModal('modalEditarLancamento')">&times;</span></div><div id="modalEditarLancamentoContent"></div></div></div>
 <div class="modal" id="modalAnexos"><div class="modal-content"><div class="modal-header"><h3>📎 Gerenciar Anexos</h3><span class="close-modal" onclick="fecharModal('modalAnexos')">&times;</span></div><div id="modalAnexosContent"></div></div></div>
 <div class="modal" id="modalUsuarios"><div class="modal-content"><div class="modal-header"><h3>👤 Editar Usuário</h3><span class="close-modal" onclick="fecharModal('modalUsuarios')">&times;</span></div><div id="modalUsuarioContent"></div></div></div>
+<div class="modal" id="modalEstoque"><div class="modal-content"><div class="modal-header"><h3 id="modalEstoqueTitle">Adicionar Item ao Estoque</h3><span class="close-modal" onclick="fecharModal('modalEstoque')">&times;</span></div><div id="modalEstoqueContent"></div></div></div>
+
+<img id="imagePreviewFloat" class="image-preview-float" src="" alt="Preview ampliada">
 
 <script>
 // ============================================
@@ -581,8 +689,20 @@ const firebaseConfig = {
     appId: "1:734348279859:web:246fe0f314063e34712346"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+let firebaseInicializado = false;
+let db = null;
+let storage = null;
+
+try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    storage = firebase.storage();
+    firebaseInicializado = true;
+    console.log("✅ Firebase inicializado com sucesso.");
+} catch (error) {
+    console.error("❌ Erro ao inicializar Firebase:", error);
+    firebaseInicializado = false;
+}
 
 // ============================================
 // CACHE DE ELEMENTOS DOM
@@ -611,6 +731,7 @@ let lancamentos = [];
 let anexos = [];
 let usuarios = [];
 let logs = [];
+let estoque = [];
 
 let usuarioAtual = null;
 let usuarioPermissao = null;
@@ -629,6 +750,25 @@ let dadosPedidosCache = [];
 let currentPage = 1;
 const rowsPerPage = 30;
 let dadosFiltradosCache = [];
+
+// Paginação - Estoque
+let currentPageEstoque = 1;
+const rowsPerPageEstoque = 20;
+let dadosEstoqueCache = [];
+
+const GUIA_LISTA = [
+    { id: 'pedidos', nome: 'Pedidos' },
+    { id: 'fornecedores', nome: 'Fornecedores' },
+    { id: 'lancamentos', nome: 'Lançamentos' },
+    { id: 'relatorios', nome: 'Relatórios' },
+    { id: 'dashboard', nome: 'Dashboard' },
+    { id: 'estoque', nome: 'Estoque' },
+    { id: 'anexos', nome: 'Anexos' },
+    { id: 'usuarios', nome: 'Usuários' },
+    { id: 'logs', nome: 'Logs' }
+];
+
+const NIVEL_ACESSO = ['SEM ACESSO', 'VISUALIZAR', 'EDITAR'];
 
 const categorias = [
     "ACESSORIO", "ADORNOS", "ALMOFADA", "ALMOFADAS", "APARADOR", "APOIO P/ MESA",
@@ -661,8 +801,23 @@ const statusLista = [
     'EM ABERTO',
     'ENTREGUE',
     'FATURADO',
-    'PRORROGADO'
+    'PRORROGADO',
+    'FINALIZADO/AG PGT'
 ];
+
+const condicaoLista = [
+    'Em aberto',
+    'Em produção',
+    'Cancelado',
+    'Entregue',
+    'Em Rota',
+    'Entregue em fábrica',
+    'Entregue - Pag. Pendente',
+    'Pedido Retido',
+    'Ag. Pgt para liberação'
+];
+
+const statusEstoqueLista = ['Em Estoque', 'Baixo Estoque', 'Indisponível'];
 
 function calcularPrevisaoChegada() {
     const dataFat = document.getElementById('lan_data_fat')?.value;
@@ -731,16 +886,137 @@ function isPedidoAtrasado(lancamento) {
     return diffDias <= 7;
 }
 
+function getStatusClass(status) {
+    if (!status) return 'pendente';
+    const map = { 
+        'FATURADO':'faturado', 
+        'AG. FATURAMENTO':'ag-faturamento', 
+        'PRORROGADO':'prorrogado', 
+        'EM ABERTO':'em-aberto', 
+        'ATRASADO':'atrasado', 
+        'ENTREGUE':'entregue', 
+        'EM ROTA':'em-rota', 
+        'CANCELADO':'cancelado',
+        'FINALIZADO/AG PGT':'finalizado'
+    };
+    return map[status.toUpperCase()] || 'pendente';
+}
+
+function getStatusBadge(status) {
+    if (!status) return '<span class="status-badge pendente">PENDENTE</span>';
+    const classe = getStatusClass(status);
+    const up = status.toUpperCase();
+    return `<span class="status-badge ${classe}">${up}</span>`;
+}
+
+function calcularTempoPagamento(dataPedido, dataPagto) {
+    if (!dataPedido || !dataPagto) return null;
+    return Math.round((new Date(dataPagto) - new Date(dataPedido)) / 86400000);
+}
+
+function salvarSessao(nome, permissao) {
+    localStorage.setItem('breton_user', nome);
+    localStorage.setItem('breton_permissao', permissao);
+}
+
+function limparSessao() {
+    localStorage.removeItem('breton_user');
+    localStorage.removeItem('breton_permissao');
+}
+
+function restaurarSessao() {
+    const nome = localStorage.getItem('breton_user');
+    const permissao = localStorage.getItem('breton_permissao');
+    if (nome && permissao) {
+        usuarioAtual = nome;
+        usuarioPermissao = permissao;
+        return true;
+    }
+    return false;
+}
+
+// ============================================
+// FUNÇÕES DE PERMISSÃO
+// ============================================
+function getPermissoesUsuario(usuario) {
+    if (!usuario) return null;
+    if (usuario.nome === 'Admin' || usuario.perfil === 'admin') {
+        const permissoes = {};
+        GUIA_LISTA.forEach(g => { permissoes[g.id] = 'EDITAR'; });
+        return permissoes;
+    }
+    if (usuario.permissoes) {
+        return usuario.permissoes;
+    }
+    const permissoes = {};
+    GUIA_LISTA.forEach(g => {
+        if (g.id === 'usuarios' || g.id === 'logs') {
+            permissoes[g.id] = 'SEM ACESSO';
+        } else {
+            permissoes[g.id] = 'VISUALIZAR';
+        }
+    });
+    return permissoes;
+}
+
+function temPermissao(guia, nivel) {
+    if (!usuarioAtual) return false;
+    if (usuarioAtual === 'Admin') return true;
+    
+    const usuario = usuarios.find(u => u.nome === usuarioAtual);
+    if (!usuario) return false;
+    
+    const permissoes = getPermissoesUsuario(usuario);
+    if (!permissoes) return false;
+    
+    const nivelUsuario = permissoes[guia] || 'SEM ACESSO';
+    
+    if (nivel === 'acesso') {
+        return nivelUsuario !== 'SEM ACESSO';
+    }
+    if (nivel === 'visualizar') {
+        return nivelUsuario === 'VISUALIZAR' || nivelUsuario === 'EDITAR';
+    }
+    if (nivel === 'editar') {
+        return nivelUsuario === 'EDITAR';
+    }
+    return false;
+}
+
+function podeVisualizarCompra() {
+    if (!usuarioAtual) return false;
+    if (usuarioAtual === 'Admin') return true;
+    
+    const usuario = usuarios.find(u => u.nome === usuarioAtual);
+    if (!usuario) return false;
+    
+    if (usuario.podeVerCompra === true) return true;
+    if (usuario.perfil === 'consultor') return false;
+    if (usuarioPermissao === 'consultor') return false;
+    
+    const permissoes = getPermissoesUsuario(usuario);
+    if (permissoes && permissoes['estoque'] === 'EDITAR') return true;
+    
+    return false;
+}
+
+// ============================================
+// FUNÇÕES DO FIREBASE
+// ============================================
 async function carregarDados() {
+    if (!firebaseInicializado || !db) {
+        throw new Error('Firebase não está inicializado.');
+    }
     showLoadingOverlay(true);
     try {
-        const [clientesSnap, fornecedoresSnap, lancamentosSnap, anexosSnap, usuariosSnap, logsSnap] = await Promise.all([
+        const [clientesSnap, fornecedoresSnap, lancamentosSnap, anexosSnap, usuariosSnap, logsSnap, estoqueSnap] = await Promise.all([
             db.collection('clientes').get(),
             db.collection('fornecedores').get(),
             db.collection('lancamentos').get(),
             db.collection('anexos').get(),
             db.collection('usuarios').get(),
-            db.collection('logs').get()
+            db.collection('logs').get(),
+            db.collection('estoque').get()
         ]);
         
         clientes = clientesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -761,13 +1037,7 @@ async function carregarDados() {
         anexos = anexosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         usuarios = usuariosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         logs = logsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        // Alterar Cristiane para Victor Hugo
-        const cristiane = usuarios.find(u => u.nome === 'Cristiane');
-        if (cristiane) {
-            cristiane.nome = 'Victor Hugo';
-            await db.collection('usuarios').doc(cristiane.id).update({ nome: 'Victor Hugo' });
-        }
+        estoque = estoqueSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
         if (clientes.length === 0) {
             const clientesIniciais = [
@@ -804,10 +1074,10 @@ async function carregarDados() {
         
         if (usuarios.length === 0) {
             const usuariosIniciais = [
-                { nome: 'Admin', senha: '123' },
-                { nome: 'Joana', senha: '' },
-                { nome: 'Victor Hugo', senha: '' },
-                { nome: 'Mariana', senha: '' }
+                { nome: 'Admin', senha: '123', perfil: 'admin' },
+                { nome: 'Joana', senha: '', perfil: 'consultor' },
+                { nome: 'Victor Hugo', senha: '', perfil: 'logistica' },
+                { nome: 'Mariana', senha: '', perfil: 'consultor' }
             ];
             for (const u of usuariosIniciais) {
                 await db.collection('usuarios').add(u);
@@ -815,14 +1085,35 @@ async function carregarDados() {
             usuarios = usuariosIniciais;
         }
         
+        if (estoque.length === 0) {
+            const estoqueIniciais = [
+                { produto: 'SOFA RETRÁTIL', descricao: 'Sofá retrátil 3 lugares', categoria: 'SOFA', quantidade: 5, valorUnitario: 3500.00, fornecedor: 'FEFER', colecao: 'VERÃO 2026', status: 'Em Estoque', imagem: '', observacoes: '', criadoEm: new Date().toISOString(), criadoPor: 'Admin' }
+            ];
+            for (const e of estoqueIniciais) {
+                await db.collection('estoque').add(e);
+            }
+            estoque = estoqueIniciais;
+        }
+        
         console.log("✅ Dados carregados do Firebase!");
         showLoadingOverlay(false);
         return true;
     } catch (error) {
         console.error("❌ Erro ao carregar dados:", error);
-        alert("❌ Erro ao conectar com o Firebase. Verifique sua internet e tente novamente.");
         showLoadingOverlay(false);
-        return false;
+        throw error;
+    }
+}
+
+async function adicionarLog(acao, detalhe = '') {
+    try {
+        if (!db) return;
+        const log = { data: new Date().toISOString(), usuario: usuarioAtual || 'Sistema', acao, detalhe };
+        await db.collection('logs').add(log);
+        logs.push(log);
+        if (logs.length > 100) logs = logs.slice(-100);
+    } catch (error) {
+        console.error("Erro ao adicionar log:", error);
     }
 }
 
@@ -863,9 +1154,42 @@ function fecharModal(modalId) {
     if (modal) modal.classList.remove('active'); 
 }
 
-// ============================================
-// FUNÇÕES DE ORDENAÇÃO E FILTRO
-// ============================================
+function formatarData(dataStr) {
+    if (!dataStr) return '-';
+    try { const [a,m,d] = dataStr.split('-'); return `${d}/${m}/${a}`; } catch { return dataStr; }
+}
+
+function formatarValor(valor) {
+    if (valor === undefined || valor === null) return '-';
+    return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatarValorInput(input) {
+    let valor = input.value;
+    if (!valor) { input.value = '0,00'; return; }
+    valor = valor.replace(/\./g, '').replace(',', '.');
+    let num = parseFloat(valor);
+    if (!isNaN(num)) input.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    else input.value = '0,00';
+}
+
+function converterValorParaNumero(valorStr) {
+    if (!valorStr) return 0;
+    return parseFloat(valorStr.replace(/\./g, '').replace(',', '.')) || 0;
+}
+
+function gerarProximoCodFornecedor() {
+    const nums = fornecedores.map(f => parseInt(f.cod.replace('FOR',''))).filter(n => !isNaN(n));
+    return 'FOR' + String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3,'0');
+}
+
+function buscarClientePorPedido(pedido) { return clientes.find(c => c.pedido == pedido); }
+
+function normalizarCNPJ(cnpj) {
+    if (!cnpj) return '';
+    return cnpj.replace(/[^\d]/g, '');
+}
+
 function aplicarOrdenacao(lista) {
     return [...lista].sort((a, b) => {
         let valA, valB;
@@ -925,30 +1249,9 @@ function calcularTotais(lista) {
 }
 
 // ============================================
-// TELA DE LOGIN E PERSISTÊNCIA
+// TELA DE LOGIN
 // ============================================
-function salvarSessao(nome, permissao) {
-    localStorage.setItem('breton_user', nome);
-    localStorage.setItem('breton_permissao', permissao);
-}
-
-function limparSessao() {
-    localStorage.removeItem('breton_user');
-    localStorage.removeItem('breton_permissao');
-}
-
-function restaurarSessao() {
-    const nome = localStorage.getItem('breton_user');
-    const permissao = localStorage.getItem('breton_permissao');
-    if (nome && permissao) {
-        usuarioAtual = nome;
-        usuarioPermissao = permissao;
-        return true;
-    }
-    return false;
-}
-
-function mostrarLogin() {
+function mostrarLogin(erro = null) {
     const sidebar = getElement('sidebar');
     const footer = getElement('footer');
     const footerVerse = getElement('footerVerse');
@@ -958,14 +1261,25 @@ function mostrarLogin() {
     
     const main = getElement('main-content');
     if (main) {
+        const usuariosOptions = usuarios.length > 0 ? 
+            usuarios.map(u => `<option value="${escapeHtml(u.nome)}">${escapeHtml(u.nome)}</option>`).join('') :
+            '<option value="Admin">Admin</option>';
+        
+        let errorHtml = '';
+        if (erro) {
+            errorHtml = `<div class="error-message-box"><strong>⚠️ Erro ao conectar</strong>${escapeHtml(erro)}<br><small>Tente novamente ou verifique sua conexão com a internet.</small></div>`;
+        }
+        
         main.innerHTML = `
             <div class="login-container">
                 <div class="login-box">
                     <h1>BRETON BELÉM</h1>
                     <h2>Hong Possas Mov. de Decoração</h2>
-                    <div class="login-field"><label>👤 Usuário</label><select id="loginUsuario">${usuarios.map(u => `<option value="${escapeHtml(u.nome)}">${escapeHtml(u.nome)}</option>`).join('')}</select></div>
+                    ${errorHtml}
+                    <div class="login-field"><label>👤 Usuário</label><select id="loginUsuario">${usuariosOptions}</select></div>
                     <div class="login-field"><label>🔑 Senha</label><input type="password" id="loginSenha" placeholder="•••" autocomplete="off"></div>
                     <button class="login-button" onclick="fazerLogin()">🔓 ENTRAR</button>
+                    <div id="loginError" class="error-message" style="display:none; color:#d32f2f; font-size:12px; text-align:center; margin-top:10px;"></div>
                 </div>
             </div>
         `;
@@ -975,31 +1289,62 @@ function mostrarLogin() {
 async function fazerLogin() {
     const nome = document.getElementById('loginUsuario').value;
     const senha = document.getElementById('loginSenha')?.value || '';
+    const errorDiv = document.getElementById('loginError');
     
-    await carregarDados();
+    if (!errorDiv) return;
+    errorDiv.style.display = 'none';
+    errorDiv.textContent = '';
     
-    const usuario = usuarios.find(u => u.nome === nome);
-    if (!usuario) { alert('Usuário não encontrado!'); return; }
-    if (usuario.senha && usuario.senha !== senha) { alert('Senha incorreta!'); return; }
+    if (!firebaseInicializado || !db) {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = '❌ Firebase não está disponível. Verifique sua internet e recarregue a página.';
+        console.error('Firebase não inicializado.');
+        return;
+    }
     
-    usuarioAtual = nome;
-    usuarioPermissao = nome === 'Admin' ? 'admin' : 'user';
-    salvarSessao(usuarioAtual, usuarioPermissao);
-    
-    const menuUsuarios = getElement('menuUsuarios');
-    const menuLogs = getElement('menuLogs');
-    const sidebar = getElement('sidebar');
-    const footer = getElement('footer');
-    const footerVerse = getElement('footerVerse');
-    
-    if (menuUsuarios) menuUsuarios.style.display = nome === 'Admin' ? 'block' : 'none';
-    if (menuLogs) menuLogs.style.display = nome === 'Admin' ? 'block' : 'none';
-    if (sidebar) sidebar.style.display = 'block';
-    if (footer) footer.style.display = 'block';
-    if (footerVerse) footerVerse.style.display = 'block';
-    
-    await adicionarLog('LOGIN', nome);
-    mostrar('pedidos');
+    try {
+        await carregarDados();
+        
+        const usuario = usuarios.find(u => u.nome === nome);
+        if (!usuario) { 
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = '❌ Usuário não encontrado!';
+            return; 
+        }
+        if (usuario.senha && usuario.senha !== senha) { 
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = '❌ Senha incorreta!';
+            return; 
+        }
+        
+        usuarioAtual = nome;
+        usuarioPermissao = nome === 'Admin' ? 'admin' : 
+                           (nome === 'Victor Hugo' ? 'logistica' : 'consultor');
+        
+        salvarSessao(usuarioAtual, usuarioPermissao);
+        
+        const menuEstoque = getElement('menuEstoque');
+        const menuUsuarios = getElement('menuUsuarios');
+        const menuLogs = getElement('menuLogs');
+        const sidebar = getElement('sidebar');
+        const footer = getElement('footer');
+        const footerVerse = getElement('footerVerse');
+        
+        if (menuEstoque) menuEstoque.style.display = temPermissao('estoque', 'acesso') ? 'block' : 'none';
+        if (menuUsuarios) menuUsuarios.style.display = temPermissao('usuarios', 'acesso') ? 'block' : 'none';
+        if (menuLogs) menuLogs.style.display = temPermissao('logs', 'acesso') ? 'block' : 'none';
+        if (sidebar) sidebar.style.display = 'block';
+        if (footer) footer.style.display = 'block';
+        if (footerVerse) footerVerse.style.display = 'block';
+        
+        await adicionarLog('LOGIN', nome);
+        mostrar('pedidos');
+    } catch (error) {
+        console.error('Erro no login:', error);
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = `❌ Erro ao carregar dados: ${error.message || 'Verifique sua internet.'}`;
+        mostrarLogin(error.message || 'Erro ao conectar com Firebase.');
+    }
 }
 
 function logout() {
@@ -1016,9 +1361,16 @@ function logout() {
 }
 
 // ============================================
-// TELA DE PEDIDOS (CLIENTES) COM PAGINAÇÃO
+// TELA DE PEDIDOS (CLIENTES)
 // ============================================
 function telaPedidos() {
+    if (!temPermissao('pedidos', 'acesso')) {
+        return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2><p>Você não tem permissão para acessar esta tela.</p></div>`;
+    }
+    
+    const podeEditar = temPermissao('pedidos', 'editar');
+    const podeVisualizar = temPermissao('pedidos', 'visualizar');
+    
     const totalPages = Math.ceil(clientes.length / rowsPerPagePedidos);
     const start = (currentPagePedidos - 1) * rowsPerPagePedidos;
     const end = start + rowsPerPagePedidos;
@@ -1027,6 +1379,7 @@ function telaPedidos() {
     return topBar() + `
         <div class="box">
             <h2>📋 Pedidos</h2>
+            ${podeEditar ? `
             <div class="form-grid">
                 <div class="form-group"><label class="required">Nº Pedido</label><input type="number" id="cli_pedido"></div>
                 <div class="form-group"><label class="required">Data</label><input type="date" id="cli_data"></div>
@@ -1035,9 +1388,10 @@ function telaPedidos() {
                 <div class="form-group"><label>Contato</label><input type="text" id="cli_contato" placeholder="Telefone/Email"></div>
                 <div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarCliente" onclick="adicionarCliente()">➕ Adicionar</button></div>
             </div>
+            ` : ''}
             <div class="search-box"><input type="text" id="buscaCliente" placeholder="🔍 Buscar..." onkeyup="filtrarClientes()"></div>
             <div class="table-container"><table class="auto-layout" id="tabelaClientes"><thead><th>#</th><th>Pedido</th><th>Data</th><th>Cliente</th><th>CPF/CNPJ</th><th>Contato</th><th>Ações</th></thead>
-                <tbody id="clientesBody">${clientesPagina.map((c,i)=>`<tr><td>${start + i + 1}</td><td>${c.pedido}</td><td>${formatarData(c.data)}</td><td>${escapeHtml(c.cliente)}</td><td>${escapeHtml(c.cpf_cnpj||'-')}</td><td>${escapeHtml(c.contato||'-')}</td><td class="acoes-cell"><button class="small" data-tooltip="Editar pedido" onclick="abrirModalEdicaoPedido('${c.id}')">✏️</button><button class="small danger" data-tooltip="Excluir pedido" onclick="excluirCliente('${c.id}')">🗑️</button></td></tr>`).join('')}
+                <tbody id="clientesBody">${clientesPagina.map((c,i)=>`<tr><td>${start + i + 1}</td><td>${c.pedido}</td><td>${formatarData(c.data)}</td><td>${escapeHtml(c.cliente)}</td><td>${escapeHtml(c.cpf_cnpj||'-')}</td><td>${escapeHtml(c.contato||'-')}</td><td class="acoes-cell">${podeEditar ? `<button class="small" data-tooltip="Editar pedido" onclick="abrirModalEdicaoPedido('${c.id}')">✏️</button><button class="small danger" data-tooltip="Excluir pedido" onclick="excluirCliente('${c.id}')">🗑️</button>` : (podeVisualizar ? `<span class="time-ago">Visualização</span>` : '')}</td></tr>`).join('')}
             </tbody></table></div>
             <div class="pagination" id="paginationPedidos"></div>
         </div>
@@ -1070,79 +1424,11 @@ function changePagePedidos(delta) {
     }
 }
 
-function adicionarLog(acao, detalhe = '') {
-    try {
-        const log = { data: new Date().toISOString(), usuario: usuarioAtual || 'Sistema', acao, detalhe };
-        db.collection('logs').add(log);
-        logs.push(log);
-        if (logs.length > 100) logs = logs.slice(-100);
-    } catch (error) {
-        console.error("Erro ao adicionar log:", error);
-    }
-}
-
-function formatarData(dataStr) {
-    if (!dataStr) return '-';
-    try { const [a,m,d] = dataStr.split('-'); return `${d}/${m}/${a}`; } catch { return dataStr; }
-}
-
-function formatarValor(valor) {
-    if (valor === undefined || valor === null) return '-';
-    return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-function formatarValorInput(input) {
-    let valor = input.value;
-    if (!valor) { input.value = '0,00'; return; }
-    valor = valor.replace(/\./g, '').replace(',', '.');
-    let num = parseFloat(valor);
-    if (!isNaN(num)) input.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-    else input.value = '0,00';
-}
-
-function converterValorParaNumero(valorStr) {
-    if (!valorStr) return 0;
-    return parseFloat(valorStr.replace(/\./g, '').replace(',', '.')) || 0;
-}
-
-function gerarProximoCodFornecedor() {
-    const nums = fornecedores.map(f => parseInt(f.cod.replace('FOR',''))).filter(n => !isNaN(n));
-    return 'FOR' + String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3,'0');
-}
-
-function buscarClientePorPedido(pedido) { return clientes.find(c => c.pedido == pedido); }
-
-function getStatusClass(status) {
-    if (!status) return 'pendente';
-    const map = { 
-        'FATURADO':'faturado', 
-        'AG. FATURAMENTO':'ag-faturamento', 
-        'PRORROGADO':'prorrogado', 
-        'EM ABERTO':'em-aberto', 
-        'ATRASADO':'atrasado', 
-        'ENTREGUE':'entregue', 
-        'EM ROTA':'em-rota', 
-        'CANCELADO':'cancelado' 
-    };
-    return map[status.toUpperCase()] || 'pendente';
-}
-
-function getStatusBadge(status) {
-    if (!status) return '<span class="status-badge pendente">PENDENTE</span>';
-    const classe = getStatusClass(status);
-    const up = status.toUpperCase();
-    return `<span class="status-badge ${classe}">${up}</span>`;
-}
-
-function calcularTempoPagamento(dataPedido, dataPagto) {
-    if (!dataPedido || !dataPagto) return null;
-    return Math.round((new Date(dataPagto) - new Date(dataPedido)) / 86400000);
-}
-
-// ============================================
-// FUNÇÕES DE CLIENTES/PEDIDOS
-// ============================================
 async function adicionarCliente() {
+    if (!temPermissao('pedidos', 'editar')) {
+        alert('❌ Você não tem permissão para adicionar pedidos.');
+        return;
+    }
     const btn = getElement('btnAdicionarCliente');
     if (!btn) return;
     const originalText = showLoading(btn, 'Salvando...');
@@ -1168,6 +1454,10 @@ async function adicionarCliente() {
 }
 
 async function excluirCliente(id) {
+    if (!temPermissao('pedidos', 'editar')) {
+        alert('❌ Você não tem permissão para excluir pedidos.');
+        return;
+    }
     if (confirm('⚠️ Excluir cliente? Esta ação não pode ser desfeita.')) {
         try {
             const c = clientes.find(c => c.id === id);
@@ -1189,6 +1479,10 @@ function filtrarClientes() {
 }
 
 function abrirModalEdicaoPedido(id) {
+    if (!temPermissao('pedidos', 'editar')) {
+        alert('❌ Você não tem permissão para editar pedidos.');
+        return;
+    }
     const c = clientes.find(c => c.id === id);
     const modal = getElement('modalEditarPedido');
     const content = getElement('modalEditarPedidoContent');
@@ -1198,6 +1492,10 @@ function abrirModalEdicaoPedido(id) {
 }
 
 async function salvarEdicaoCliente(id) {
+    if (!temPermissao('pedidos', 'editar')) {
+        alert('❌ Você não tem permissão para editar pedidos.');
+        return;
+    }
     const btn = document.getElementById('btnSalvarCliente');
     if (!btn) return;
     const originalText = showLoading(btn, 'Salvando...');
@@ -1227,12 +1525,20 @@ async function salvarEdicaoCliente(id) {
 }
 
 // ============================================
-// TELA DE FORNECEDORES (COM CONTATO)
+// TELA DE FORNECEDORES
 // ============================================
 function telaFornecedores() {
+    if (!temPermissao('fornecedores', 'acesso')) {
+        return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2><p>Você não tem permissão para acessar esta tela.</p></div>`;
+    }
+    
+    const podeEditar = temPermissao('fornecedores', 'editar');
+    const podeVisualizar = temPermissao('fornecedores', 'visualizar');
+    
     return topBar() + `
         <div class="box">
             <h2>📦 Fornecedores</h2>
+            ${podeEditar ? `
             <div class="form-grid">
                 <div class="form-group"><label>Código</label><input type="text" id="for_cod" value="${gerarProximoCodFornecedor()}" readonly></div>
                 <div class="form-group"><label class="required">Fornecedor</label><input type="text" id="for_nome" style="text-transform:uppercase"></div>
@@ -1242,20 +1548,20 @@ function telaFornecedores() {
                 <div class="form-group"><label>Coleção</label><input type="text" id="for_colecao" style="text-transform:uppercase"></div>
                 <div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarFornecedor" onclick="adicionarFornecedor()">➕ Adicionar</button></div>
             </div>
+            ` : ''}
             <div class="search-box"><input type="text" id="buscaFornecedor" placeholder="🔍 Buscar..." onkeyup="filtrarFornecedores()"></div>
             <div class="table-container"><table class="auto-layout" id="tabelaFornecedores"><thead><th>#</th><th>COD</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Contato</th><th>Condição</th><th>Coleção</th><th>Ações</th></thead>
-                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}</td><td>${f.cod}</td><td>${escapeHtml(f.nome)}</td><td>${escapeHtml(f.cpf_cnpj||'-')}</td><td>${escapeHtml(f.contato||'-')}</td><td>${escapeHtml(f.condicao||'-')}</td><td>${escapeHtml(f.colecao||'-')}</td><td class="acoes-cell"><button class="small" data-tooltip="Editar fornecedor" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" data-tooltip="Excluir fornecedor" onclick="excluirFornecedor('${f.id}')">🗑️</button></td></tr>`).join('')}
+                <tbody>${fornecedores.map((f,i)=>`<tr><td>${i+1}</td><td>${f.cod}</td><td>${escapeHtml(f.nome)}</td><td>${escapeHtml(f.cpf_cnpj||'-')}</td><td>${escapeHtml(f.contato||'-')}</td><td>${escapeHtml(f.condicao||'-')}</td><td>${escapeHtml(f.colecao||'-')}</td><td class="acoes-cell">${podeEditar ? `<button class="small" data-tooltip="Editar fornecedor" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" data-tooltip="Excluir fornecedor" onclick="excluirFornecedor('${f.id}')">🗑️</button>` : (podeVisualizar ? `<span class="time-ago">Visualização</span>` : '')}</td></tr>`).join('')}
             </tbody></table></div>
         </div>
     `;
 }
 
-function normalizarCNPJ(cnpj) {
-    if (!cnpj) return '';
-    return cnpj.replace(/[^\d]/g, '');
-}
-
 async function adicionarFornecedor() {
+    if (!temPermissao('fornecedores', 'editar')) {
+        alert('❌ Você não tem permissão para adicionar fornecedores.');
+        return;
+    }
     const btn = document.getElementById('btnAdicionarFornecedor');
     if (!btn) return;
     const originalText = showLoading(btn, 'Salvando...');
@@ -1298,6 +1604,10 @@ async function adicionarFornecedor() {
 }
 
 async function excluirFornecedor(id) {
+    if (!temPermissao('fornecedores', 'editar')) {
+        alert('❌ Você não tem permissão para excluir fornecedores.');
+        return;
+    }
     if (confirm('⚠️ Excluir fornecedor?')) {
         try {
             const f = fornecedores.find(f => f.id === id);
@@ -1318,6 +1628,10 @@ function filtrarFornecedores() {
 }
 
 function abrirModalEdicaoFornecedor(id) {
+    if (!temPermissao('fornecedores', 'editar')) {
+        alert('❌ Você não tem permissão para editar fornecedores.');
+        return;
+    }
     const f = fornecedores.find(f => f.id === id);
     const modal = getElement('modalEditarFornecedor');
     const content = getElement('modalEditarFornecedorContent');
@@ -1327,6 +1641,10 @@ function abrirModalEdicaoFornecedor(id) {
 }
 
 async function salvarEdicaoFornecedor(id) {
+    if (!temPermissao('fornecedores', 'editar')) {
+        alert('❌ Você não tem permissão para editar fornecedores.');
+        return;
+    }
     const btn = document.getElementById('btnSalvarFornecedor');
     if (!btn) return;
     const originalText = showLoading(btn, 'Salvando...');
@@ -1427,14 +1745,23 @@ function gerarLembretes() {
 }
 
 // ============================================
-// TELA DE LANÇAMENTOS (com busca por produto, categoria, export Excel)
+// TELA DE LANÇAMENTOS
 // ============================================
 function telaLancamentos() {
+    if (!temPermissao('lancamentos', 'acesso')) {
+        return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2><p>Você não tem permissão para acessar esta tela.</p></div>`;
+    }
+    
+    const podeEditar = temPermissao('lancamentos', 'editar');
+    const podeVisualizar = temPermissao('lancamentos', 'visualizar');
+    const podeVerCompra = podeVisualizarCompra();
+    
     let optionsCat = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
     let optionsForn = fornecedores.map(f => `<option value="${escapeHtml(f.nome)}">${escapeHtml(f.nome)} (${f.cod})</option>`).join('');
     let optionsTipo = tiposPedido.map(t => `<option value="${t}">${t}</option>`).join('');
     let optionsMeses = mesesLista.map(m => `<option value="${m}">${m}</option>`).join('');
     let optionsStatus = statusLista.map(s => `<option value="${s}">${s}</option>`).join('');
+    let optionsCondicao = condicaoLista.map(c => `<option value="${c}">${c}</option>`).join('');
     
     const lancamentosFiltrados = getLancamentosFiltrados();
     const totais = calcularTotais(lancamentosFiltrados);
@@ -1448,7 +1775,7 @@ function telaLancamentos() {
             
             <div class="resumo-rapido">
                 <span class="resumo-item">📊 <strong>${totais.totalPedidos}</strong> pedidos</span>
-                <span class="resumo-item">💰 <strong>${formatarValor(totais.totalValor)}</strong></span>
+                <span class="resumo-item">💰 <strong>${podeVerCompra ? formatarValor(totais.totalValor) : '••••'}</strong></span>
                 <span class="resumo-item">📦 <strong>${totais.totalItens}</strong> itens</span>
                 <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados <span class="atrasados-count">${totais.totalAtrasados}</span></span>
                 <button class="btn-excel" onclick="exportarLancamentosExcel()">📊 Exportar Excel</button>
@@ -1475,6 +1802,7 @@ function telaLancamentos() {
                 <button class="ordem-btn" onclick="toggleOrderDirection()">${currentOrderDirection === 'asc' ? '⬆️ Crescente' : '⬇️ Decrescente'}</button>
             </div>
             
+            ${podeEditar ? `
             <details>
                 <summary style="cursor:pointer;padding:10px;background:#FAF0F0;border-radius:6px;font-weight:bold">➕ NOVO LANÇAMENTO</summary>
                 <div style="margin-top:15px">
@@ -1517,7 +1845,7 @@ function telaLancamentos() {
                     <div id="tab3" class="tab-content">
                         <div class="form-grid">
                             <div class="form-group"><label>Valor</label><input type="text" id="lan_valor" placeholder="0,00" onblur="formatarValorInput(this)"></div>
-                            <div class="form-group"><label>Condição</label><select id="lan_condicao"><option value="">Selecione</option><option value="Em aberto">EM ABERTO</option><option value="Em produção">EM PRODUÇÃO</option><option value="Cancelado">CANCELADO</option><option value="Entregue">ENTREGUE</option><option value="Em Rota">EM ROTA</option><option value="Entregue em fábrica">ENTREGUE EM FÁBRICA</option><option value="Entregue - Pag. Pendente">ENTREGUE - PAG. PENDENTE</option><option value="Pedido Retido">PEDIDO RETIDO</option></select></div>
+                            <div class="form-group"><label>Condição</label><select id="lan_condicao"><option value="">Selecione</option>${optionsCondicao}</select></div>
                             <div class="form-group"><label>Status</label><select id="lan_status"><option value="">Selecione</option>${optionsStatus}</select></div>
                             <div class="form-group"><label>Nº NF</label><input type="text" id="lan_nf" style="text-transform:uppercase"></div>
                             <div class="form-group"><label>Transportadora</label><input type="text" id="lan_transportadora" style="text-transform:uppercase"></div>
@@ -1530,6 +1858,7 @@ function telaLancamentos() {
                     <div style="text-align:center;margin-top:20px"><button class="salvar" id="btnSalvarLancamento" onclick="adicionarLancamento()">💾 SALVAR LANÇAMENTO</button></div>
                 </div>
             </details>
+            ` : ''}
             
             <div class="search-box"><input type="text" id="buscaLancamento" placeholder="🔍 Buscar por pedido, cliente, fornecedor, OC, NF, produto ou categoria..." onkeyup="filtrarLancamentos()"></div>
             <div class="loading-overlay" id="loadingOverlay">
@@ -1552,6 +1881,9 @@ function telaLancamentos() {
 function renderLancamentos() {
     const lancamentosFiltrados = getLancamentosFiltrados();
     const busca = document.getElementById('buscaLancamento')?.value.toLowerCase() || '';
+    const podeEditar = temPermissao('lancamentos', 'editar');
+    const podeVisualizar = temPermissao('lancamentos', 'visualizar');
+    const podeVerCompra = podeVisualizarCompra();
     
     let dadosFiltrados = lancamentosFiltrados;
     if (busca) {
@@ -1599,7 +1931,7 @@ function renderLancamentos() {
             <td>${l.itens || '-'}</td>
             <td>${l.produtos || '-'}</td>
             <td>${escapeHtml(etiqueta) || '-'}</td>
-            <td>${formatarValor(l.valor)}</td>
+            <td>${podeVerCompra ? formatarValor(l.valor) : '••••'}</td>
             <td>${formatarData(l.data_pagto)}</td>
             <td>${l.condicao || '-'}</td>
             <td>${formatarData(l.prev_fat)}</td>
@@ -1617,10 +1949,10 @@ function renderLancamentos() {
             <td><span class="time-ago" title="${new Date(l.editadoEm).toLocaleString()}">${editado}</span></td>
             <td>${l.observacoes ? `<span class="tooltip-icon" data-tooltip="${escapeHtml(l.observacoes.replace(/"/g, '&quot;'))}">💬</span>` : '-'}</td>
             <td class="acoes-cell">
-                <button class="small" data-tooltip="Editar lançamento" onclick="abrirModalEdicaoLancamento('${l.id}')">✏️</button>
-                <button class="small" data-tooltip="Duplicar lançamento" onclick="duplicarLancamento('${l.id}')">📋</button>
+                ${podeEditar ? `<button class="small" data-tooltip="Editar lançamento" onclick="abrirModalEdicaoLancamento('${l.id}')">✏️</button>` : ''}
+                ${podeEditar ? `<button class="small" data-tooltip="Duplicar lançamento" onclick="duplicarLancamento('${l.id}')">📋</button>` : ''}
                 <button class="small info" data-tooltip="Gerenciar anexos" onclick="abrirModalAnexos(${l.pedido})">📎</button>
-                <button class="small danger" data-tooltip="Excluir lançamento" onclick="excluirLancamento('${l.id}')">🗑️</button>
+                ${podeEditar ? `<button class="small danger" data-tooltip="Excluir lançamento" onclick="excluirLancamento('${l.id}')">🗑️</button>` : ''}
              </td>
          </tr>`;
     }).join('');
@@ -1629,7 +1961,7 @@ function renderLancamentos() {
     if (tfoot) {
         tfoot.innerHTML = `<tr style="background:#FAF0F0; font-weight:bold;">
             <td colspan="12" style="text-align:right;">TOTAL:</td>
-            <td>${formatarValor(totaisFiltrados.totalValor)}</td>
+            <td>${podeVerCompra ? formatarValor(totaisFiltrados.totalValor) : '••••'}</td>
             <td colspan="9"></td>
             <td>${totaisFiltrados.totalItens} itens</td>
             <td colspan="5"></td>
@@ -1671,11 +2003,12 @@ function setFilterType(tipo) {
     currentPage = 1;
     renderLancamentos();
     const totais = calcularTotais(getLancamentosFiltrados());
+    const podeVerCompra = podeVisualizarCompra();
     const resumoDiv = document.querySelector('.resumo-rapido');
     if (resumoDiv) {
         resumoDiv.innerHTML = `
             <span class="resumo-item">📊 <strong>${totais.totalPedidos}</strong> pedidos</span>
-            <span class="resumo-item">💰 <strong>${formatarValor(totais.totalValor)}</strong></span>
+            <span class="resumo-item">💰 <strong>${podeVerCompra ? formatarValor(totais.totalValor) : '••••'}</strong></span>
             <span class="resumo-item">📦 <strong>${totais.totalItens}</strong> itens</span>
             <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados <span class="atrasados-count">${totais.totalAtrasados}</span></span>
             <button class="btn-excel" onclick="exportarLancamentosExcel()">📊 Exportar Excel</button>
@@ -1740,6 +2073,8 @@ function exportarLancamentosExcel() {
     
     if (dadosFiltrados.length === 0) { alert('Não há dados com os filtros atuais!'); return; }
     
+    const podeVerCompra = podeVisualizarCompra();
+    
     const wsData = [
         ['#','Pedido','Data','Mês','Tipo','Cliente','OC','Fornecedor','Categoria','Itens','Produtos','Etiqueta','Valor',
          'Data Pagto','Condição','Prev.Fat','Data Fat','Prev.Chegada','Novo Prazo','Status','Nº NF','Transportadora',
@@ -1751,7 +2086,7 @@ function exportarLancamentosExcel() {
             idx+1, 
             l.pedido||'', l.data||'', l.mes||'', l.tipo||'', l.cliente||'', l.oc||'', l.fornecedor||'', 
             l.categoria||'', l.itens||'', l.produtos||'', l.etiqueta||'', 
-            l.valor !== undefined && l.valor !== null ? l.valor.toFixed(2).replace('.', ',') : '',
+            podeVerCompra ? (l.valor !== undefined && l.valor !== null ? l.valor.toFixed(2).replace('.', ',') : '') : '••••',
             l.data_pagto||'', l.condicao||'', l.prev_fat||'', l.data_fat||'', l.prev_chegada||'', 
             l.novo_prazo||'', l.status||'', l.nf||'', l.transportadora||'', l.chegada||'', 
             l.conferencia||'', l.entrega||'', l.prazo_final||'', l.usuario||'', 
@@ -1767,6 +2102,10 @@ function exportarLancamentosExcel() {
 }
 
 async function adicionarLancamento() {
+    if (!temPermissao('lancamentos', 'editar')) {
+        alert('❌ Você não tem permissão para adicionar lançamentos.');
+        return;
+    }
     const btn = document.getElementById('btnSalvarLancamento');
     if (!btn) return;
     const originalText = showLoading(btn, 'Salvando...');
@@ -1787,6 +2126,9 @@ async function adicionarLancamento() {
             etiqueta = document.getElementById('lan_etiqueta')?.value?.toUpperCase() || '';
         }
         
+        const produtoNome = document.getElementById('lan_produtos')?.value?.toUpperCase() || '';
+        const quantidade = parseInt(document.getElementById('lan_itens')?.value) || 0;
+        
         let l = {
             pedido: document.getElementById('lan_pedido')?.value,
             data: document.getElementById('lan_data')?.value,
@@ -1796,8 +2138,8 @@ async function adicionarLancamento() {
             oc: document.getElementById('lan_oc')?.value?.toUpperCase(),
             fornecedor: document.getElementById('lan_fornecedor')?.value,
             categoria: document.getElementById('lan_categoria')?.value,
-            itens: parseInt(document.getElementById('lan_itens')?.value) || 0,
-            produtos: document.getElementById('lan_produtos')?.value?.toUpperCase(),
+            itens: quantidade,
+            produtos: produtoNome,
             etiqueta: etiqueta,
             valor: valorNumerico,
             data_pagto: document.getElementById('lan_data_pagto')?.value,
@@ -1822,6 +2164,11 @@ async function adicionarLancamento() {
         
         const docRef = await db.collection('lancamentos').add(l);
         lancamentos.push({ id: docRef.id, ...l });
+        
+        if (tipoSelecionado === 'SHOWROOM' && produtoNome && quantidade > 0) {
+            await atualizarEstoqueShowRoom(produtoNome, quantidade);
+        }
+        
         await adicionarLog('ADICIONOU LANÇAMENTO', `Pedido ${l.pedido}`);
         mostrar('lancamentos');
     } catch (error) {
@@ -1832,7 +2179,48 @@ async function adicionarLancamento() {
     }
 }
 
+async function atualizarEstoqueShowRoom(produtoNome, quantidade) {
+    try {
+        const estoqueSnapshot = await db.collection('estoque')
+            .where('produto', '==', produtoNome)
+            .get();
+        
+        if (estoqueSnapshot.empty) {
+            console.log(`⚠️ Produto "${produtoNome}" não encontrado no estoque.`);
+            return;
+        }
+        
+        const doc = estoqueSnapshot.docs[0];
+        const dados = doc.data();
+        const novaQuantidade = Math.max(0, (dados.quantidade || 0) - quantidade);
+        
+        const statusAtualizado = novaQuantidade === 0 ? 'Indisponível' : 
+                                 novaQuantidade <= (dados.quantidadeMinima || 2) ? 'Baixo Estoque' : 'Em Estoque';
+        
+        await db.collection('estoque').doc(doc.id).update({
+            quantidade: novaQuantidade,
+            status: statusAtualizado,
+            editadoEm: new Date().toISOString(),
+            editadoPor: usuarioAtual
+        });
+        
+        const index = estoque.findIndex(e => e.id === doc.id);
+        if (index !== -1) {
+            estoque[index].quantidade = novaQuantidade;
+            estoque[index].status = statusAtualizado;
+        }
+        
+        console.log(`✅ Estoque atualizado: ${produtoNome} → ${novaQuantidade} unidades`);
+    } catch (error) {
+        console.error('❌ Erro ao atualizar estoque:', error);
+    }
+}
+
 async function excluirLancamento(id) {
+    if (!temPermissao('lancamentos', 'editar')) {
+        alert('❌ Você não tem permissão para excluir lançamentos.');
+        return;
+    }
     if (confirm('⚠️ Excluir lançamento?')) {
         try {
             const l = lancamentos.find(l => l.id === id);
@@ -1849,6 +2237,10 @@ async function excluirLancamento(id) {
 }
 
 async function duplicarLancamento(id) {
+    if (!temPermissao('lancamentos', 'editar')) {
+        alert('❌ Você não tem permissão para duplicar lançamentos.');
+        return;
+    }
     if (confirm('Deseja duplicar este pedido? Será criado um novo pedido com número sequencial.')) {
         try {
             const original = lancamentos.find(l => l.id === id);
@@ -1874,6 +2266,10 @@ async function duplicarLancamento(id) {
 }
 
 function abrirModalEdicaoLancamento(id) {
+    if (!temPermissao('lancamentos', 'editar')) {
+        alert('❌ Você não tem permissão para editar lançamentos.');
+        return;
+    }
     const l = lancamentos.find(l => l.id === id);
     if (!l) return;
     const modal = getElement('modalEditarLancamento');
@@ -1884,6 +2280,7 @@ function abrirModalEdicaoLancamento(id) {
     let optionsForn = fornecedores.map(f => `<option value="${escapeHtml(f.nome)}" ${l.fornecedor===f.nome?'selected':''}>${escapeHtml(f.nome)}</option>`).join('');
     let optionsTipo = tiposPedido.map(t => `<option value="${t}" ${l.tipo===t?'selected':''}>${t}</option>`).join('');
     let optionsStatus = statusLista.map(s => `<option value="${s}" ${l.status===s?'selected':''}>${s}</option>`).join('');
+    let optionsCondicao = condicaoLista.map(c => `<option value="${c}" ${l.condicao===c?'selected':''}>${c}</option>`).join('');
     
     content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Pedido</label><input type="number" id="edit_lan_pedido" value="${l.pedido||''}"></div>
         <div class="form-group"><label>Data</label><input type="date" id="edit_lan_data" value="${l.data||''}"></div>
@@ -1898,7 +2295,7 @@ function abrirModalEdicaoLancamento(id) {
         <div class="form-group"><label>🏷️ Etiqueta</label><input type="text" id="edit_lan_etiqueta" value="${escapeHtml(l.etiqueta||'')}" style="text-transform:uppercase"></div>
         <div class="form-group"><label>Valor</label><input type="text" id="edit_lan_valor" value="${formatarValor(l.valor)}" onblur="formatarValorInput(this)"></div>
         <div class="form-group"><label>Data Pagto</label><input type="date" id="edit_lan_data_pagto" value="${l.data_pagto||''}"></div>
-        <div class="form-group"><label>Condição</label><select id="edit_lan_condicao"><option value="">Selecione</option><option value="Em aberto" ${l.condicao==='Em aberto'?'selected':''}>EM ABERTO</option><option value="Em produção" ${l.condicao==='Em produção'?'selected':''}>EM PRODUÇÃO</option><option value="Cancelado" ${l.condicao==='Cancelado'?'selected':''}>CANCELADO</option><option value="Entregue" ${l.condicao==='Entregue'?'selected':''}>ENTREGUE</option><option value="Em Rota" ${l.condicao==='Em Rota'?'selected':''}>EM ROTA</option><option value="Entregue em fábrica" ${l.condicao==='Entregue em fábrica'?'selected':''}>ENTREGUE EM FÁBRICA</option><option value="Entregue - Pag. Pendente" ${l.condicao==='Entregue - Pag. Pendente'?'selected':''}>ENTREGUE - PAG. PENDENTE</option><option value="Pedido Retido" ${l.condicao==='Pedido Retido'?'selected':''}>PEDIDO RETIDO</option></select></div>
+        <div class="form-group"><label>Condição</label><select id="edit_lan_condicao">${optionsCondicao}</select></div>
         <div class="form-group"><label>Prev. Fat</label><input type="date" id="edit_lan_prev_fat" value="${l.prev_fat||''}"></div>
         <div class="form-group"><label>Data Fat</label><input type="date" id="edit_lan_data_fat" value="${l.data_fat||''}" onchange="calcularPrevisaoChegadaEdicao()"></div>
         <div class="form-group"><label>Prev. Chegada</label><input type="date" id="edit_lan_prev_chegada" value="${l.prev_chegada||''}" onchange="manualPrevChegada(this)"></div>
@@ -1925,6 +2322,10 @@ function abrirModalEdicaoLancamento(id) {
 }
 
 async function salvarEdicaoLancamento(id) {
+    if (!temPermissao('lancamentos', 'editar')) {
+        alert('❌ Você não tem permissão para editar lançamentos.');
+        return;
+    }
     const btn = document.getElementById('btnSalvarEdicaoLancamento');
     if (!btn) return;
     const originalText = showLoading(btn, 'Salvando...');
@@ -2058,6 +2459,10 @@ async function excluirAnexo(id, pedido) {
 }
 
 function telaAnexos() {
+    if (!temPermissao('anexos', 'acesso')) {
+        return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2><p>Você não tem permissão para acessar esta tela.</p></div>`;
+    }
+    
     return topBar() + `
         <div class="box">
             <h2>📎 Anexos</h2>
@@ -2088,9 +2493,397 @@ function filtrarAnexosPorOC() {
 function limparBuscaAnexos() { document.getElementById('buscaAnexoPedido').value = ''; document.getElementById('buscaAnexoOC').value = ''; document.querySelectorAll('#anexosLista > div').forEach(d => d.style.display = ''); }
 
 // ============================================
-// RELATÓRIOS (com Top 8 Produtos e Pedidos por Fornecedor)
+// TELA DE ESTOQUE SHOWROOM (ATUALIZADA)
+// ============================================
+function telaEstoque() {
+    if (!temPermissao('estoque', 'acesso')) {
+        return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2><p>Você não tem permissão para acessar esta tela.</p></div>`;
+    }
+    
+    const podeEditar = temPermissao('estoque', 'editar');
+    const podeVisualizar = temPermissao('estoque', 'visualizar');
+    const podeVerCompra = podeVisualizarCompra();
+    
+    const totalItens = estoque.length;
+    const totalEmEstoque = estoque.filter(e => e.status === 'Em Estoque').reduce((acc, e) => acc + (e.quantidade || 0), 0);
+    const totalBaixo = estoque.filter(e => e.status === 'Baixo Estoque').reduce((acc, e) => acc + (e.quantidade || 0), 0);
+    
+    const totalPages = Math.ceil(estoque.length / rowsPerPageEstoque);
+    const start = (currentPageEstoque - 1) * rowsPerPageEstoque;
+    const end = start + rowsPerPageEstoque;
+    const estoquePagina = estoque.slice(start, end);
+    
+    let optionsCat = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+    let optionsForn = fornecedores.map(f => `<option value="${escapeHtml(f.nome)}">${escapeHtml(f.nome)}</option>`).join('');
+    let optionsStatusEstoque = statusEstoqueLista.map(s => `<option value="${s}">${s}</option>`).join('');
+    
+    return topBar() + `
+        <div class="box">
+            <h2>🏷️ Estoque ShowRoom</h2>
+            
+            <div class="estoque-resumo">
+                <span class="estoque-resumo-item">📦 <strong>Total Itens:</strong> ${totalItens}</span>
+                <span class="estoque-resumo-item">✅ <strong>Em Estoque:</strong> ${totalEmEstoque}</span>
+                <span class="estoque-resumo-item">⚠️ <strong>Baixo Estoque:</strong> ${totalBaixo}</span>
+            </div>
+            
+            <div class="filtros-rapidos">
+                <input type="text" id="buscaEstoque" placeholder="🔍 Buscar produto..." onkeyup="filtrarEstoque()" style="padding:4px 10px; border-radius:20px; border:1px solid #ddd; font-size:12px;">
+                <select class="filtro-etiqueta-select" id="filtroEstoqueCategoria" onchange="filtrarEstoque()">
+                    <option value="">Todas categorias</option>
+                    ${optionsCat}
+                </select>
+                <select class="filtro-etiqueta-select" id="filtroEstoqueFornecedor" onchange="filtrarEstoque()">
+                    <option value="">Todos fornecedores</option>
+                    ${optionsForn}
+                </select>
+                ${podeEditar ? `<button class="success" onclick="abrirModalEstoque()">➕ Adicionar</button>` : ''}
+            </div>
+            
+            <div class="table-container">
+                <table class="auto-layout" id="tabelaEstoque">
+                    <thead>
+                        <th>#</th>
+                        <th>Produto</th>
+                        <th>Descrição</th>
+                        <th>Categoria</th>
+                        <th>Qtd</th>
+                        <th>Fornecedor</th>
+                        <th>Coleção</th>
+                        <th>Status</th>
+                        <th>${podeVerCompra ? 'Valor' : 'Valor'}</th>
+                        <th>Imagem</th>
+                        <th>COD/ETIQUETA</th>
+                        <th>Últ. Atualização</th>
+                        <th>Obs</th>
+                        <th>Ações</th>
+                    </thead>
+                    <tbody id="estoqueBody">
+                        ${estoquePagina.map((e, i) => {
+                            const statusClass = e.status === 'Em Estoque' ? 'status-badge entregue' : 
+                                               e.status === 'Baixo Estoque' ? 'status-badge atrasado' : 'status-badge cancelado';
+                            const imgHtml = e.imagem ? `<img src="${e.imagem}" class="estoque-thumb" onmouseenter="showImagePreview(event, '${e.imagem}')" onmouseleave="hideImagePreview()" onclick="window.open('${e.imagem}')">` : '-';
+                            const ultimaAtualizacao = e.ultimaAtualizacao || e.editadoEm || e.criadoEm || '';
+                            const codEtiqueta = [e.codigoProduto, e.numeroEtiqueta].filter(v => v).join(' | ') || '-';
+                            return `<tr>
+                                <td>${start + i + 1}</td>
+                                <td>${escapeHtml(e.produto || '-')}</td>
+                                <td>${escapeHtml(e.descricao || '')}</td>
+                                <td>${escapeHtml(e.categoria || '-')}</td>
+                                <td>${e.quantidade || 0}</td>
+                                <td>${escapeHtml(e.fornecedor || '-')}</td>
+                                <td>${escapeHtml(e.colecao || '-')}</td>
+                                <td><span class="${statusClass}">${e.status || 'Indisponível'}</span></td>
+                                <td>${podeVerCompra ? formatarValor(e.valorUnitario) : '••••'}</td>
+                                <td>${imgHtml}</td>
+                                <td>${escapeHtml(codEtiqueta)}</td>
+                                <td>${ultimaAtualizacao ? timeAgo(ultimaAtualizacao) : '-'}</td>
+                                <td>${escapeHtml((e.observacoes || '').substring(0, 20))}</td>
+                                <td class="acoes-cell">
+                                    ${podeEditar ? `<button class="small" data-tooltip="Editar" onclick="abrirModalEstoque('${e.id}')">✏️</button>` : ''}
+                                    ${podeEditar ? `<button class="small danger" data-tooltip="Excluir" onclick="excluirItemEstoque('${e.id}')">🗑️</button>` : ''}
+                                    <button class="small info" data-tooltip="Ver detalhes" onclick="verDetalhesEstoque('${e.id}')">👁️</button>
+                                </td>
+                            </tr>`;
+                        }).join('')}
+                        ${estoque.length === 0 ? `<tr><td colspan="14" class="text-center">Nenhum item cadastrado no estoque.</td></tr>` : ''}
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination" id="paginationEstoque"></div>
+        </div>
+    `;
+}
+
+// ============================================
+// FUNÇÕES DE PREVIEW DE IMAGEM FLUTUANTE
+// ============================================
+function showImagePreview(event, imageUrl) {
+    const preview = document.getElementById('imagePreviewFloat');
+    if (!preview) return;
+    preview.src = imageUrl;
+    preview.style.display = 'block';
+    const x = event.clientX + 20;
+    const y = event.clientY + 20;
+    preview.style.left = Math.min(x, window.innerWidth - 420) + 'px';
+    preview.style.top = Math.min(y, window.innerHeight - 420) + 'px';
+}
+
+function hideImagePreview() {
+    const preview = document.getElementById('imagePreviewFloat');
+    if (preview) {
+        preview.style.display = 'none';
+        preview.src = '';
+    }
+}
+
+// ============================================
+// FUNÇÕES DO ESTOQUE (ATUALIZADAS)
+// ============================================
+function renderPaginacaoEstoque() {
+    const totalPages = Math.ceil(estoque.length / rowsPerPageEstoque);
+    const paginationDiv = document.getElementById('paginationEstoque');
+    if (!paginationDiv) return;
+    
+    if (totalPages <= 1) {
+        paginationDiv.innerHTML = '';
+        return;
+    }
+    
+    paginationDiv.innerHTML = `
+        <button onclick="changePageEstoque(-1)" ${currentPageEstoque === 1 ? 'disabled' : ''}>◀ Anterior</button>
+        <span>Página ${currentPageEstoque} de ${totalPages}</span>
+        <button onclick="changePageEstoque(1)" ${currentPageEstoque === totalPages ? 'disabled' : ''}>Próxima ▶</button>
+    `;
+}
+
+function changePageEstoque(delta) {
+    const totalPages = Math.ceil(estoque.length / rowsPerPageEstoque);
+    const newPage = currentPageEstoque + delta;
+    if (newPage >= 1 && newPage <= totalPages) {
+        currentPageEstoque = newPage;
+        mostrar('estoque');
+    }
+}
+
+function filtrarEstoque() {
+    const busca = document.getElementById('buscaEstoque')?.value.toLowerCase() || '';
+    const categoria = document.getElementById('filtroEstoqueCategoria')?.value || '';
+    const fornecedor = document.getElementById('filtroEstoqueFornecedor')?.value || '';
+    
+    const rows = document.querySelectorAll('#estoqueBody tr');
+    rows.forEach(row => {
+        const texto = row.textContent.toLowerCase();
+        const cat = row.cells?.[3]?.textContent || '';
+        const forn = row.cells?.[5]?.textContent || '';
+        let show = true;
+        if (busca && !texto.includes(busca)) show = false;
+        if (categoria && cat !== categoria) show = false;
+        if (fornecedor && forn !== fornecedor) show = false;
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+function abrirModalEstoque(id = null) {
+    if (!temPermissao('estoque', 'editar')) {
+        alert('❌ Você não tem permissão para editar o estoque.');
+        return;
+    }
+    const modal = getElement('modalEstoque');
+    const content = getElement('modalEstoqueContent');
+    const title = getElement('modalEstoqueTitle');
+    if (!modal || !content) return;
+    
+    const isEdit = id !== null;
+    const item = isEdit ? estoque.find(e => e.id === id) : null;
+    
+    title.textContent = isEdit ? '✏️ Editar Item do Estoque' : '➕ Adicionar Item ao Estoque';
+    
+    let optionsCat = categorias.map(c => `<option value="${c}" ${item?.categoria === c ? 'selected' : ''}>${c}</option>`).join('');
+    let optionsForn = fornecedores.map(f => `<option value="${escapeHtml(f.nome)}" ${item?.fornecedor === f.nome ? 'selected' : ''}>${escapeHtml(f.nome)}</option>`).join('');
+    let optionsStatusEstoque = statusEstoqueLista.map(s => `<option value="${s}" ${item?.status === s ? 'selected' : ''}>${s}</option>`).join('');
+    
+    const imagemHtml = item?.imagem ? 
+        `<div><img src="${item.imagem}" class="image-preview" id="estoque_imagem_preview"></div>
+         <div class="imagem-actions">
+             <button class="outline danger" onclick="removerImagemEstoque()">🗑️ Remover Imagem</button>
+             <span style="font-size:11px; color:#888;">ou selecione uma nova abaixo</span>
+         </div>` : 
+        `<div id="estoque_imagem_preview"></div>`;
+    
+    content.innerHTML = `
+        <div class="form-grid">
+            <div class="form-group"><label class="required">Produto</label><input type="text" id="estoque_produto" value="${escapeHtml(item?.produto || '')}" style="text-transform:uppercase"></div>
+            <div class="form-group"><label>Descrição</label><input type="text" id="estoque_descricao" value="${escapeHtml(item?.descricao || '')}" placeholder="Descrição do produto"></div>
+            <div class="form-group"><label class="required">Categoria</label><select id="estoque_categoria">${optionsCat}</select></div>
+            <div class="form-group"><label class="required">Quantidade</label><input type="number" id="estoque_quantidade" value="${item?.quantidade || 0}"></div>
+            <div class="form-group"><label>Valor Unitário</label><input type="text" id="estoque_valor" value="${formatarValor(item?.valorUnitario)}" onblur="formatarValorInput(this)"></div>
+            <div class="form-group"><label>Fornecedor</label><select id="estoque_fornecedor"><option value="">Selecione</option>${optionsForn}</select></div>
+            <div class="form-group"><label>Coleção</label><input type="text" id="estoque_colecao" value="${escapeHtml(item?.colecao || '')}" style="text-transform:uppercase"></div>
+            <div class="form-group"><label>Status</label><select id="estoque_status">${optionsStatusEstoque}</select></div>
+            <div class="form-group"><label>Código do Produto</label><input type="text" id="estoque_codigo" value="${escapeHtml(item?.codigoProduto || '')}" style="text-transform:uppercase" placeholder="Código interno"></div>
+            <div class="form-group"><label>Número da Etiqueta</label><input type="text" id="estoque_etiqueta" value="${escapeHtml(item?.numeroEtiqueta || '')}" style="text-transform:uppercase" placeholder="Número da etiqueta"></div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label>Imagem</label>
+                ${imagemHtml}
+                <input type="file" id="estoque_imagem" accept="image/*" onchange="previewImagemEstoque(event)" style="margin-top:5px;">
+                <input type="hidden" id="estoque_imagem_remover" value="false">
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label>Observações</label>
+                <textarea id="estoque_observacoes" rows="2">${escapeHtml(item?.observacoes || '')}</textarea>
+            </div>
+        </div>
+        <div style="text-align:right; margin-top:20px">
+            <button class="success" id="btnSalvarEstoque" onclick="salvarItemEstoque('${id || ''}')">💾 SALVAR</button>
+        </div>
+    `;
+    
+    modal.classList.add('active');
+}
+
+function removerImagemEstoque() {
+    document.getElementById('estoque_imagem_remover').value = 'true';
+    const preview = document.getElementById('estoque_imagem_preview');
+    if (preview) {
+        preview.innerHTML = '<span style="color:#999;">Imagem removida</span>';
+    }
+    const fileInput = document.getElementById('estoque_imagem');
+    if (fileInput) fileInput.value = '';
+    alert('✅ Imagem será removida ao salvar.');
+}
+
+function previewImagemEstoque(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    document.getElementById('estoque_imagem_remover').value = 'false';
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const preview = document.getElementById('estoque_imagem_preview');
+        if (preview) {
+            preview.innerHTML = `<img src="${e.target.result}" class="image-preview">`;
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+async function salvarItemEstoque(id) {
+    if (!temPermissao('estoque', 'editar')) {
+        alert('❌ Você não tem permissão para editar o estoque.');
+        return;
+    }
+    const btn = document.getElementById('btnSalvarEstoque');
+    if (!btn) return;
+    const originalText = showLoading(btn, 'Salvando...');
+    
+    try {
+        const produto = document.getElementById('estoque_produto')?.value?.toUpperCase().trim();
+        const descricao = document.getElementById('estoque_descricao')?.value?.trim() || '';
+        const categoria = document.getElementById('estoque_categoria')?.value;
+        const quantidade = parseInt(document.getElementById('estoque_quantidade')?.value) || 0;
+        const valorRaw = document.getElementById('estoque_valor')?.value || '0,00';
+        const valorUnitario = converterValorParaNumero(valorRaw);
+        const fornecedor = document.getElementById('estoque_fornecedor')?.value;
+        const colecao = document.getElementById('estoque_colecao')?.value?.toUpperCase().trim() || '';
+        const status = document.getElementById('estoque_status')?.value || 'Em Estoque';
+        const observacoes = document.getElementById('estoque_observacoes')?.value || '';
+        const codigoProduto = document.getElementById('estoque_codigo')?.value?.toUpperCase().trim() || '';
+        const numeroEtiqueta = document.getElementById('estoque_etiqueta')?.value?.toUpperCase().trim() || '';
+        const fileInput = document.getElementById('estoque_imagem');
+        const removerImagem = document.getElementById('estoque_imagem_remover')?.value === 'true';
+        
+        if (!produto) { alert('Produto é obrigatório!'); return; }
+        if (!categoria) { alert('Categoria é obrigatória!'); return; }
+        
+        let imagem = '';
+        // Se deve remover a imagem
+        if (removerImagem) {
+            imagem = '';
+        } else if (fileInput && fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            imagem = await new Promise((resolve) => {
+                reader.onload = function(e) { resolve(e.target.result); };
+                reader.readAsDataURL(fileInput.files[0]);
+            });
+        } else if (id) {
+            const existing = estoque.find(e => e.id === id);
+            if (existing) imagem = existing.imagem || '';
+        }
+        
+        const agora = new Date().toISOString();
+        
+        const data = {
+            produto,
+            descricao,
+            categoria,
+            quantidade,
+            valorUnitario,
+            fornecedor: fornecedor || '',
+            colecao,
+            status,
+            imagem,
+            observacoes,
+            codigoProduto,
+            numeroEtiqueta,
+            ultimaAtualizacao: agora,
+            editadoEm: agora,
+            editadoPor: usuarioAtual
+        };
+        
+        if (id) {
+            const existing = estoque.find(e => e.id === id);
+            if (!existing) throw new Error('Item não encontrado');
+            if (existing.criadoEm) {
+                data.criadoEm = existing.criadoEm;
+            }
+            await db.collection('estoque').doc(id).update(data);
+            Object.assign(existing, data);
+            await adicionarLog('EDITOU ITEM ESTOQUE', produto);
+        } else {
+            data.criadoEm = agora;
+            data.criadoPor = usuarioAtual;
+            const docRef = await db.collection('estoque').add(data);
+            estoque.push({ id: docRef.id, ...data });
+            await adicionarLog('ADICIONOU ITEM ESTOQUE', produto);
+        }
+        
+        fecharModal('modalEstoque');
+        mostrar('estoque');
+    } catch (error) {
+        console.error('Erro ao salvar item do estoque:', error);
+        alert('❌ Erro ao salvar! Tente novamente.');
+    } finally {
+        hideLoading(btn, originalText);
+    }
+}
+
+async function excluirItemEstoque(id) {
+    if (!temPermissao('estoque', 'editar')) {
+        alert('❌ Você não tem permissão para excluir itens do estoque.');
+        return;
+    }
+    if (!confirm('⚠️ Excluir este item do estoque?')) return;
+    try {
+        const item = estoque.find(e => e.id === id);
+        if (!item) return;
+        await db.collection('estoque').doc(id).delete();
+        estoque = estoque.filter(e => e.id !== id);
+        await adicionarLog('EXCLUIU ITEM ESTOQUE', item.produto);
+        mostrar('estoque');
+    } catch (error) {
+        console.error('Erro ao excluir:', error);
+        alert('❌ Erro ao excluir!');
+    }
+}
+
+function verDetalhesEstoque(id) {
+    const item = estoque.find(e => e.id === id);
+    if (!item) return;
+    const podeVerCompra = podeVisualizarCompra();
+    const imgHtml = item.imagem ? `<img src="${item.imagem}" style="max-width:100%;max-height:200px;border-radius:4px;margin:5px 0;">` : 'Sem imagem';
+    alert(`📦 ${item.produto}
+Descrição: ${item.descricao || '-'}
+Categoria: ${item.categoria || '-'}
+Quantidade: ${item.quantidade || 0}
+Valor: ${podeVerCompra ? formatarValor(item.valorUnitario) : '••••'}
+Fornecedor: ${item.fornecedor || '-'}
+Coleção: ${item.colecao || '-'}
+Status: ${item.status || '-'}
+Código: ${item.codigoProduto || '-'}
+Etiqueta: ${item.numeroEtiqueta || '-'}
+Última Atualização: ${item.ultimaAtualizacao ? new Date(item.ultimaAtualizacao).toLocaleString() : '-'}
+Observações: ${item.observacoes || '-'}
+${imgHtml ? '🖼️ Imagem disponível' : ''}`);
+}
+
+// ============================================
+// RELATÓRIOS
 // ============================================
 function telaRelatorios() {
+    if (!temPermissao('relatorios', 'acesso')) {
+        return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2><p>Você não tem permissão para acessar esta tela.</p></div>`;
+    }
+    
     const etiquetas = getEtiquetas();
     const etiquetaOptions = etiquetas.map(e => `<option value="${e}">${e}</option>`).join('');
     
@@ -2103,7 +2896,7 @@ function telaRelatorios() {
                 <div class="filtro-item"><label>Data Fim</label><input type="date" id="filtroDataFim"></div>
                 <div class="filtro-item"><label>OC</label><input type="text" id="filtroOC" placeholder="Nº OC"></div>
                 <div class="filtro-item"><label>Pedido</label><input type="number" id="filtroPedido" placeholder="Nº Pedido"></div>
-                <div class="filtro-item"><label>Condição</label><select id="filtroCondicao"><option value="">Todas</option><option value="Em aberto">Em aberto</option><option value="Em produção">Em produção</option><option value="Cancelado">Cancelado</option><option value="Entregue">Entregue</option><option value="Em Rota">Em rota</option><option value="Pedido Retido">Pedido Retido</option></select></div>
+                <div class="filtro-item"><label>Condição</label><select id="filtroCondicao"><option value="">Todas</option>${condicaoLista.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
                 <div class="filtro-item"><label>Etiqueta</label><select id="filtroRelatorioEtiqueta"><option value="">Todas</option>${etiquetaOptions}</select></div>
                 <div class="filtro-actions"><button class="info" onclick="aplicarFiltrosRelatorio()">🔍 Filtrar</button><button class="success" onclick="exportarRelatoriosExcel()">📥 Excel</button><button onclick="gerarPDF()">🖨️ PDF</button></div>
             </div>
@@ -2147,13 +2940,13 @@ function aplicarFiltrosRelatorio() {
 }
 
 function gerarRelatorios(dados) {
+    const podeVerCompra = podeVisualizarCompra();
     const total = dados.length;
     const meses = {}; dados.forEach(l=>{ if(l.data){ let d=new Date(l.data); let m=d.toLocaleString('pt-BR',{month:'long',year:'numeric'}); meses[m]=(meses[m]||0)+1; } });
     const status = {}; dados.forEach(l=>{ let s=l.status||'PENDENTE'; status[s]=(status[s]||0)+1; });
     const cond = {}; dados.forEach(l=>{ let c=l.condicao||'SEM CONDIÇÃO'; cond[c]=(cond[c]||0)+1; });
     const cat = {}; dados.forEach(l=>{ let c=l.categoria||'SEM CATEGORIA'; cat[c]=(cat[c]||0)+1; });
     
-    // Top 8 Produtos mais pedidos
     const produtos = {};
     dados.forEach(l => {
         if (l.produtos) {
@@ -2164,7 +2957,6 @@ function gerarRelatorios(dados) {
     });
     const top8 = Object.entries(produtos).sort((a,b) => b[1] - a[1]).slice(0,8);
     
-    // Pedidos por Fornecedor
     const fornecedorCount = {};
     dados.forEach(l => {
         if (l.fornecedor) {
@@ -2215,8 +3007,9 @@ function gerarRelatorios(dados) {
 
 function exportarRelatoriosExcel() {
     if (lancamentos.length === 0) { alert('Não há dados!'); return; }
-    const wsData = [['Nº Pedido','Data','Cliente','OC','Fornecedor','Categoria','Itens','Status','Condição','Entrega','Etiqueta','Observações']];
-    lancamentos.forEach(l => { wsData.push([l.pedido||'', formatarData(l.data), l.cliente||'', l.oc||'', l.fornecedor||'', l.categoria||'', l.itens||'', l.status||'', l.condicao||'', formatarData(l.entrega), l.etiqueta||'', (l.observacoes||'').substring(0,100)]); });
+    const podeVerCompra = podeVisualizarCompra();
+    const wsData = [['Nº Pedido','Data','Cliente','OC','Fornecedor','Categoria','Itens','Status','Condição','Entrega','Etiqueta','Observações','Valor']];
+    lancamentos.forEach(l => { wsData.push([l.pedido||'', formatarData(l.data), l.cliente||'', l.oc||'', l.fornecedor||'', l.categoria||'', l.itens||'', l.status||'', l.condicao||'', formatarData(l.entrega), l.etiqueta||'', (l.observacoes||'').substring(0,100), podeVerCompra ? (l.valor||'') : '••••']); });
     const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(wsData); XLSX.utils.book_append_sheet(wb, ws, 'Relatório'); XLSX.writeFile(wb, `relatorio_${new Date().toISOString().slice(0,10)}.xlsx`);
     alert('Exportado!');
 }
@@ -2239,6 +3032,10 @@ function gerarPDF() {
 // DASHBOARD
 // ============================================
 function telaDashboard() {
+    if (!temPermissao('dashboard', 'acesso')) {
+        return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2><p>Você não tem permissão para acessar esta tela.</p></div>`;
+    }
+    
     return topBar() + `
         <div class="box">
             <h2>📈 Dashboard</h2>
@@ -2302,7 +3099,6 @@ function gerarDashboard(dados) {
     const tempoMedioPagamento = countPagamento > 0 ? (totalDiasPagamento / countPagamento).toFixed(1) : 0;
     const tempoMedioEntrega = countEntrega > 0 ? (totalDiasEntrega / countEntrega).toFixed(1) : 0;
     
-    // Tempo Médio por Fornecedor - apenas OC
     const fornecedoresTempos = {};
     dadosOC.forEach(l => {
         if (!l.fornecedor) return;
@@ -2317,7 +3113,6 @@ function gerarDashboard(dados) {
     });
     const rankingFornecedores = Object.entries(fornecedoresTempos).map(([n,d]) => ({ fornecedor: n, pedidos: d.count, prazoMedio: (d.total / d.count).toFixed(1) })).sort((a,b)=>a.prazoMedio-b.prazoMedio);
     
-    // Comparativo mensal
     const mesesMap = {};
     dados.forEach(l => {
         if (l.data && l.valor) {
@@ -2399,48 +3194,129 @@ function gerarDashboard(dados) {
 }
 
 // ============================================
-// USUÁRIOS E LOGS
+// USUÁRIOS (ATUALIZADO COM PERMISSÕES)
 // ============================================
 function telaUsuarios() {
+    if (!temPermissao('usuarios', 'acesso')) {
+        return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2><p>Você não tem permissão para acessar esta tela.</p></div>`;
+    }
+    
+    const podeEditar = temPermissao('usuarios', 'editar');
+    const podeVisualizar = temPermissao('usuarios', 'visualizar');
+    
     return topBar() + `
         <div class="box">
             <h2>👤 Gerenciar Usuários</h2>
+            ${podeEditar ? `
             <div class="form-grid">
                 <div class="form-group"><label class="required">Novo Usuário</label><input type="text" id="novo_usuario"></div>
                 <div class="form-group"><label>Senha</label><input type="password" id="nova_senha" placeholder="Deixe em branco"></div>
                 <div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarUsuario" onclick="adicionarUsuario()">➕ Adicionar</button></div>
             </div>
-            <div class="table-container"><table class="auto-layout"><thead><th>#</th><th>Usuário</th><th>Senha</th><th>Ações</th></thead><tbody>
-                ${usuarios.map((u,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(u.nome)}</td><td>${u.senha?'••••••':'Sem senha'}</td><td class="acoes-cell"><button class="small" data-tooltip="Editar usuário" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️</button><button class="small danger" data-tooltip="Excluir usuário" onclick="excluirUsuario('${u.id}')">🗑️</button></td></tr>`).join('')}
+            ` : ''}
+            <div class="table-container"><table class="auto-layout"><thead><th>#</th><th>Usuário</th><th>Perfil</th><th>Senha</th><th>Ações</th></thead><tbody>
+                ${usuarios.map((u,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(u.nome)}</td><td>${u.perfil || 'consultor'}</td><td>${u.senha?'••••••':'Sem senha'}</td><td class="acoes-cell">${podeEditar ? `<button class="small" data-tooltip="Editar usuário" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️</button><button class="small danger" data-tooltip="Excluir usuário" onclick="excluirUsuario('${u.id}')">🗑️</button>` : (podeVisualizar ? `<span class="time-ago">Visualização</span>` : '')}</td></tr>`).join('')}
             </tbody></table></div>
         </div>
     `;
 }
 
 function abrirModalEdicaoUsuario(id) {
+    if (!temPermissao('usuarios', 'editar')) {
+        alert('❌ Você não tem permissão para editar usuários.');
+        return;
+    }
     const u = usuarios.find(u => u.id === id);
     const modal = getElement('modalUsuarios');
     const content = getElement('modalUsuarioContent');
     if (!modal || !content) return;
-    content.innerHTML = `<div class="form-grid"><div class="form-group"><label>Nome</label><input type="text" id="edit_user_nome" value="${escapeHtml(u.nome)}"></div><div class="form-group"><label>Nova Senha</label><input type="password" id="edit_user_senha" placeholder="Deixe em branco"></div><div class="form-group"><label>Confirmar</label><input type="password" id="edit_user_confirm" placeholder="Digite novamente"></div></div><div style="text-align:right"><button class="success" id="btnSalvarUsuario" onclick="salvarEdicaoUsuario('${id}')">💾 SALVAR</button></div>`;
+    
+    const permissoesAtuais = u.permissoes || {};
+    const guiasHtml = GUIA_LISTA.map(g => {
+        const nivel = permissoesAtuais[g.id] || (g.id === 'usuarios' || g.id === 'logs' ? 'SEM ACESSO' : 'VISUALIZAR');
+        return `<div class="permissao-item">
+            <span class="guia-nome">${g.nome}</span>
+            <select data-guia="${g.id}">
+                ${NIVEL_ACESSO.map(n => `<option value="${n}" ${n === nivel ? 'selected' : ''}>${n}</option>`).join('')}
+            </select>
+        </div>`;
+    }).join('');
+    
+    content.innerHTML = `
+        <div class="form-grid">
+            <div class="form-group"><label>Nome</label><input type="text" id="edit_user_nome" value="${escapeHtml(u.nome)}"></div>
+            <div class="form-group"><label>Perfil</label>
+                <select id="edit_user_perfil">
+                    <option value="admin" ${u.perfil === 'admin' ? 'selected' : ''}>Admin</option>
+                    <option value="logistica" ${u.perfil === 'logistica' ? 'selected' : ''}>Logística</option>
+                    <option value="consultor" ${u.perfil === 'consultor' ? 'selected' : ''}>Consultor</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Nova Senha</label><input type="password" id="edit_user_senha" placeholder="Deixe em branco"></div>
+            <div class="form-group"><label>Confirmar</label><input type="password" id="edit_user_confirm" placeholder="Digite novamente"></div>
+        </div>
+        
+        <h3 style="margin-top:15px; font-size:14px;">🔐 Permissões por Guia</h3>
+        <p style="font-size:12px; color:#666; margin-bottom:10px;">Configure o nível de acesso para cada tela do sistema.</p>
+        <div class="permissoes-grid" id="permissoesGrid">
+            ${guiasHtml}
+        </div>
+        
+        <div style="text-align:right; margin-top:20px">
+            <button class="success" id="btnSalvarUsuario" onclick="salvarEdicaoUsuario('${id}')">💾 SALVAR</button>
+        </div>
+    `;
     modal.classList.add('active');
 }
 
 async function salvarEdicaoUsuario(id) {
+    if (!temPermissao('usuarios', 'editar')) {
+        alert('❌ Você não tem permissão para editar usuários.');
+        return;
+    }
     const btn = document.getElementById('btnSalvarUsuario');
     if (!btn) return;
     const originalText = showLoading(btn, 'Salvando...');
     
     try {
         const u = usuarios.find(u => u.id === id);
+        if (!u) throw new Error('Usuário não encontrado');
+        
         const novoNome = document.getElementById('edit_user_nome')?.value;
+        const novoPerfil = document.getElementById('edit_user_perfil')?.value || 'consultor';
         const novaSenha = document.getElementById('edit_user_senha')?.value;
         const confirm = document.getElementById('edit_user_confirm')?.value;
+        
         if (!novoNome) { alert('Nome obrigatório!'); return; }
-        if (usuarios.some((user,i)=>user.id !== id && user.nome===novoNome)) { alert('Nome já existe!'); return; }
+        if (usuarios.some((user,i) => user.id !== id && user.nome === novoNome)) { alert('Nome já existe!'); return; }
         u.nome = novoNome;
-        if (novaSenha) { if (novaSenha !== confirm) { alert('Senhas não conferem!'); return; } u.senha = novaSenha; }
+        u.perfil = novoPerfil;
+        
+        if (novaSenha) { 
+            if (novaSenha !== confirm) { alert('Senhas não conferem!'); return; } 
+            u.senha = novaSenha; 
+        }
+        
+        const permissoes = {};
+        const selects = document.querySelectorAll('#permissoesGrid select');
+        selects.forEach(sel => {
+            const guia = sel.dataset.guia;
+            permissoes[guia] = sel.value;
+        });
+        u.permissoes = permissoes;
+        
         await db.collection('usuarios').doc(id).update(u);
+        
+        if (usuarioAtual === u.nome) {
+            usuarioPermissao = u.perfil || 'consultor';
+            const menuEstoque = getElement('menuEstoque');
+            const menuUsuarios = getElement('menuUsuarios');
+            const menuLogs = getElement('menuLogs');
+            if (menuEstoque) menuEstoque.style.display = temPermissao('estoque', 'acesso') ? 'block' : 'none';
+            if (menuUsuarios) menuUsuarios.style.display = temPermissao('usuarios', 'acesso') ? 'block' : 'none';
+            if (menuLogs) menuLogs.style.display = temPermissao('logs', 'acesso') ? 'block' : 'none';
+        }
+        
         await adicionarLog('EDITOU USUÁRIO', u.nome);
         fecharModal('modalUsuarios');
         mostrar('usuarios');
@@ -2453,6 +3329,10 @@ async function salvarEdicaoUsuario(id) {
 }
 
 async function adicionarUsuario() {
+    if (!temPermissao('usuarios', 'editar')) {
+        alert('❌ Você não tem permissão para adicionar usuários.');
+        return;
+    }
     const btn = document.getElementById('btnAdicionarUsuario');
     if (!btn) return;
     const originalText = showLoading(btn, 'Salvando...');
@@ -2462,7 +3342,22 @@ async function adicionarUsuario() {
         let senha = document.getElementById('nova_senha')?.value || '';
         if (!nome) { alert('Digite um nome!'); return; }
         if (usuarios.some(u=>u.nome===nome)) { alert('Nome já existe!'); return; }
-        const novo = { nome, senha };
+        
+        const permissoesPadrao = {};
+        GUIA_LISTA.forEach(g => {
+            if (g.id === 'usuarios' || g.id === 'logs') {
+                permissoesPadrao[g.id] = 'SEM ACESSO';
+            } else {
+                permissoesPadrao[g.id] = 'VISUALIZAR';
+            }
+        });
+        
+        const novo = { 
+            nome, 
+            senha, 
+            perfil: 'consultor',
+            permissoes: permissoesPadrao
+        };
         const docRef = await db.collection('usuarios').add(novo);
         usuarios.push({ id: docRef.id, ...novo });
         await adicionarLog('ADICIONOU USUÁRIO', nome);
@@ -2476,6 +3371,10 @@ async function adicionarUsuario() {
 }
 
 async function excluirUsuario(id) {
+    if (!temPermissao('usuarios', 'editar')) {
+        alert('❌ Você não tem permissão para excluir usuários.');
+        return;
+    }
     if (usuarios.length <= 1) { alert('Não pode excluir o último!'); return; }
     const u = usuarios.find(u => u.id === id);
     if (u.nome === 'Admin') { alert('Não pode excluir o Admin!'); return; }
@@ -2485,11 +3384,14 @@ async function excluirUsuario(id) {
             usuarios = usuarios.filter(u => u.id !== id);
             if (usuarioAtual === u.nome) {
                 usuarioAtual = usuarios[0].nome;
-                usuarioPermissao = usuarioAtual === 'Admin' ? 'admin' : 'user';
+                usuarioPermissao = usuarioAtual === 'Admin' ? 'admin' : 
+                                   (usuarioAtual === 'Victor Hugo' ? 'logistica' : 'consultor');
+                const menuEstoque = getElement('menuEstoque');
                 const menuUsuarios = getElement('menuUsuarios');
                 const menuLogs = getElement('menuLogs');
-                if (menuUsuarios) menuUsuarios.style.display = usuarioAtual === 'Admin' ? 'block' : 'none';
-                if (menuLogs) menuLogs.style.display = usuarioAtual === 'Admin' ? 'block' : 'none';
+                if (menuEstoque) menuEstoque.style.display = temPermissao('estoque', 'acesso') ? 'block' : 'none';
+                if (menuUsuarios) menuUsuarios.style.display = temPermissao('usuarios', 'acesso') ? 'block' : 'none';
+                if (menuLogs) menuLogs.style.display = temPermissao('logs', 'acesso') ? 'block' : 'none';
             }
             await adicionarLog('EXCLUIU USUÁRIO', u.nome);
             mostrar('usuarios');
@@ -2500,11 +3402,24 @@ async function excluirUsuario(id) {
     }
 }
 
+// ============================================
+// LOGS
+// ============================================
 function telaLogs() {
-    return topBar() + `<div class="box"><h2>📋 Logs</h2><div class="log-viewer">${logs.slice().reverse().map(l=>`<div class="log-entry"><span class="log-time">[${new Date(l.data).toLocaleString()}]</span> <span class="log-user">${escapeHtml(l.usuario)}</span> <span class="log-action">${escapeHtml(l.acao)}</span>${l.detalhe?` - ${escapeHtml(l.detalhe)}`:''}</div>`).join('')}${logs.length===0?'<div>Nenhum log.</div>':''}</div><div class="mt-20"><button class="danger" onclick="limparLogs()">🗑️ Limpar Logs</button></div></div>`;
+    if (!temPermissao('logs', 'acesso')) {
+        return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2><p>Você não tem permissão para acessar esta tela.</p></div>`;
+    }
+    
+    const podeEditar = temPermissao('logs', 'editar');
+    
+    return topBar() + `<div class="box"><h2>📋 Logs</h2><div class="log-viewer">${logs.slice().reverse().map(l=>`<div class="log-entry"><span class="log-time">[${new Date(l.data).toLocaleString()}]</span> <span class="log-user">${escapeHtml(l.usuario)}</span> <span class="log-action">${escapeHtml(l.acao)}</span>${l.detalhe?` - ${escapeHtml(l.detalhe)}`:''}</div>`).join('')}${logs.length===0?'<div>Nenhum log.</div>':''}</div>${podeEditar ? `<div class="mt-20"><button class="danger" onclick="limparLogs()">🗑️ Limpar Logs</button></div>` : ''}</div>`;
 }
 
 async function limparLogs() {
+    if (!temPermissao('logs', 'editar')) {
+        alert('❌ Você não tem permissão para limpar logs.');
+        return;
+    }
     if (confirm('Limpar todos os logs?')) {
         try {
             const snapshot = await db.collection('logs').get();
@@ -2525,52 +3440,82 @@ async function limparLogs() {
 // FUNÇÃO PRINCIPAL
 // ============================================
 async function mostrar(tela) {
-    if (!usuarioAtual) { mostrarLogin(); return; }
+    if (!usuarioAtual) { 
+        mostrarLogin(); 
+        return; 
+    }
+    
+    if (!temPermissao(tela, 'acesso')) {
+        const main = getElement('main-content');
+        if (main) {
+            main.innerHTML = topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2><p>Você não tem permissão para acessar a tela "${tela}".</p></div>`;
+        }
+        return;
+    }
+    
     const main = getElement('main-content');
     if (!main) return;
     
-    switch(tela) {
-        case 'pedidos': main.innerHTML = telaPedidos(); setTimeout(() => renderPaginacaoPedidos(), 100); break;
-        case 'fornecedores': main.innerHTML = telaFornecedores(); break;
-        case 'lancamentos': main.innerHTML = telaLancamentos(); setTimeout(() => {
-            renderLancamentos();
-            toggleEtiquetaField();
-        }, 100); break;
-        case 'relatorios': main.innerHTML = telaRelatorios(); setTimeout(()=>aplicarFiltrosRelatorio(),100); break;
-        case 'dashboard': main.innerHTML = telaDashboard(); setTimeout(()=>aplicarFiltroDashboard(),100); break;
-        case 'anexos': main.innerHTML = telaAnexos(); break;
-        case 'usuarios': if (usuarioPermissao !== 'admin') { alert('Acesso negado!'); mostrar('dashboard'); return; } main.innerHTML = telaUsuarios(); break;
-        case 'logs': if (usuarioPermissao !== 'admin') { alert('Acesso negado!'); mostrar('dashboard'); return; } main.innerHTML = telaLogs(); break;
-        default: main.innerHTML = telaPedidos();
+    try {
+        switch(tela) {
+            case 'pedidos': main.innerHTML = telaPedidos(); setTimeout(() => renderPaginacaoPedidos(), 100); break;
+            case 'fornecedores': main.innerHTML = telaFornecedores(); break;
+            case 'lancamentos': main.innerHTML = telaLancamentos(); setTimeout(() => {
+                renderLancamentos();
+                toggleEtiquetaField();
+            }, 100); break;
+            case 'relatorios': main.innerHTML = telaRelatorios(); setTimeout(()=>aplicarFiltrosRelatorio(),100); break;
+            case 'dashboard': main.innerHTML = telaDashboard(); setTimeout(()=>aplicarFiltroDashboard(),100); break;
+            case 'estoque': main.innerHTML = telaEstoque(); setTimeout(() => renderPaginacaoEstoque(), 100); break;
+            case 'anexos': main.innerHTML = telaAnexos(); break;
+            case 'usuarios': main.innerHTML = telaUsuarios(); break;
+            case 'logs': main.innerHTML = telaLogs(); break;
+            default: main.innerHTML = telaPedidos();
+        }
+        await adicionarLog('VISUALIZOU', tela);
+    } catch (error) {
+        console.error('Erro ao mostrar tela:', error);
+        mostrarLogin('Erro ao carregar a tela. Tente novamente.');
     }
-    await adicionarLog('VISUALIZOU', tela);
 }
 
-carregarDados().then(() => {
+// ============================================
+// INICIALIZAÇÃO
+// ============================================
+mostrarLogin();
+
+setTimeout(async () => {
     if (restaurarSessao()) {
-        const usuario = usuarios.find(u => u.nome === usuarioAtual);
-        if (usuario) {
-            const permissao = localStorage.getItem('breton_permissao');
-            if (permissao) usuarioPermissao = permissao;
-            const menuUsuarios = getElement('menuUsuarios');
-            const menuLogs = getElement('menuLogs');
-            const sidebar = getElement('sidebar');
-            const footer = getElement('footer');
-            const footerVerse = getElement('footerVerse');
-            if (menuUsuarios) menuUsuarios.style.display = usuarioAtual === 'Admin' ? 'block' : 'none';
-            if (menuLogs) menuLogs.style.display = usuarioAtual === 'Admin' ? 'block' : 'none';
-            if (sidebar) sidebar.style.display = 'block';
-            if (footer) footer.style.display = 'block';
-            if (footerVerse) footerVerse.style.display = 'block';
-            mostrar('pedidos');
-        } else {
+        try {
+            await carregarDados();
+            const usuario = usuarios.find(u => u.nome === usuarioAtual);
+            if (usuario) {
+                const permissao = localStorage.getItem('breton_permissao');
+                if (permissao) usuarioPermissao = permissao;
+                const menuEstoque = getElement('menuEstoque');
+                const menuUsuarios = getElement('menuUsuarios');
+                const menuLogs = getElement('menuLogs');
+                const sidebar = getElement('sidebar');
+                const footer = getElement('footer');
+                const footerVerse = getElement('footerVerse');
+                if (menuEstoque) menuEstoque.style.display = temPermissao('estoque', 'acesso') ? 'block' : 'none';
+                if (menuUsuarios) menuUsuarios.style.display = temPermissao('usuarios', 'acesso') ? 'block' : 'none';
+                if (menuLogs) menuLogs.style.display = temPermissao('logs', 'acesso') ? 'block' : 'none';
+                if (sidebar) sidebar.style.display = 'block';
+                if (footer) footer.style.display = 'block';
+                if (footerVerse) footerVerse.style.display = 'block';
+                mostrar('pedidos');
+            } else {
+                limparSessao();
+                mostrarLogin('Sessão expirada. Faça login novamente.');
+            }
+        } catch (error) {
+            console.error('Erro ao restaurar sessão:', error);
             limparSessao();
-            mostrarLogin();
+            mostrarLogin('Erro ao restaurar sessão. Faça login novamente.');
         }
-    } else {
-        mostrarLogin();
     }
-});
+}, 100);
 </script>
 </body>
 </html>
