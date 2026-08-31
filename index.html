@@ -170,28 +170,33 @@
         td { border: 1px solid #ddd; padding: 4px 5px; white-space: nowrap; font-size: 12px; vertical-align: middle; }
         tr:hover { background: #fafafa; }
         
-        /* Tabela de Lançamentos - compacta e alinhada */
+        /* ===== LANÇAMENTOS – TABELA COMPACTA ===== */
         .lancamentos-table td {
-            padding: 3px 4px;
-            font-size: 11px;
+            padding: 2px 3px;
+            font-size: 10px;
             vertical-align: middle;
             white-space: nowrap;
-            max-width: 150px;
+            max-width: 120px;
             overflow: hidden;
             text-overflow: ellipsis;
+            line-height: 1.3;
+        }
+        .lancamentos-table th {
+            padding: 3px 3px;
+            font-size: 10px;
+            text-align: left;
+            white-space: nowrap;
         }
         .lancamentos-table td .acoes-cell {
             gap: 2px;
+            flex-wrap: nowrap;
         }
         .lancamentos-table td .acoes-cell button {
-            padding: 2px 4px;
-            font-size: 10px;
-            min-width: 20px;
-            height: 20px;
-        }
-        .lancamentos-table th {
-            padding: 5px 4px;
-            font-size: 10px;
+            padding: 1px 3px;
+            font-size: 9px;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 3px;
         }
         
         .estoque-table td {
@@ -464,8 +469,8 @@
             .top-bar .menu-toggle { display: inline-block; }
             .footer { left: 0; }
             .footer-verse { left: 10px; bottom: 4px; font-size: 8px; }
-            .lancamentos-table td, .lancamentos-table th { font-size: 10px; padding: 2px 3px; }
-            .lancamentos-table td .acoes-cell button { padding: 1px 3px; font-size: 9px; min-width: 18px; height: 18px; }
+            .lancamentos-table td, .lancamentos-table th { font-size: 9px; padding: 2px 2px; }
+            .lancamentos-table td .acoes-cell button { padding: 1px 2px; font-size: 8px; min-width: 16px; height: 16px; }
             .resumo-rapido { gap: 10px; font-size: 11px; padding: 6px 12px; }
             .filtros-grid { grid-template-columns: 1fr 1fr; }
             .charts-grid { grid-template-columns: 1fr; }
@@ -486,8 +491,8 @@
             .top-bar { flex-wrap: wrap; gap: 5px; }
             .system-title { font-size: 15px; }
             .system-user { font-size: 12px; }
-            .lancamentos-table td, .lancamentos-table th { font-size: 9px; padding: 2px 3px; }
-            .lancamentos-table td .acoes-cell button { padding: 1px 2px; font-size: 8px; min-width: 16px; height: 16px; }
+            .lancamentos-table td, .lancamentos-table th { font-size: 8px; padding: 1px 2px; }
+            .lancamentos-table td .acoes-cell button { padding: 1px 2px; font-size: 7px; min-width: 14px; height: 14px; }
             .pagination button { padding: 4px 8px; font-size: 11px; }
             .pagination span { font-size: 11px; }
             .kpi-grid { grid-template-columns: 1fr 1fr; }
@@ -879,68 +884,6 @@ async function carregarDados() {
         estoque = estoqueSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         movimentacoes = movimentacoesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        // Inicializar dados padrão se vazios
-        if (clientes.length === 0) {
-            const iniciais = [
-                { pedido: 1035, data: '2026-01-07', cliente: 'PAULA REGINA CASTRO MARTINS', cpf_cnpj: '616507732-34', contato: '(91) 99999-1234' },
-                { pedido: 1038, data: '2026-01-05', cliente: 'BARBARA EMILY LIMA GOUVEIA', cpf_cnpj: '014296542-10', contato: '(91) 99999-5678' }
-            ];
-            for (const c of iniciais) await db.collection('clientes').add(c);
-            clientes = iniciais;
-        }
-        if (fornecedores.length === 0) {
-            const iniciais = [
-                { cod: 'FOR001', nome: 'FEFER', cpf_cnpj: '', contato: '(11) 99999-1111', condicao: '28D', colecao: 'VERÃO 2026' },
-                { cod: 'FOR002', nome: 'BRETON MÓVEIS', cpf_cnpj: '12.345.678/0001-90', contato: '(11) 99999-2222', condicao: 'FATURADO', colecao: 'INVERNO 2026' }
-            ];
-            for (const f of iniciais) await db.collection('fornecedores').add(f);
-            fornecedores = iniciais;
-        }
-        if (lancamentos.length === 0) {
-            const iniciais = [
-                { pedido: 1035, data: '2026-01-07', mes: 'Janeiro/2026', tipo: 'OC', cliente: 'PAULA REGINA CASTRO MARTINS', oc: 'OC001', fornecedor: 'FEFER', categoria: 'SOFA', itens: 2, produtos: 'SOFA RETRÁTIL', valor: 3500, data_pagto: '2026-01-10', condicao: 'Em aberto', prev_fat: '2026-01-15', novo_prazo: '', prev_chegada: '2026-02-01', status: 'EM ROTA', data_fat: '', nf: 'NF001', transportadora: 'TRANSPORTADORA A', chegada: '', conferencia: '', entrega: '2026-02-05', prazo_final: '', usuario: 'Admin', criado: new Date().toISOString(), observacoes: '', produtoEstoqueId: '', statusSaida: '' },
-                { pedido: 1038, data: '2026-01-05', mes: 'Janeiro/2026', tipo: 'OC', cliente: 'BARBARA EMILY LIMA GOUVEIA', oc: 'OC002', fornecedor: 'BRETON MÓVEIS', categoria: 'CADEIRA', itens: 4, produtos: 'CADEIRA DE JANTAR', valor: 1200, data_pagto: '2026-01-08', condicao: 'Em aberto', prev_fat: '2026-01-10', novo_prazo: '', prev_chegada: '2026-01-20', status: 'ENTREGUE', data_fat: '2026-01-09', nf: 'NF002', transportadora: 'TRANSPORTADORA B', chegada: '2026-01-19', conferencia: '2026-01-19', entrega: '2026-01-20', prazo_final: '', usuario: 'Admin', criado: new Date().toISOString(), observacoes: '', produtoEstoqueId: '', statusSaida: '' }
-            ];
-            for (const l of iniciais) await db.collection('lancamentos').add(l);
-            lancamentos = iniciais;
-        }
-        if (usuarios.length === 0) {
-            const iniciais = [
-                { nome: 'Admin', senha: '123', perfil: 'admin' },
-                { nome: 'Joana', senha: '', perfil: 'consultor' },
-                { nome: 'Victor Hugo', senha: '', perfil: 'logistica', podeEditarLancamentos: false },
-                { nome: 'Mariana', senha: '', perfil: 'consultor' }
-            ];
-            for (const u of iniciais) await db.collection('usuarios').add(u);
-            usuarios = iniciais;
-        }
-        if (estoque.length === 0) {
-            const iniciais = [
-                { produto: 'SOFA RETRÁTIL', descricao: 'Sofá retrátil 3 lugares', categoria: 'SOFA', quantidade: 5, valorUnitario: 3500, fornecedor: 'FEFER', colecao: 'VERÃO 2026', status: 'Em Estoque', imagem: '', observacoes: '', criadoEm: new Date().toISOString(), criadoPor: 'Admin' }
-            ];
-            for (const e of iniciais) await db.collection('estoque').add(e);
-            estoque = iniciais;
-        }
-        if (movimentacoes.length === 0) {
-            for (const e of estoque) {
-                await db.collection('movimentacoes_estoque').add({
-                    produtoId: e.id,
-                    produtoNome: e.produto,
-                    tipo: 'entrada',
-                    motivo: 'Criação inicial',
-                    quantidade: e.quantidade || 0,
-                    quantidadeAnterior: 0,
-                    quantidadeNova: e.quantidade || 0,
-                    usuario: 'Sistema',
-                    data: e.criadoEm || new Date().toISOString(),
-                    documento: '',
-                    observacao: 'Criação do produto no estoque',
-                    status: 'confirmada'
-                });
-            }
-            movimentacoes = [];
-        }
-
         console.log('✅ Dados carregados com sucesso!');
         showLoadingOverlay(false);
         return true;
@@ -1275,22 +1218,27 @@ function abrirModalEdicaoPedido(id) {
 }
 async function salvarEdicaoCliente(id) {
     if (!temPermissao('pedidos', 'editar')) { alert('❌ Sem permissão.'); return; }
-    const c = clientes.find(c => c.id === id);
-    const novoPedido = parseInt(document.getElementById('edit_cli_pedido')?.value);
-    if (clientes.some(cli => cli.id !== id && cli.pedido === novoPedido)) { alert('Pedido já existe para outro cliente.'); return; }
-    c.pedido = novoPedido;
-    c.data = document.getElementById('edit_cli_data')?.value || c.data;
-    c.cliente = document.getElementById('edit_cli_nome')?.value?.toUpperCase() || c.cliente;
-    c.cpf_cnpj = document.getElementById('edit_cli_cpf')?.value || '';
-    c.contato = document.getElementById('edit_cli_contato')?.value || '';
-    await db.collection('clientes').doc(id).update(c);
-    await adicionarLog('EDITOU CLIENTE', c.cliente);
-    fecharModal('modalEditarPedido');
-    mostrar('pedidos');
+    const btn = document.querySelector('#modalEditarPedido .success');
+    if (!btn) return;
+    const original = showLoading(btn, 'Salvando...');
+    try {
+        const c = clientes.find(c => c.id === id);
+        const novoPedido = parseInt(document.getElementById('edit_cli_pedido')?.value);
+        if (clientes.some(cli => cli.id !== id && cli.pedido === novoPedido)) { alert('Pedido já existe para outro cliente.'); return; }
+        c.pedido = novoPedido;
+        c.data = document.getElementById('edit_cli_data')?.value || c.data;
+        c.cliente = document.getElementById('edit_cli_nome')?.value?.toUpperCase() || c.cliente;
+        c.cpf_cnpj = document.getElementById('edit_cli_cpf')?.value || '';
+        c.contato = document.getElementById('edit_cli_contato')?.value || '';
+        await db.collection('clientes').doc(id).update(c);
+        await adicionarLog('EDITOU CLIENTE', c.cliente);
+        fecharModal('modalEditarPedido');
+        mostrar('pedidos');
+    } catch (e) { alert('Erro ao salvar: ' + e.message); } finally { hideLoading(btn, original); }
 }
 
 // ============================================
-// TELA: FORNECEDORES - COM BUSCA CORRIGIDA
+// TELA: FORNECEDORES
 // ============================================
 function telaFornecedores() {
     if (!temPermissao('fornecedores', 'acesso')) {
@@ -1321,18 +1269,83 @@ function telaFornecedores() {
         </div>
     `;
 }
-// Função de busca corrigida para fornecedores
 function filtrarFornecedores() {
     const b = document.getElementById('buscaFornecedor')?.value.toLowerCase() || '';
-    const rows = document.querySelectorAll('#fornecedoresBody tr');
-    rows.forEach(row => {
-        const texto = row.textContent.toLowerCase();
-        row.style.display = texto.includes(b) ? '' : 'none';
+    document.querySelectorAll('#fornecedoresBody tr').forEach(r => {
+        r.style.display = r.textContent.toLowerCase().includes(b) ? '' : 'none';
     });
+}
+async function adicionarFornecedor() {
+    if (!temPermissao('fornecedores', 'editar')) { alert('❌ Sem permissão.'); return; }
+    const btn = document.querySelector('#telaFornecedores .success');
+    if (!btn) return;
+    const original = showLoading(btn, 'Salvando...');
+    try {
+        let nome = document.getElementById('for_nome')?.value;
+        if (!nome) { alert('Nome obrigatório.'); return; }
+        nome = nome.toUpperCase().trim();
+        const cnpj = document.getElementById('for_cpf')?.value || '';
+        if (fornecedores.some(f => f.nome === nome)) { alert('Fornecedor já existe.'); return; }
+        const novo = { cod: document.getElementById('for_cod')?.value || gerarProximoCodFornecedor(), nome, cpf_cnpj: cnpj, contato: document.getElementById('for_contato')?.value || '', condicao: document.getElementById('for_condicao')?.value || '', colecao: document.getElementById('for_colecao')?.value?.toUpperCase() || '' };
+        const doc = await db.collection('fornecedores').add(novo);
+        fornecedores.push({ id: doc.id, ...novo });
+        await adicionarLog('ADICIONOU FORNECEDOR', nome);
+        mostrar('fornecedores');
+    } catch (e) { alert('Erro ao salvar: ' + e.message); } finally { hideLoading(btn, original); }
+}
+async function excluirFornecedor(id) {
+    if (!temPermissao('fornecedores', 'editar')) { alert('❌ Sem permissão.'); return; }
+    if (!confirm('Excluir fornecedor?')) return;
+    const f = fornecedores.find(f => f.id === id);
+    await db.collection('fornecedores').doc(id).delete();
+    fornecedores = fornecedores.filter(f => f.id !== id);
+    await adicionarLog('EXCLUIU FORNECEDOR', f?.nome || '');
+    mostrar('fornecedores');
+}
+function abrirModalEdicaoFornecedor(id) {
+    if (!temPermissao('fornecedores', 'editar')) { alert('❌ Sem permissão.'); return; }
+    const f = fornecedores.find(f => f.id === id);
+    const modal = getElement('modalEditarFornecedor');
+    const content = getElement('modalEditarFornecedorContent');
+    if (!modal || !content) return;
+    content.innerHTML = `
+        <div class="form-grid">
+            <div class="form-group"><label>Código</label><input type="text" id="edit_for_cod" value="${f.cod}" readonly></div>
+            <div class="form-group"><label>Fornecedor</label><input type="text" id="edit_for_nome" value="${escapeHtml(f.nome)}" style="text-transform:uppercase"></div>
+            <div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_for_cpf" value="${escapeHtml(f.cpf_cnpj||'')}"></div>
+            <div class="form-group"><label>Contato</label><input type="text" id="edit_for_contato" value="${escapeHtml(f.contato||'')}"></div>
+            <div class="form-group"><label>Condição</label><select id="edit_for_condicao"><option value="">Selecione</option><option value="FATURADO" ${f.condicao==='FATURADO'?'selected':''}>FATURADO</option><option value="28D" ${f.condicao==='28D'?'selected':''}>28D</option><option value="ENTRADA + ENTREGA" ${f.condicao==='ENTRADA + ENTREGA'?'selected':''}>ENTRADA + ENTREGA</option><option value="ANTECIPADO" ${f.condicao==='ANTECIPADO'?'selected':''}>ANTECIPADO</option></select></div>
+            <div class="form-group"><label>Coleção</label><input type="text" id="edit_for_colecao" value="${escapeHtml(f.colecao||'')}" style="text-transform:uppercase"></div>
+        </div>
+        <div style="text-align:right;margin-top:20px"><button class="success" onclick="salvarEdicaoFornecedor('${id}')">💾 SALVAR</button></div>
+    `;
+    modal.classList.add('active');
+}
+async function salvarEdicaoFornecedor(id) {
+    if (!temPermissao('fornecedores', 'editar')) { alert('❌ Sem permissão.'); return; }
+    const btn = document.querySelector('#modalEditarFornecedor .success');
+    if (!btn) return;
+    const original = showLoading(btn, 'Salvando...');
+    try {
+        const f = fornecedores.find(f => f.id === id);
+        const novoNome = document.getElementById('edit_for_nome')?.value?.toUpperCase().trim() || f.nome;
+        const novoCnpj = document.getElementById('edit_for_cpf')?.value || '';
+        const novoContato = document.getElementById('edit_for_contato')?.value || '';
+        if (fornecedores.some(f2 => f2.id !== id && f2.nome === novoNome)) { alert('Fornecedor já existe.'); return; }
+        f.nome = novoNome;
+        f.cpf_cnpj = novoCnpj;
+        f.contato = novoContato;
+        f.condicao = document.getElementById('edit_for_condicao')?.value || '';
+        f.colecao = document.getElementById('edit_for_colecao')?.value?.toUpperCase() || '';
+        await db.collection('fornecedores').doc(id).update(f);
+        await adicionarLog('EDITOU FORNECEDOR', f.nome);
+        fecharModal('modalEditarFornecedor');
+        mostrar('fornecedores');
+    } catch (e) { alert('Erro ao salvar: ' + e.message); } finally { hideLoading(btn, original); }
 }
 
 // ============================================
-// TELA: LANÇAMENTOS - RESTAURADA COM SHOWROOM
+// TELA: LANÇAMENTOS (com SHOWROOM)
 // ============================================
 function toggleEtiquetaField() {
     const tipo = document.getElementById('lan_tipo');
@@ -1419,6 +1432,20 @@ function calcularPrevisaoChegada() {
 }
 function manualPrevChegada(input) {
     input.dataset.manual = 'true';
+}
+function calcularPrevisaoChegadaEdicao() {
+    const dataFat = document.getElementById('edit_lan_data_fat')?.value;
+    if (dataFat) {
+        const data = new Date(dataFat);
+        data.setDate(data.getDate() + 20);
+        const ano = data.getFullYear();
+        const mes = String(data.getMonth() + 1).padStart(2, '0');
+        const dia = String(data.getDate()).padStart(2, '0');
+        const prevChegadaInput = document.getElementById('edit_lan_prev_chegada');
+        if (prevChegadaInput && !prevChegadaInput.dataset.manual) {
+            prevChegadaInput.value = `${ano}-${mes}-${dia}`;
+        }
+    }
 }
 
 function telaLancamentos() {
@@ -1691,9 +1718,9 @@ function exportarLancamentosExcel() {
 
 async function adicionarLancamento() {
     if (!podeEditarLancamentos()) { alert('❌ Sem permissão.'); return; }
-    const btn = document.getElementById('btnSalvarLancamento');
+    const btn = document.querySelector('#telaLancamentos .salvar');
     if (!btn) return;
-    const originalText = showLoading(btn, 'Salvando...');
+    const original = showLoading(btn, 'Salvando...');
     try {
         if (!document.getElementById('lan_categoria')?.value) { alert('Categoria obrigatória.'); return; }
         if (!document.getElementById('lan_tipo')?.value) { alert('Tipo obrigatório.'); return; }
@@ -1762,7 +1789,7 @@ async function adicionarLancamento() {
         lancamentos.push({ id: doc.id, ...l });
         await adicionarLog('ADICIONOU LANÇAMENTO', `Pedido ${l.pedido} - ${tipo}`);
         mostrar('lancamentos');
-    } catch (e) { alert('Erro ao salvar: ' + e.message); } finally { hideLoading(btn, originalText); }
+    } catch (e) { alert('Erro ao salvar: ' + e.message); } finally { hideLoading(btn, original); }
 }
 async function excluirLancamento(id) {
     if (!podeEditarLancamentos()) { alert('❌ Sem permissão.'); return; }
@@ -1833,25 +1860,11 @@ function abrirModalEdicaoLancamento(id) {
     }, 50);
     modal.classList.add('active');
 }
-function calcularPrevisaoChegadaEdicao() {
-    const dataFat = document.getElementById('edit_lan_data_fat')?.value;
-    if (dataFat) {
-        const data = new Date(dataFat);
-        data.setDate(data.getDate() + 20);
-        const ano = data.getFullYear();
-        const mes = String(data.getMonth() + 1).padStart(2, '0');
-        const dia = String(data.getDate()).padStart(2, '0');
-        const prevChegadaInput = document.getElementById('edit_lan_prev_chegada');
-        if (prevChegadaInput && !prevChegadaInput.dataset.manual) {
-            prevChegadaInput.value = `${ano}-${mes}-${dia}`;
-        }
-    }
-}
 async function salvarEdicaoLancamento(id) {
     if (!podeEditarLancamentos()) { alert('❌ Sem permissão.'); return; }
-    const btn = document.getElementById('btnSalvarEdicaoLancamento');
+    const btn = document.querySelector('#modalEditarLancamento .success');
     if (!btn) return;
-    const originalText = showLoading(btn, 'Salvando...');
+    const original = showLoading(btn, 'Salvando...');
     try {
         const l = lancamentos.find(l => l.id === id);
         if (!l) throw new Error('Lançamento não encontrado');
@@ -1883,20 +1896,13 @@ async function salvarEdicaoLancamento(id) {
         l.observacoes = getValue('edit_lan_observacoes').substring(0, 100);
         l.editadoPor = usuarioAtual;
         l.editadoEm = new Date().toISOString();
-        const camposString = ['data', 'mes', 'tipo', 'cliente', 'oc', 'fornecedor', 'categoria', 'produtos', 'etiqueta', 'condicao', 'status', 'nf', 'transportadora', 'observacoes'];
-        camposString.forEach(campo => {
-            if (l[campo] === undefined) l[campo] = null;
-            if (l[campo] === '') l[campo] = null;
-        });
         await db.collection('lancamentos').doc(id).update(l);
         const index = lancamentos.findIndex(item => item.id === id);
         if (index !== -1) lancamentos[index] = l;
         await adicionarLog('EDITOU LANÇAMENTO', `Pedido ${l.pedido}`);
         fecharModal('modalEditarLancamento');
         mostrar('lancamentos');
-    } catch (error) {
-        alert(`❌ Erro ao salvar: ${error.message || 'Verifique o console'}`);
-    } finally { hideLoading(btn, originalText); }
+    } catch (e) { alert('Erro ao salvar: ' + e.message); } finally { hideLoading(btn, original); }
 }
 
 // ============================================
@@ -1987,7 +1993,7 @@ function limparBuscaAnexos() {
 }
 
 // ============================================
-// TELA: ESTOQUE
+// TELA: ESTOQUE (com movimentações)
 // ============================================
 function telaEstoque() {
     if (!temPermissao('estoque', 'acesso')) {
@@ -2241,7 +2247,6 @@ async function confirmarMovimentacao(tipo) {
             return;
         }
 
-        // Atualizar estoque
         await db.collection('estoque').doc(produtoId).update({
             quantidade: novaQuantidade,
             status: novaQuantidade <= 0 ? 'Indisponível' : novaQuantidade <= 2 ? 'Baixo Estoque' : 'Em Estoque',
@@ -2256,7 +2261,6 @@ async function confirmarMovimentacao(tipo) {
             estoque[idx].ultimaAtualizacao = new Date().toISOString();
         }
 
-        // Registrar movimentação
         const mov = {
             produtoId: produtoId,
             produtoNome: produto.produto,
@@ -2855,7 +2859,7 @@ function gerarLembretes() {
 }
 
 // ============================================
-// USUÁRIOS E LOGS (mantidos)
+// USUÁRIOS E LOGS
 // ============================================
 function telaUsuarios() {
     if (!temPermissao('usuarios', 'acesso')) return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2></div>`;
@@ -2930,34 +2934,41 @@ function abrirModalEdicaoUsuario(id) {
 }
 async function salvarEdicaoUsuario(id) {
     if (!temPermissao('usuarios', 'editar')) { alert('❌ Sem permissão.'); return; }
-    const u = usuarios.find(u => u.id === id);
-    const novoNome = document.getElementById('edit_user_nome')?.value;
-    const novoPerfil = document.getElementById('edit_user_perfil')?.value || 'consultor';
-    const novaSenha = document.getElementById('edit_user_senha')?.value;
-    const confirm = document.getElementById('edit_user_confirm')?.value;
-    const podeEditarLanc = document.getElementById('edit_user_podeEditarLanc')?.checked || false;
-    if (!novoNome) { alert('Nome obrigatório.'); return; }
-    if (usuarios.some((user,i) => user.id !== id && user.nome === novoNome)) { alert('Nome já existe.'); return; }
-    u.nome = novoNome;
-    u.perfil = novoPerfil;
-    u.podeEditarLancamentos = podeEditarLanc;
-    if (novaSenha) { if (novaSenha !== confirm) { alert('Senhas não conferem.'); return; } u.senha = novaSenha; }
-    const permissoes = {};
-    document.querySelectorAll('#permissoesGrid select').forEach(sel => { permissoes[sel.dataset.guia] = sel.value; });
-    u.permissoes = permissoes;
-    await db.collection('usuarios').doc(id).update(u);
-    if (usuarioAtual === u.nome) {
-        usuarioPermissao = u.perfil || 'consultor';
-        const menuEstoque = getElement('menuEstoque');
-        const menuUsuarios = getElement('menuUsuarios');
-        const menuLogs = getElement('menuLogs');
-        if (menuEstoque) menuEstoque.style.display = temPermissao('estoque', 'acesso') ? 'block' : 'none';
-        if (menuUsuarios) menuUsuarios.style.display = temPermissao('usuarios', 'acesso') ? 'block' : 'none';
-        if (menuLogs) menuLogs.style.display = temPermissao('logs', 'acesso') ? 'block' : 'none';
-    }
-    await adicionarLog('EDITOU USUÁRIO', u.nome);
-    fecharModal('modalUsuarios');
-    mostrar('usuarios');
+    const btn = document.querySelector('#modalUsuarios .success');
+    if (!btn) return;
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = 'Salvando...';
+    try {
+        const u = usuarios.find(u => u.id === id);
+        const novoNome = document.getElementById('edit_user_nome')?.value;
+        const novoPerfil = document.getElementById('edit_user_perfil')?.value || 'consultor';
+        const novaSenha = document.getElementById('edit_user_senha')?.value;
+        const confirm = document.getElementById('edit_user_confirm')?.value;
+        const podeEditarLanc = document.getElementById('edit_user_podeEditarLanc')?.checked || false;
+        if (!novoNome) { alert('Nome obrigatório.'); return; }
+        if (usuarios.some((user,i) => user.id !== id && user.nome === novoNome)) { alert('Nome já existe.'); return; }
+        u.nome = novoNome;
+        u.perfil = novoPerfil;
+        u.podeEditarLancamentos = podeEditarLanc;
+        if (novaSenha) { if (novaSenha !== confirm) { alert('Senhas não conferem.'); return; } u.senha = novaSenha; }
+        const permissoes = {};
+        document.querySelectorAll('#permissoesGrid select').forEach(sel => { permissoes[sel.dataset.guia] = sel.value; });
+        u.permissoes = permissoes;
+        await db.collection('usuarios').doc(id).update(u);
+        if (usuarioAtual === u.nome) {
+            usuarioPermissao = u.perfil || 'consultor';
+            const menuEstoque = getElement('menuEstoque');
+            const menuUsuarios = getElement('menuUsuarios');
+            const menuLogs = getElement('menuLogs');
+            if (menuEstoque) menuEstoque.style.display = temPermissao('estoque', 'acesso') ? 'block' : 'none';
+            if (menuUsuarios) menuUsuarios.style.display = temPermissao('usuarios', 'acesso') ? 'block' : 'none';
+            if (menuLogs) menuLogs.style.display = temPermissao('logs', 'acesso') ? 'block' : 'none';
+        }
+        await adicionarLog('EDITOU USUÁRIO', u.nome);
+        fecharModal('modalUsuarios');
+        mostrar('usuarios');
+    } catch (e) { alert('Erro ao salvar: ' + e.message); } finally { btn.disabled = false; btn.innerHTML = original; }
 }
 function telaLogs() {
     if (!temPermissao('logs', 'acesso')) return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2></div>`;
