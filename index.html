@@ -170,34 +170,18 @@
         td { border: 1px solid #ddd; padding: 4px 5px; white-space: nowrap; font-size: 12px; vertical-align: middle; }
         tr:hover { background: #fafafa; }
         
-        /* ===== LANÇAMENTOS – TABELA COMPACTA ===== */
         .lancamentos-table td {
-            padding: 2px 3px;
-            font-size: 10px;
+            padding: 3px 4px;
+            font-size: 11px;
             vertical-align: middle;
             white-space: nowrap;
-            max-width: 120px;
+            max-width: 150px;
             overflow: hidden;
             text-overflow: ellipsis;
-            line-height: 1.3;
         }
-        .lancamentos-table th {
-            padding: 3px 3px;
-            font-size: 10px;
-            text-align: left;
-            white-space: nowrap;
-        }
-        .lancamentos-table td .acoes-cell {
-            gap: 2px;
-            flex-wrap: nowrap;
-        }
-        .lancamentos-table td .acoes-cell button {
-            padding: 1px 3px;
-            font-size: 9px;
-            min-width: 18px;
-            height: 18px;
-            border-radius: 3px;
-        }
+        .lancamentos-table td .acoes-cell { gap: 2px; }
+        .lancamentos-table td .acoes-cell button { padding: 2px 4px; font-size: 10px; min-width: 20px; height: 20px; }
+        .lancamentos-table th { padding: 5px 4px; font-size: 10px; }
         
         .estoque-table td {
             padding: 4px 5px;
@@ -469,8 +453,8 @@
             .top-bar .menu-toggle { display: inline-block; }
             .footer { left: 0; }
             .footer-verse { left: 10px; bottom: 4px; font-size: 8px; }
-            .lancamentos-table td, .lancamentos-table th { font-size: 9px; padding: 2px 2px; }
-            .lancamentos-table td .acoes-cell button { padding: 1px 2px; font-size: 8px; min-width: 16px; height: 16px; }
+            .lancamentos-table td, .lancamentos-table th { font-size: 10px; padding: 2px 3px; }
+            .lancamentos-table td .acoes-cell button { padding: 1px 3px; font-size: 9px; min-width: 18px; height: 18px; }
             .resumo-rapido { gap: 10px; font-size: 11px; padding: 6px 12px; }
             .filtros-grid { grid-template-columns: 1fr 1fr; }
             .charts-grid { grid-template-columns: 1fr; }
@@ -491,8 +475,8 @@
             .top-bar { flex-wrap: wrap; gap: 5px; }
             .system-title { font-size: 15px; }
             .system-user { font-size: 12px; }
-            .lancamentos-table td, .lancamentos-table th { font-size: 8px; padding: 1px 2px; }
-            .lancamentos-table td .acoes-cell button { padding: 1px 2px; font-size: 7px; min-width: 14px; height: 14px; }
+            .lancamentos-table td, .lancamentos-table th { font-size: 9px; padding: 2px 3px; }
+            .lancamentos-table td .acoes-cell button { padding: 1px 2px; font-size: 8px; min-width: 16px; height: 16px; }
             .pagination button { padding: 4px 8px; font-size: 11px; }
             .pagination span { font-size: 11px; }
             .kpi-grid { grid-template-columns: 1fr 1fr; }
@@ -609,6 +593,7 @@ let movimentacoes = [];
 
 let usuarioAtual = null;
 let usuarioPermissao = null;
+let telaAtual = 'pedidos';
 let currentFilterType = "TODOS";
 let currentOrder = "data";
 let currentOrderDirection = "desc";
@@ -647,9 +632,11 @@ const categorias = [
 const tiposPedido = ['OC', 'SHOWROOM', 'ESTOQUE', 'ASSISTENCIA'];
 const mesesLista = (() => {
     const meses = [];
-    const anos = [2025, 2026, 2027];
+    const anoAtual = new Date().getFullYear();
+    const anoInicio = anoAtual - 2;
+    const anoFim = anoAtual + 5;
     const nomesMeses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-    for (const ano of anos) {
+    for (let ano = anoInicio; ano <= anoFim; ano++) {
         for (const mes of nomesMeses) meses.push(`${mes}/${ano}`);
     }
     return meses;
@@ -672,9 +659,12 @@ function formatarValor(valor) {
     if (valor === undefined || valor === null) return '-';
     return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
-function converterValorParaNumero(valorStr) {
-    if (!valorStr) return 0;
-    return parseFloat(valorStr.replace(/\./g, '').replace(',', '.')) || 0;
+function converterParaNumero(valor) {
+    if (valor === undefined || valor === null) return 0;
+    if (typeof valor === 'number') return valor;
+    let str = String(valor).trim().replace(/\./g, '').replace(',', '.');
+    let num = parseFloat(str);
+    return isNaN(num) ? 0 : num;
 }
 function formatarValorInput(input) {
     let valor = input.value;
@@ -716,12 +706,13 @@ function getEtiquetas() {
 }
 function isPedidoAtrasado(lancamento) {
     const status = (lancamento.status || '').toUpperCase().trim();
-    if (status === 'ENTREGUE') return false;
+    if (['ENTREGUE', 'CANCELADO', 'FINALIZADO/AG PGT'].includes(status)) return false;
     if (!lancamento.entrega) return false;
     const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
     const dataEntrega = new Date(lancamento.entrega);
-    const diffDias = Math.ceil((dataEntrega - hoje) / 86400000);
-    return diffDias <= 7;
+    dataEntrega.setHours(0, 0, 0, 0);
+    return dataEntrega < hoje;
 }
 function getStatusClass(status) {
     if (!status) return 'pendente';
@@ -884,6 +875,9 @@ async function carregarDados() {
         estoque = estoqueSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         movimentacoes = movimentacoesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+        // Se não houver dados, criar apenas se explicitamente solicitado (opcional)
+        // NÃO recriar automaticamente
+
         console.log('✅ Dados carregados com sucesso!');
         showLoadingOverlay(false);
         return true;
@@ -938,21 +932,7 @@ async function atualizarDados() {
         btn.innerHTML = '🔄 Carregando...';
         try {
             await carregarDados();
-            let guia = 'pedidos';
-            const active = document.querySelector('.sidebar button:focus');
-            if (active) {
-                const texto = active.textContent.trim().toLowerCase();
-                if (texto.includes('pedidos')) guia = 'pedidos';
-                else if (texto.includes('fornecedores')) guia = 'fornecedores';
-                else if (texto.includes('lançamentos')) guia = 'lancamentos';
-                else if (texto.includes('relatórios')) guia = 'relatorios';
-                else if (texto.includes('dashboard')) guia = 'dashboard';
-                else if (texto.includes('estoque')) guia = 'estoque';
-                else if (texto.includes('anexos')) guia = 'anexos';
-                else if (texto.includes('usuários')) guia = 'usuarios';
-                else if (texto.includes('logs')) guia = 'logs';
-            }
-            await mostrar(guia);
+            await mostrar(telaAtual);
             alert('✅ Dados atualizados com sucesso!');
         } catch (error) {
             alert('❌ Erro ao atualizar dados.');
@@ -1042,7 +1022,7 @@ async function fazerLogin() {
             return;
         }
         usuarioAtual = nome;
-        usuarioPermissao = nome === 'Admin' ? 'admin' : (nome === 'Victor Hugo' ? 'logistica' : 'consultor');
+        usuarioPermissao = usuario.perfil || 'consultor';
         salvarSessao(usuarioAtual, usuarioPermissao);
 
         const menuEstoque = getElement('menuEstoque');
@@ -1090,14 +1070,32 @@ function aplicarOrdenacao(lista) {
     return [...lista].sort((a, b) => {
         let valA, valB;
         switch(currentOrder) {
-            case 'data': valA = a.data || ''; valB = b.data || ''; break;
-            case 'cliente': valA = (a.cliente || '').toLowerCase(); valB = (b.cliente || '').toLowerCase(); break;
-            case 'pedido': valA = a.pedido || 0; valB = b.pedido || 0; break;
-            case 'status': valA = (a.status || '').toLowerCase(); valB = (b.status || '').toLowerCase(); break;
-            default: valA = a.data || ''; valB = b.data || '';
+            case 'data':
+                valA = a.data || '';
+                valB = b.data || '';
+                if (valA === valB) return 0;
+                return valA > valB ? 1 : -1;
+            case 'cliente':
+                valA = (a.cliente || '').toLowerCase();
+                valB = (b.cliente || '').toLowerCase();
+                if (valA === valB) return 0;
+                return valA > valB ? 1 : -1;
+            case 'pedido':
+                valA = parseInt(a.pedido) || 0;
+                valB = parseInt(b.pedido) || 0;
+                if (valA === valB) return 0;
+                return valA > valB ? 1 : -1;
+            case 'status':
+                valA = (a.status || '').toLowerCase();
+                valB = (b.status || '').toLowerCase();
+                if (valA === valB) return 0;
+                return valA > valB ? 1 : -1;
+            default:
+                valA = a.data || '';
+                valB = b.data || '';
+                if (valA === valB) return 0;
+                return valA > valB ? 1 : -1;
         }
-        if (currentOrderDirection === 'asc') return valA > valB ? 1 : -1;
-        else return valA < valB ? 1 : -1;
     });
 }
 function aplicarFiltroTipo(lista) {
@@ -1116,8 +1114,8 @@ function getLancamentosFiltrados() {
 }
 function calcularTotais(lista) {
     const totalPedidos = lista.length;
-    const totalValor = lista.reduce((acc, l) => acc + (l.valor || 0), 0);
-    const totalItens = lista.reduce((acc, l) => acc + (l.itens || 0), 0);
+    const totalValor = lista.reduce((acc, l) => acc + converterParaNumero(l.valor), 0);
+    const totalItens = lista.reduce((acc, l) => acc + converterParaNumero(l.itens), 0);
     const totalAtrasados = lista.filter(l => isPedidoAtrasado(l)).length;
     return { totalPedidos, totalValor, totalItens, totalAtrasados };
 }
@@ -1131,8 +1129,21 @@ function telaPedidos() {
     }
     const podeEditar = temPermissao('pedidos', 'editar');
     const podeVisualizar = temPermissao('pedidos', 'visualizar');
+    const busca = document.getElementById('buscaCliente')?.value?.toLowerCase() || '';
+    let clientesFiltrados = clientes;
+    if (busca) {
+        clientesFiltrados = clientes.filter(c =>
+            (c.pedido?.toString().includes(busca)) ||
+            (c.cliente?.toLowerCase().includes(busca)) ||
+            (c.cpf_cnpj?.toLowerCase().includes(busca)) ||
+            (c.contato?.toLowerCase().includes(busca))
+        );
+    }
+    const totalPages = Math.ceil(clientesFiltrados.length / rowsPerPagePedidos);
+    if (currentPagePedidos > totalPages) currentPagePedidos = 1;
     const start = (currentPagePedidos - 1) * rowsPerPagePedidos;
-    const clientesPagina = clientes.slice(start, start + rowsPerPagePedidos);
+    const clientesPagina = clientesFiltrados.slice(start, start + rowsPerPagePedidos);
+
     return topBar() + `
         <div class="box">
             <h2>📋 Pedidos</h2>
@@ -1157,10 +1168,21 @@ function telaPedidos() {
     `;
 }
 function renderPaginacaoPedidos() {
-    const total = Math.ceil(clientes.length / rowsPerPagePedidos);
+    const busca = document.getElementById('buscaCliente')?.value?.toLowerCase() || '';
+    let clientesFiltrados = clientes;
+    if (busca) {
+        clientesFiltrados = clientes.filter(c =>
+            (c.pedido?.toString().includes(busca)) ||
+            (c.cliente?.toLowerCase().includes(busca)) ||
+            (c.cpf_cnpj?.toLowerCase().includes(busca)) ||
+            (c.contato?.toLowerCase().includes(busca))
+        );
+    }
+    const total = Math.ceil(clientesFiltrados.length / rowsPerPagePedidos);
     const pag = document.getElementById('paginationPedidos');
     if (!pag) return;
     if (total <= 1) { pag.innerHTML = ''; return; }
+    if (currentPagePedidos > total) currentPagePedidos = 1;
     pag.innerHTML = `
         <button onclick="changePagePedidos(-1)" ${currentPagePedidos === 1 ? 'disabled' : ''}>◀</button>
         <span>Página ${currentPagePedidos} de ${total}</span>
@@ -1168,9 +1190,23 @@ function renderPaginacaoPedidos() {
     `;
 }
 function changePagePedidos(delta) {
-    const total = Math.ceil(clientes.length / rowsPerPagePedidos);
+    const busca = document.getElementById('buscaCliente')?.value?.toLowerCase() || '';
+    let clientesFiltrados = clientes;
+    if (busca) {
+        clientesFiltrados = clientes.filter(c =>
+            (c.pedido?.toString().includes(busca)) ||
+            (c.cliente?.toLowerCase().includes(busca)) ||
+            (c.cpf_cnpj?.toLowerCase().includes(busca)) ||
+            (c.contato?.toLowerCase().includes(busca))
+        );
+    }
+    const total = Math.ceil(clientesFiltrados.length / rowsPerPagePedidos);
     const newPage = currentPagePedidos + delta;
     if (newPage >= 1 && newPage <= total) { currentPagePedidos = newPage; mostrar('pedidos'); }
+}
+function filtrarClientes() {
+    currentPagePedidos = 1;
+    mostrar('pedidos');
 }
 async function adicionarCliente() {
     if (!temPermissao('pedidos', 'editar')) { alert('❌ Sem permissão.'); return; }
@@ -1179,24 +1215,32 @@ async function adicionarCliente() {
     const n = document.getElementById('cli_nome')?.value;
     if (!p || !d || !n) { alert('Preencha todos os campos obrigatórios.'); return; }
     if (clientes.some(c => c.pedido == p)) { alert('Pedido já cadastrado.'); return; }
-    const novo = { pedido: parseInt(p), data: d, cliente: n.toUpperCase(), cpf_cnpj: document.getElementById('cli_cpf')?.value || '', contato: document.getElementById('cli_contato')?.value || '' };
-    const doc = await db.collection('clientes').add(novo);
-    clientes.push({ id: doc.id, ...novo });
-    await adicionarLog('ADICIONOU CLIENTE', n);
-    mostrar('pedidos');
+    try {
+        const novo = { pedido: parseInt(p), data: d, cliente: n.toUpperCase(), cpf_cnpj: document.getElementById('cli_cpf')?.value || '', contato: document.getElementById('cli_contato')?.value || '' };
+        const doc = await db.collection('clientes').add(novo);
+        clientes.push({ id: doc.id, ...novo });
+        await adicionarLog('ADICIONOU CLIENTE', n);
+        mostrar('pedidos');
+        alert('✅ Cliente adicionado com sucesso!');
+    } catch (error) {
+        alert('❌ Erro ao adicionar cliente: ' + error.message);
+        console.error(error);
+    }
 }
 async function excluirCliente(id) {
     if (!temPermissao('pedidos', 'editar')) { alert('❌ Sem permissão.'); return; }
     if (!confirm('Excluir cliente?')) return;
-    const c = clientes.find(c => c.id === id);
-    await db.collection('clientes').doc(id).delete();
-    clientes = clientes.filter(c => c.id !== id);
-    await adicionarLog('EXCLUIU CLIENTE', c?.cliente || '');
-    mostrar('pedidos');
-}
-function filtrarClientes() {
-    const b = document.getElementById('buscaCliente')?.value.toLowerCase() || '';
-    document.querySelectorAll('#clientesBody tr').forEach(r => r.style.display = r.textContent.toLowerCase().includes(b) ? '' : 'none');
+    try {
+        const c = clientes.find(c => c.id === id);
+        await db.collection('clientes').doc(id).delete();
+        clientes = clientes.filter(c => c.id !== id);
+        await adicionarLog('EXCLUIU CLIENTE', c?.cliente || '');
+        mostrar('pedidos');
+        alert('✅ Cliente excluído.');
+    } catch (error) {
+        alert('❌ Erro ao excluir: ' + error.message);
+        console.error(error);
+    }
 }
 function abrirModalEdicaoPedido(id) {
     if (!temPermissao('pedidos', 'editar')) { alert('❌ Sem permissão.'); return; }
@@ -1212,13 +1256,13 @@ function abrirModalEdicaoPedido(id) {
             <div class="form-group"><label>CPF/CNPJ</label><input type="text" id="edit_cli_cpf" value="${escapeHtml(c.cpf_cnpj||'')}"></div>
             <div class="form-group"><label>Contato</label><input type="text" id="edit_cli_contato" value="${escapeHtml(c.contato||'')}"></div>
         </div>
-        <div style="text-align:right; margin-top:20px"><button class="success" onclick="salvarEdicaoCliente('${id}')">💾 SALVAR</button></div>
+        <div style="text-align:right; margin-top:20px"><button class="success" id="btnSalvarEdicaoCliente" onclick="salvarEdicaoCliente('${id}')">💾 SALVAR</button></div>
     `;
     modal.classList.add('active');
 }
 async function salvarEdicaoCliente(id) {
     if (!temPermissao('pedidos', 'editar')) { alert('❌ Sem permissão.'); return; }
-    const btn = document.querySelector('#modalEditarPedido .success');
+    const btn = document.getElementById('btnSalvarEdicaoCliente');
     if (!btn) return;
     const original = showLoading(btn, 'Salvando...');
     try {
@@ -1234,7 +1278,8 @@ async function salvarEdicaoCliente(id) {
         await adicionarLog('EDITOU CLIENTE', c.cliente);
         fecharModal('modalEditarPedido');
         mostrar('pedidos');
-    } catch (e) { alert('Erro ao salvar: ' + e.message); } finally { hideLoading(btn, original); }
+        alert('✅ Cliente atualizado.');
+    } catch (e) { alert('❌ Erro ao salvar: ' + e.message); } finally { hideLoading(btn, original); }
 }
 
 // ============================================
@@ -1246,6 +1291,16 @@ function telaFornecedores() {
     }
     const podeEditar = temPermissao('fornecedores', 'editar');
     const podeVisualizar = temPermissao('fornecedores', 'visualizar');
+    const busca = document.getElementById('buscaFornecedor')?.value?.toLowerCase() || '';
+    let fornecedoresFiltrados = fornecedores;
+    if (busca) {
+        fornecedoresFiltrados = fornecedores.filter(f =>
+            (f.nome?.toLowerCase().includes(busca)) ||
+            (f.cod?.toLowerCase().includes(busca)) ||
+            (f.cpf_cnpj?.toLowerCase().includes(busca)) ||
+            (f.contato?.toLowerCase().includes(busca))
+        );
+    }
     return topBar() + `
         <div class="box">
             <h2>📦 Fornecedores</h2>
@@ -1257,27 +1312,24 @@ function telaFornecedores() {
                 <div class="form-group"><label>Contato</label><input type="text" id="for_contato" placeholder="Telefone/Email"></div>
                 <div class="form-group"><label>Condição</label><select id="for_condicao"><option value="">Selecione</option><option value="FATURADO">FATURADO</option><option value="28D">28D</option><option value="ENTRADA + ENTREGA">ENTRADA + ENTREGA</option><option value="ANTECIPADO">ANTECIPADO</option></select></div>
                 <div class="form-group"><label>Coleção</label><input type="text" id="for_colecao" style="text-transform:uppercase"></div>
-                <div class="form-group" style="justify-content:flex-end"><button class="success" onclick="adicionarFornecedor()">➕ Adicionar</button></div>
+                <div class="form-group" style="justify-content:flex-end"><button class="success" id="btnSalvarFornecedor" onclick="adicionarFornecedor()">➕ Adicionar</button></div>
             </div>
             ` : ''}
             <div class="search-box"><input type="text" id="buscaFornecedor" placeholder="🔍 Buscar..." onkeyup="filtrarFornecedores()"></div>
             <div class="table-container">
                 <table class="auto-layout" id="tabelaFornecedores"><thead><th>#</th><th>COD</th><th>Fornecedor</th><th>CPF/CNPJ</th><th>Contato</th><th>Condição</th><th>Coleção</th><th>Ações</th></thead>
-                <tbody id="fornecedoresBody">${fornecedores.map((f,i)=>`<tr><td>${i+1}</td><td>${f.cod}</td><td>${escapeHtml(f.nome)}</td><td>${escapeHtml(f.cpf_cnpj||'-')}</td><td>${escapeHtml(f.contato||'-')}</td><td>${escapeHtml(f.condicao||'-')}</td><td>${escapeHtml(f.colecao||'-')}</td><td class="acoes-cell">${podeEditar ? `<button class="small" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" onclick="excluirFornecedor('${f.id}')">🗑️</button>` : (podeVisualizar ? '<span>Visualização</span>' : '')}</td></tr>`).join('')}</tbody>
+                <tbody id="fornecedoresBody">${fornecedoresFiltrados.map((f,i)=>`<tr><td>${i+1}</td><td>${f.cod}</td><td>${escapeHtml(f.nome)}</td><td>${escapeHtml(f.cpf_cnpj||'-')}</td><td>${escapeHtml(f.contato||'-')}</td><td>${escapeHtml(f.condicao||'-')}</td><td>${escapeHtml(f.colecao||'-')}</td><td class="acoes-cell">${podeEditar ? `<button class="small" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" onclick="excluirFornecedor('${f.id}')">🗑️</button>` : (podeVisualizar ? '<span>Visualização</span>' : '')}</td></tr>`).join('')}</tbody>
                 </table>
             </div>
         </div>
     `;
 }
 function filtrarFornecedores() {
-    const b = document.getElementById('buscaFornecedor')?.value.toLowerCase() || '';
-    document.querySelectorAll('#fornecedoresBody tr').forEach(r => {
-        r.style.display = r.textContent.toLowerCase().includes(b) ? '' : 'none';
-    });
+    mostrar('fornecedores');
 }
 async function adicionarFornecedor() {
     if (!temPermissao('fornecedores', 'editar')) { alert('❌ Sem permissão.'); return; }
-    const btn = document.querySelector('#telaFornecedores .success');
+    const btn = document.getElementById('btnSalvarFornecedor');
     if (!btn) return;
     const original = showLoading(btn, 'Salvando...');
     try {
@@ -1291,16 +1343,20 @@ async function adicionarFornecedor() {
         fornecedores.push({ id: doc.id, ...novo });
         await adicionarLog('ADICIONOU FORNECEDOR', nome);
         mostrar('fornecedores');
-    } catch (e) { alert('Erro ao salvar: ' + e.message); } finally { hideLoading(btn, original); }
+        alert('✅ Fornecedor adicionado!');
+    } catch (e) { alert('❌ Erro ao salvar: ' + e.message); console.error(e); } finally { hideLoading(btn, original); }
 }
 async function excluirFornecedor(id) {
     if (!temPermissao('fornecedores', 'editar')) { alert('❌ Sem permissão.'); return; }
     if (!confirm('Excluir fornecedor?')) return;
-    const f = fornecedores.find(f => f.id === id);
-    await db.collection('fornecedores').doc(id).delete();
-    fornecedores = fornecedores.filter(f => f.id !== id);
-    await adicionarLog('EXCLUIU FORNECEDOR', f?.nome || '');
-    mostrar('fornecedores');
+    try {
+        const f = fornecedores.find(f => f.id === id);
+        await db.collection('fornecedores').doc(id).delete();
+        fornecedores = fornecedores.filter(f => f.id !== id);
+        await adicionarLog('EXCLUIU FORNECEDOR', f?.nome || '');
+        mostrar('fornecedores');
+        alert('✅ Fornecedor excluído.');
+    } catch (e) { alert('❌ Erro ao excluir: ' + e.message); console.error(e); }
 }
 function abrirModalEdicaoFornecedor(id) {
     if (!temPermissao('fornecedores', 'editar')) { alert('❌ Sem permissão.'); return; }
@@ -1317,13 +1373,13 @@ function abrirModalEdicaoFornecedor(id) {
             <div class="form-group"><label>Condição</label><select id="edit_for_condicao"><option value="">Selecione</option><option value="FATURADO" ${f.condicao==='FATURADO'?'selected':''}>FATURADO</option><option value="28D" ${f.condicao==='28D'?'selected':''}>28D</option><option value="ENTRADA + ENTREGA" ${f.condicao==='ENTRADA + ENTREGA'?'selected':''}>ENTRADA + ENTREGA</option><option value="ANTECIPADO" ${f.condicao==='ANTECIPADO'?'selected':''}>ANTECIPADO</option></select></div>
             <div class="form-group"><label>Coleção</label><input type="text" id="edit_for_colecao" value="${escapeHtml(f.colecao||'')}" style="text-transform:uppercase"></div>
         </div>
-        <div style="text-align:right;margin-top:20px"><button class="success" onclick="salvarEdicaoFornecedor('${id}')">💾 SALVAR</button></div>
+        <div style="text-align:right;margin-top:20px"><button class="success" id="btnSalvarEdicaoFornecedor" onclick="salvarEdicaoFornecedor('${id}')">💾 SALVAR</button></div>
     `;
     modal.classList.add('active');
 }
 async function salvarEdicaoFornecedor(id) {
     if (!temPermissao('fornecedores', 'editar')) { alert('❌ Sem permissão.'); return; }
-    const btn = document.querySelector('#modalEditarFornecedor .success');
+    const btn = document.getElementById('btnSalvarEdicaoFornecedor');
     if (!btn) return;
     const original = showLoading(btn, 'Salvando...');
     try {
@@ -1341,7 +1397,8 @@ async function salvarEdicaoFornecedor(id) {
         await adicionarLog('EDITOU FORNECEDOR', f.nome);
         fecharModal('modalEditarFornecedor');
         mostrar('fornecedores');
-    } catch (e) { alert('Erro ao salvar: ' + e.message); } finally { hideLoading(btn, original); }
+        alert('✅ Fornecedor atualizado.');
+    } catch (e) { alert('❌ Erro ao salvar: ' + e.message); console.error(e); } finally { hideLoading(btn, original); }
 }
 
 // ============================================
@@ -1390,6 +1447,11 @@ function toggleEtiquetaField() {
 }
 function preencherClienteAuto() {
     const pedido = document.getElementById('lan_pedido')?.value;
+    if (!pedido) {
+        document.getElementById('lan_cliente').value = '';
+        document.getElementById('lan_data').value = '';
+        return;
+    }
     const cliente = buscarClientePorPedido(pedido);
     if (cliente) {
         document.getElementById('lan_cliente').value = cliente.cliente;
@@ -1563,7 +1625,7 @@ function telaLancamentos() {
                             </div>
                         </div>
                     </div>
-                    <div style="text-align:center;margin-top:20px"><button class="salvar" onclick="adicionarLancamento()">💾 SALVAR LANÇAMENTO</button></div>
+                    <div style="text-align:center;margin-top:20px"><button class="salvar" id="btnSalvarLancamento" onclick="adicionarLancamento()">💾 SALVAR LANÇAMENTO</button></div>
                 </div>
             </details>
             ` : ''}
@@ -1687,11 +1749,11 @@ function changePage(delta) {
     const newPage = currentPage + delta;
     if (newPage >= 1 && newPage <= total) { currentPage = newPage; renderLancamentos(); }
 }
-function setFilterType(tipo) { currentFilterType = tipo; currentPage=1; renderLancamentos(); }
-function setFilterEtiqueta(valor) { currentEtiquetaFilter = valor; currentPage=1; renderLancamentos(); }
-function setOrder(order) { currentOrder = order; currentPage=1; renderLancamentos(); }
-function toggleOrderDirection() { currentOrderDirection = currentOrderDirection==='asc'?'desc':'asc'; currentPage=1; renderLancamentos(); }
-function filtrarLancamentos() { currentPage=1; renderLancamentos(); }
+function setFilterType(tipo) { currentFilterType = tipo; currentPage = 1; renderLancamentos(); }
+function setFilterEtiqueta(valor) { currentEtiquetaFilter = valor; currentPage = 1; renderLancamentos(); }
+function setOrder(order) { currentOrder = order; currentPage = 1; renderLancamentos(); }
+function toggleOrderDirection() { currentOrderDirection = currentOrderDirection === 'asc' ? 'desc' : 'asc'; currentPage = 1; renderLancamentos(); }
+function filtrarLancamentos() { currentPage = 1; renderLancamentos(); }
 
 function exportarLancamentosExcel() {
     if (lancamentos.length === 0) { alert('Não há dados!'); return; }
@@ -1718,14 +1780,18 @@ function exportarLancamentosExcel() {
 
 async function adicionarLancamento() {
     if (!podeEditarLancamentos()) { alert('❌ Sem permissão.'); return; }
-    const btn = document.querySelector('#telaLancamentos .salvar');
-    if (!btn) return;
+    const btn = document.getElementById('btnSalvarLancamento');
+    if (!btn) { alert('❌ Botão de salvar não encontrado.'); return; }
     const original = showLoading(btn, 'Salvando...');
     try {
+        // Validações básicas
         if (!document.getElementById('lan_categoria')?.value) { alert('Categoria obrigatória.'); return; }
         if (!document.getElementById('lan_tipo')?.value) { alert('Tipo obrigatório.'); return; }
         if (!document.getElementById('lan_mes')?.value) { alert('Mês/Ano obrigatório.'); return; }
-        const valor = converterValorParaNumero(document.getElementById('lan_valor')?.value || '0,00');
+        const pedido = document.getElementById('lan_pedido')?.value;
+        if (!pedido) { alert('Pedido obrigatório.'); return; }
+
+        const valor = converterParaNumero(document.getElementById('lan_valor')?.value || '0,00');
         let obs = document.getElementById('lan_observacoes')?.value || '';
         if (obs.length > 100) obs = obs.substring(0,100);
         let etiqueta = '';
@@ -1752,65 +1818,76 @@ async function adicionarLancamento() {
         }
 
         let l = {
-            pedido: document.getElementById('lan_pedido')?.value,
-            data: document.getElementById('lan_data')?.value,
+            pedido: pedido,
+            data: document.getElementById('lan_data')?.value || new Date().toISOString().split('T')[0],
             mes: document.getElementById('lan_mes')?.value,
             tipo: tipo,
-            cliente: document.getElementById('lan_cliente')?.value,
-            oc: document.getElementById('lan_oc')?.value?.toUpperCase(),
-            fornecedor: document.getElementById('lan_fornecedor')?.value,
+            cliente: document.getElementById('lan_cliente')?.value || '',
+            oc: document.getElementById('lan_oc')?.value?.toUpperCase() || '',
+            fornecedor: document.getElementById('lan_fornecedor')?.value || '',
             categoria: document.getElementById('lan_categoria')?.value,
             itens: itens,
             produtos: produtos,
             etiqueta: etiqueta,
             valor: valor,
-            data_pagto: document.getElementById('lan_data_pagto')?.value,
-            condicao: document.getElementById('lan_condicao')?.value,
-            prev_fat: document.getElementById('lan_prev_fat')?.value,
-            data_fat: document.getElementById('lan_data_fat')?.value,
-            prev_chegada: document.getElementById('lan_prev_chegada')?.value,
-            novo_prazo: document.getElementById('lan_novo_prazo')?.value,
-            status: document.getElementById('lan_status')?.value,
-            nf: document.getElementById('lan_nf')?.value?.toUpperCase(),
-            transportadora: document.getElementById('lan_transportadora')?.value?.toUpperCase(),
-            chegada: document.getElementById('lan_chegada')?.value,
-            conferencia: document.getElementById('lan_conferencia')?.value,
-            entrega: document.getElementById('lan_entrega')?.value,
-            prazo_final: document.getElementById('lan_prazo_final')?.value,
+            data_pagto: document.getElementById('lan_data_pagto')?.value || null,
+            condicao: document.getElementById('lan_condicao')?.value || '',
+            prev_fat: document.getElementById('lan_prev_fat')?.value || null,
+            data_fat: document.getElementById('lan_data_fat')?.value || null,
+            prev_chegada: document.getElementById('lan_prev_chegada')?.value || null,
+            novo_prazo: document.getElementById('lan_novo_prazo')?.value || null,
+            status: document.getElementById('lan_status')?.value || '',
+            nf: document.getElementById('lan_nf')?.value?.toUpperCase() || '',
+            transportadora: document.getElementById('lan_transportadora')?.value?.toUpperCase() || '',
+            chegada: document.getElementById('lan_chegada')?.value || null,
+            conferencia: document.getElementById('lan_conferencia')?.value || null,
+            entrega: document.getElementById('lan_entrega')?.value || null,
+            prazo_final: document.getElementById('lan_prazo_final')?.value || null,
             observacoes: obs,
             usuario: usuarioAtual,
             criado: new Date().toISOString(),
             produtoEstoqueId: produtoEstoqueId,
             statusSaida: statusSaida
         };
-        if (!l.pedido) { alert('Pedido obrigatório.'); return; }
 
         const doc = await db.collection('lancamentos').add(l);
         lancamentos.push({ id: doc.id, ...l });
         await adicionarLog('ADICIONOU LANÇAMENTO', `Pedido ${l.pedido} - ${tipo}`);
         mostrar('lancamentos');
-    } catch (e) { alert('Erro ao salvar: ' + e.message); } finally { hideLoading(btn, original); }
+        alert('✅ Lançamento criado!');
+    } catch (e) {
+        alert('❌ Erro ao salvar: ' + e.message);
+        console.error(e);
+    } finally {
+        hideLoading(btn, original);
+    }
 }
 async function excluirLancamento(id) {
     if (!podeEditarLancamentos()) { alert('❌ Sem permissão.'); return; }
     if (!confirm('Excluir lançamento?')) return;
-    const l = lancamentos.find(l => l.id === id);
-    await db.collection('lancamentos').doc(id).delete();
-    lancamentos = lancamentos.filter(l => l.id !== id);
-    await adicionarLog('EXCLUIU LANÇAMENTO', l?.pedido || '');
-    mostrar('lancamentos');
+    try {
+        const l = lancamentos.find(l => l.id === id);
+        await db.collection('lancamentos').doc(id).delete();
+        lancamentos = lancamentos.filter(l => l.id !== id);
+        await adicionarLog('EXCLUIU LANÇAMENTO', l?.pedido || '');
+        mostrar('lancamentos');
+        alert('✅ Lançamento excluído.');
+    } catch (e) { alert('❌ Erro ao excluir: ' + e.message); console.error(e); }
 }
 async function duplicarLancamento(id) {
     if (!podeEditarLancamentos()) { alert('❌ Sem permissão.'); return; }
     if (!confirm('Duplicar?')) return;
-    const original = lancamentos.find(l => l.id === id);
-    if (!original) return;
-    const novoPedido = parseInt(original.pedido) + 1;
-    const novo = { ...original, id: undefined, pedido: novoPedido, observacoes: (original.observacoes ? '[CÓPIA] ' + original.observacoes.substring(0,90) : 'CÓPIA'), criado: new Date().toISOString(), usuario: usuarioAtual, statusSaida: original.tipo === 'SHOWROOM' ? 'pendente' : '' };
-    const doc = await db.collection('lancamentos').add(novo);
-    lancamentos.push({ id: doc.id, ...novo });
-    await adicionarLog('DUPLICOU LANÇAMENTO', `Pedido ${original.pedido} → ${novoPedido}`);
-    mostrar('lancamentos');
+    try {
+        const original = lancamentos.find(l => l.id === id);
+        if (!original) return;
+        const novoPedido = parseInt(original.pedido) + 1;
+        const novo = { ...original, id: undefined, pedido: novoPedido, observacoes: (original.observacoes ? '[CÓPIA] ' + original.observacoes.substring(0,90) : 'CÓPIA'), criado: new Date().toISOString(), usuario: usuarioAtual, statusSaida: original.tipo === 'SHOWROOM' ? 'pendente' : '' };
+        const doc = await db.collection('lancamentos').add(novo);
+        lancamentos.push({ id: doc.id, ...novo });
+        await adicionarLog('DUPLICOU LANÇAMENTO', `Pedido ${original.pedido} → ${novoPedido}`);
+        mostrar('lancamentos');
+        alert('✅ Lançamento duplicado.');
+    } catch (e) { alert('❌ Erro ao duplicar: ' + e.message); console.error(e); }
 }
 function abrirModalEdicaoLancamento(id) {
     if (!podeEditarLancamentos()) { alert('❌ Sem permissão.'); return; }
@@ -1853,7 +1930,7 @@ function abrirModalEdicaoLancamento(id) {
         <div class="form-group"><label>Observações</label><textarea id="edit_lan_observacoes" rows="2" maxlength="100" oninput="atualizarContadorCaracteres(this, 100)">${escapeHtml(l.observacoes||'')}</textarea>
             <div class="char-counter" id="editObsCharCounter">${(l.observacoes||'').length}/100</div>
         </div>
-    </div><div style="text-align:right;margin-top:20px"><p>Editando como: ${escapeHtml(usuarioAtual)}</p><button class="success" onclick="salvarEdicaoLancamento('${id}')">💾 SALVAR</button></div>`;
+    </div><div style="text-align:right;margin-top:20px"><p>Editando como: ${escapeHtml(usuarioAtual)}</p><button class="success" id="btnSalvarEdicaoLancamento" onclick="salvarEdicaoLancamento('${id}')">💾 SALVAR</button></div>`;
     setTimeout(() => {
         const editTextarea = document.getElementById('edit_lan_observacoes');
         if (editTextarea) atualizarContadorCaracteres(editTextarea, 100);
@@ -1862,8 +1939,8 @@ function abrirModalEdicaoLancamento(id) {
 }
 async function salvarEdicaoLancamento(id) {
     if (!podeEditarLancamentos()) { alert('❌ Sem permissão.'); return; }
-    const btn = document.querySelector('#modalEditarLancamento .success');
-    if (!btn) return;
+    const btn = document.getElementById('btnSalvarEdicaoLancamento');
+    if (!btn) { alert('❌ Botão de salvar não encontrado.'); return; }
     const original = showLoading(btn, 'Salvando...');
     try {
         const l = lancamentos.find(l => l.id === id);
@@ -1881,9 +1958,7 @@ async function salvarEdicaoLancamento(id) {
         l.produtos = getValue('edit_lan_produtos').toUpperCase() || l.produtos;
         l.etiqueta = getValue('edit_lan_etiqueta').toUpperCase() || l.etiqueta || '';
         let valorRaw = getValue('edit_lan_valor', '0,00');
-        let valorNumerico = parseFloat(valorRaw.replace(/\./g, '').replace(',', '.'));
-        if (isNaN(valorNumerico)) valorNumerico = 0;
-        l.valor = valorNumerico;
+        l.valor = converterParaNumero(valorRaw);
         const camposData = ['data_pagto', 'prev_fat', 'data_fat', 'prev_chegada', 'novo_prazo', 'chegada', 'conferencia', 'entrega', 'prazo_final'];
         camposData.forEach(campo => {
             const valor = getValue(`edit_lan_${campo}`);
@@ -1902,7 +1977,13 @@ async function salvarEdicaoLancamento(id) {
         await adicionarLog('EDITOU LANÇAMENTO', `Pedido ${l.pedido}`);
         fecharModal('modalEditarLancamento');
         mostrar('lancamentos');
-    } catch (e) { alert('Erro ao salvar: ' + e.message); } finally { hideLoading(btn, original); }
+        alert('✅ Lançamento atualizado.');
+    } catch (e) {
+        alert('❌ Erro ao salvar: ' + e.message);
+        console.error(e);
+    } finally {
+        hideLoading(btn, original);
+    }
 }
 
 // ============================================
@@ -1972,11 +2053,13 @@ function baixarAnexo(id) {
 }
 async function excluirAnexo(id, pedido) {
     if (!confirm('Excluir anexo?')) return;
-    await db.collection('anexos').doc(id).delete();
-    anexos = anexos.filter(a => a.id !== id);
-    await adicionarLog('EXCLUIU ANEXO', '');
-    fecharModal('modalAnexos');
-    abrirModalAnexos(pedido);
+    try {
+        await db.collection('anexos').doc(id).delete();
+        anexos = anexos.filter(a => a.id !== id);
+        await adicionarLog('EXCLUIU ANEXO', '');
+        fecharModal('modalAnexos');
+        abrirModalAnexos(pedido);
+    } catch (e) { alert('❌ Erro ao excluir: ' + e.message); console.error(e); }
 }
 function filtrarAnexos() {
     const b = document.getElementById('buscaAnexoPedido')?.value.toLowerCase() || '';
@@ -2002,15 +2085,33 @@ function telaEstoque() {
     const podeEditar = temPermissao('estoque', 'editar');
     const podeVerCompra = podeVisualizarCompra();
     const totalItens = estoque.length;
-    const totalEmEstoque = estoque.reduce((acc,e) => acc + (e.quantidade||0), 0);
-    const totalBaixo = estoque.filter(e => e.status === 'Baixo Estoque').reduce((acc,e) => acc + (e.quantidade||0), 0);
+    const totalEmEstoque = estoque.reduce((acc,e) => acc + converterParaNumero(e.quantidade), 0);
+    const totalBaixo = estoque.filter(e => e.status === 'Baixo Estoque').reduce((acc,e) => acc + converterParaNumero(e.quantidade), 0);
     const pendentes = lancamentos.filter(l => l.tipo === 'SHOWROOM' && l.statusSaida === 'pendente').length;
     const pendentesEntrada = movimentacoes.filter(m => m.tipo === 'entrada' && m.status === 'pendente').length;
     const pendentesDevolucao = movimentacoes.filter(m => m.tipo === 'devolucao' && m.status === 'pendente').length;
     const totalPendencias = pendentes + pendentesEntrada + pendentesDevolucao;
 
+    const busca = document.getElementById('buscaEstoque')?.value?.toLowerCase() || '';
+    const categoria = document.getElementById('filtroEstoqueCategoria')?.value || '';
+    const fornecedor = document.getElementById('filtroEstoqueFornecedor')?.value || '';
+    let estoqueFiltrado = estoque;
+    if (busca) {
+        estoqueFiltrado = estoqueFiltrado.filter(e =>
+            (e.produto?.toLowerCase().includes(busca)) ||
+            (e.descricao?.toLowerCase().includes(busca)) ||
+            (e.categoria?.toLowerCase().includes(busca)) ||
+            (e.fornecedor?.toLowerCase().includes(busca))
+        );
+    }
+    if (categoria) estoqueFiltrado = estoqueFiltrado.filter(e => e.categoria === categoria);
+    if (fornecedor) estoqueFiltrado = estoqueFiltrado.filter(e => e.fornecedor === fornecedor);
+
+    const totalPages = Math.ceil(estoqueFiltrado.length / rowsPerPageEstoque);
+    if (currentPageEstoque > totalPages) currentPageEstoque = 1;
     const start = (currentPageEstoque - 1) * rowsPerPageEstoque;
-    const estoquePagina = estoque.slice(start, start + rowsPerPageEstoque);
+    const estoquePagina = estoqueFiltrado.slice(start, start + rowsPerPageEstoque);
+
     const optionsCat = categorias.map(c => `<option value="${c}">${c}</option>`).join('');
     const optionsForn = fornecedores.map(f => `<option value="${escapeHtml(f.nome)}">${escapeHtml(f.nome)}</option>`).join('');
 
@@ -2095,10 +2196,26 @@ function telaEstoque() {
     `;
 }
 function renderPaginacaoEstoque() {
-    const total = Math.ceil(estoque.length / rowsPerPageEstoque);
+    const busca = document.getElementById('buscaEstoque')?.value?.toLowerCase() || '';
+    const categoria = document.getElementById('filtroEstoqueCategoria')?.value || '';
+    const fornecedor = document.getElementById('filtroEstoqueFornecedor')?.value || '';
+    let estoqueFiltrado = estoque;
+    if (busca) {
+        estoqueFiltrado = estoqueFiltrado.filter(e =>
+            (e.produto?.toLowerCase().includes(busca)) ||
+            (e.descricao?.toLowerCase().includes(busca)) ||
+            (e.categoria?.toLowerCase().includes(busca)) ||
+            (e.fornecedor?.toLowerCase().includes(busca))
+        );
+    }
+    if (categoria) estoqueFiltrado = estoqueFiltrado.filter(e => e.categoria === categoria);
+    if (fornecedor) estoqueFiltrado = estoqueFiltrado.filter(e => e.fornecedor === fornecedor);
+
+    const total = Math.ceil(estoqueFiltrado.length / rowsPerPageEstoque);
     const pag = document.getElementById('paginationEstoque');
     if (!pag) return;
     if (total <= 1) { pag.innerHTML = ''; return; }
+    if (currentPageEstoque > total) currentPageEstoque = 1;
     pag.innerHTML = `
         <button onclick="changePageEstoque(-1)" ${currentPageEstoque === 1 ? 'disabled' : ''}>◀</button>
         <span>Página ${currentPageEstoque} de ${total}</span>
@@ -2106,24 +2223,27 @@ function renderPaginacaoEstoque() {
     `;
 }
 function changePageEstoque(delta) {
-    const total = Math.ceil(estoque.length / rowsPerPageEstoque);
+    const busca = document.getElementById('buscaEstoque')?.value?.toLowerCase() || '';
+    const categoria = document.getElementById('filtroEstoqueCategoria')?.value || '';
+    const fornecedor = document.getElementById('filtroEstoqueFornecedor')?.value || '';
+    let estoqueFiltrado = estoque;
+    if (busca) {
+        estoqueFiltrado = estoqueFiltrado.filter(e =>
+            (e.produto?.toLowerCase().includes(busca)) ||
+            (e.descricao?.toLowerCase().includes(busca)) ||
+            (e.categoria?.toLowerCase().includes(busca)) ||
+            (e.fornecedor?.toLowerCase().includes(busca))
+        );
+    }
+    if (categoria) estoqueFiltrado = estoqueFiltrado.filter(e => e.categoria === categoria);
+    if (fornecedor) estoqueFiltrado = estoqueFiltrado.filter(e => e.fornecedor === fornecedor);
+    const total = Math.ceil(estoqueFiltrado.length / rowsPerPageEstoque);
     const newPage = currentPageEstoque + delta;
     if (newPage >= 1 && newPage <= total) { currentPageEstoque = newPage; mostrar('estoque'); }
 }
 function filtrarEstoque() {
-    const busca = document.getElementById('buscaEstoque')?.value.toLowerCase() || '';
-    const categoria = document.getElementById('filtroEstoqueCategoria')?.value || '';
-    const fornecedor = document.getElementById('filtroEstoqueFornecedor')?.value || '';
-    document.querySelectorAll('#estoqueBody tr').forEach(row => {
-        const texto = row.textContent.toLowerCase();
-        const cat = row.cells?.[3]?.textContent || '';
-        const forn = row.cells?.[6]?.textContent || '';
-        let show = true;
-        if (busca && !texto.includes(busca)) show = false;
-        if (categoria && cat !== categoria) show = false;
-        if (fornecedor && forn !== fornecedor) show = false;
-        row.style.display = show ? '' : 'none';
-    });
+    currentPageEstoque = 1;
+    mostrar('estoque');
 }
 
 // ============================================
@@ -2180,7 +2300,7 @@ function abrirModalMovimentacao(tipo, produtoId = null) {
         <div class="form-grid">${campos}</div>
         <div style="text-align:right;margin-top:20px">
             <button onclick="fecharModal('${modalId}')" class="outline" style="margin-right:10px;">Cancelar</button>
-            <button class="${btnClass}" onclick="confirmarMovimentacao('${tipo}')">${btnLabel}</button>
+            <button class="${btnClass}" id="btnConfirmarMov" onclick="confirmarMovimentacao('${tipo}')">${btnLabel}</button>
         </div>
     `;
     modal.classList.add('active');
@@ -2188,22 +2308,19 @@ function abrirModalMovimentacao(tipo, produtoId = null) {
 
 async function confirmarMovimentacao(tipo) {
     if (!temPermissao('estoque', 'editar')) { alert('❌ Sem permissão.'); return; }
-    const produtoId = document.getElementById('mov_produto')?.value;
-    const quantidade = parseFloat(document.getElementById('mov_quantidade')?.value) || 0;
-    const motivo = document.getElementById('mov_motivo')?.value || '';
-    const documento = document.getElementById('mov_documento')?.value || '';
-    const observacao = document.getElementById('mov_observacao')?.value || '';
-    if (!produtoId) { alert('Selecione um produto.'); return; }
-    if (quantidade <= 0) { alert('Quantidade deve ser maior que zero.'); return; }
-    if (!motivo) { alert('Motivo obrigatório.'); return; }
-
-    const btn = document.querySelector('.modal.active .success, .modal.active .danger, .modal.active .info');
+    const btn = document.getElementById('btnConfirmarMov');
     if (!btn) return;
-    const original = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = 'Salvando...';
-
+    const original = showLoading(btn, 'Processando...');
     try {
+        const produtoId = document.getElementById('mov_produto')?.value;
+        const quantidade = parseFloat(document.getElementById('mov_quantidade')?.value) || 0;
+        const motivo = document.getElementById('mov_motivo')?.value || '';
+        const documento = document.getElementById('mov_documento')?.value || '';
+        const observacao = document.getElementById('mov_observacao')?.value || '';
+        if (!produtoId) { alert('Selecione um produto.'); return; }
+        if (quantidade <= 0) { alert('Quantidade deve ser maior que zero.'); return; }
+        if (!motivo) { alert('Motivo obrigatório.'); return; }
+
         const produto = estoque.find(e => e.id === produtoId);
         if (!produto) { alert('Produto não encontrado.'); return; }
         let novaQuantidade = produto.quantidade || 0;
@@ -2216,6 +2333,9 @@ async function confirmarMovimentacao(tipo) {
             mensagem = `Entrada de ${quantidade} unidades. Motivo: ${motivo}`;
         } else if (tipo === 'saida') {
             if (quantidade > novaQuantidade && usuarioAtual !== 'Admin') { alert(`Estoque insuficiente. Disponível: ${novaQuantidade}`); return; }
+            if (quantidade > novaQuantidade && usuarioAtual === 'Admin') {
+                if (!confirm(`Estoque insuficiente (${novaQuantidade} disponível). Deseja prosseguir com saldo negativo?`)) return;
+            }
             novaQuantidade -= quantidade;
             mensagem = `Saída de ${quantidade} unidades. Motivo: ${motivo}`;
         } else if (tipo === 'devolucao') {
@@ -2242,8 +2362,7 @@ async function confirmarMovimentacao(tipo) {
             alert('✅ Devolução registrada como pendente. Aguardando confirmação da logística.');
             fecharModal(document.querySelector('.modal.active')?.id || '');
             mostrar('estoque');
-            btn.disabled = false;
-            btn.innerHTML = original;
+            hideLoading(btn, original);
             return;
         }
 
@@ -2281,7 +2400,8 @@ async function confirmarMovimentacao(tipo) {
 
         fecharModal(document.querySelector('.modal.active')?.id || '');
         mostrar('estoque');
-    } catch (e) { alert('Erro: ' + e.message); } finally { btn.disabled = false; btn.innerHTML = original; }
+        alert('✅ Movimentação realizada com sucesso!');
+    } catch (e) { alert('❌ Erro: ' + e.message); console.error(e); } finally { hideLoading(btn, original); }
 }
 
 // ============================================
@@ -2383,20 +2503,23 @@ async function confirmarPendenciaEntrada(movimentoId) {
     const produto = estoque.find(e => e.id === produtoId);
     if (!produto) { alert('Produto não encontrado.'); return; }
     const novaQuantidade = (produto.quantidade || 0) + quantidade;
-    await db.collection('estoque').doc(produtoId).update({
-        quantidade: novaQuantidade,
-        status: novaQuantidade <= 0 ? 'Indisponível' : novaQuantidade <= 2 ? 'Baixo Estoque' : 'Em Estoque',
-        ultimaAtualizacao: new Date().toISOString(),
-        editadoEm: new Date().toISOString(),
-        editadoPor: usuarioAtual
-    });
-    const idx = estoque.findIndex(e => e.id === produtoId);
-    if (idx !== -1) { estoque[idx].quantidade = novaQuantidade; estoque[idx].status = novaQuantidade <= 0 ? 'Indisponível' : novaQuantidade <= 2 ? 'Baixo Estoque' : 'Em Estoque'; }
-    await db.collection('movimentacoes_estoque').doc(movimentoId).update({ status: 'confirmada', quantidadeNova: novaQuantidade });
-    mov.status = 'confirmada';
-    await adicionarLog('CONFIRMOU ENTRADA', `${produto.produto} - ${quantidade}`);
-    fecharModal('modalPendenciasEstoque');
-    mostrar('estoque');
+    try {
+        await db.collection('estoque').doc(produtoId).update({
+            quantidade: novaQuantidade,
+            status: novaQuantidade <= 0 ? 'Indisponível' : novaQuantidade <= 2 ? 'Baixo Estoque' : 'Em Estoque',
+            ultimaAtualizacao: new Date().toISOString(),
+            editadoEm: new Date().toISOString(),
+            editadoPor: usuarioAtual
+        });
+        const idx = estoque.findIndex(e => e.id === produtoId);
+        if (idx !== -1) { estoque[idx].quantidade = novaQuantidade; estoque[idx].status = novaQuantidade <= 0 ? 'Indisponível' : novaQuantidade <= 2 ? 'Baixo Estoque' : 'Em Estoque'; }
+        await db.collection('movimentacoes_estoque').doc(movimentoId).update({ status: 'confirmada', quantidadeNova: novaQuantidade });
+        mov.status = 'confirmada';
+        await adicionarLog('CONFIRMOU ENTRADA', `${produto.produto} - ${quantidade}`);
+        fecharModal('modalPendenciasEstoque');
+        mostrar('estoque');
+        alert('✅ Entrada confirmada.');
+    } catch (e) { alert('❌ Erro: ' + e.message); console.error(e); }
 }
 
 async function confirmarPendenciaDevolucao(movimentoId) {
@@ -2407,20 +2530,23 @@ async function confirmarPendenciaDevolucao(movimentoId) {
     const produto = estoque.find(e => e.id === produtoId);
     if (!produto) { alert('Produto não encontrado.'); return; }
     const novaQuantidade = (produto.quantidade || 0) + quantidade;
-    await db.collection('estoque').doc(produtoId).update({
-        quantidade: novaQuantidade,
-        status: novaQuantidade <= 0 ? 'Indisponível' : novaQuantidade <= 2 ? 'Baixo Estoque' : 'Em Estoque',
-        ultimaAtualizacao: new Date().toISOString(),
-        editadoEm: new Date().toISOString(),
-        editadoPor: usuarioAtual
-    });
-    const idx = estoque.findIndex(e => e.id === produtoId);
-    if (idx !== -1) { estoque[idx].quantidade = novaQuantidade; estoque[idx].status = novaQuantidade <= 0 ? 'Indisponível' : novaQuantidade <= 2 ? 'Baixo Estoque' : 'Em Estoque'; }
-    await db.collection('movimentacoes_estoque').doc(movimentoId).update({ status: 'confirmada', quantidadeNova: novaQuantidade });
-    mov.status = 'confirmada';
-    await adicionarLog('CONFIRMOU DEVOLUÇÃO', `${produto.produto} - ${quantidade}`);
-    fecharModal('modalPendenciasEstoque');
-    mostrar('estoque');
+    try {
+        await db.collection('estoque').doc(produtoId).update({
+            quantidade: novaQuantidade,
+            status: novaQuantidade <= 0 ? 'Indisponível' : novaQuantidade <= 2 ? 'Baixo Estoque' : 'Em Estoque',
+            ultimaAtualizacao: new Date().toISOString(),
+            editadoEm: new Date().toISOString(),
+            editadoPor: usuarioAtual
+        });
+        const idx = estoque.findIndex(e => e.id === produtoId);
+        if (idx !== -1) { estoque[idx].quantidade = novaQuantidade; estoque[idx].status = novaQuantidade <= 0 ? 'Indisponível' : novaQuantidade <= 2 ? 'Baixo Estoque' : 'Em Estoque'; }
+        await db.collection('movimentacoes_estoque').doc(movimentoId).update({ status: 'confirmada', quantidadeNova: novaQuantidade });
+        mov.status = 'confirmada';
+        await adicionarLog('CONFIRMOU DEVOLUÇÃO', `${produto.produto} - ${quantidade}`);
+        fecharModal('modalPendenciasEstoque');
+        mostrar('estoque');
+        alert('✅ Devolução confirmada.');
+    } catch (e) { alert('❌ Erro: ' + e.message); console.error(e); }
 }
 
 // ============================================
@@ -2498,7 +2624,7 @@ function abrirModalEstoque(id = null) {
             <div class="form-group" style="grid-column:span 2;"><label>Imagem</label>${imagemHtml}<input type="file" id="estoque_imagem" accept="image/*" onchange="previewImagemEstoque(event)" style="margin-top:5px;"><input type="hidden" id="estoque_imagem_remover" value="false"></div>
             <div class="form-group" style="grid-column:span 2;"><label>Observações</label><textarea id="estoque_observacoes" rows="2">${escapeHtml(item?.observacoes||'')}</textarea></div>
         </div>
-        <div style="text-align:right;margin-top:20px"><button class="success" onclick="salvarItemEstoque('${id||''}')">💾 SALVAR</button></div>
+        <div style="text-align:right;margin-top:20px"><button class="success" id="btnSalvarEstoque" onclick="salvarItemEstoque('${id||''}')">💾 SALVAR</button></div>
     `;
     modal.classList.add('active');
 }
@@ -2520,17 +2646,15 @@ function previewImagemEstoque(event) {
 }
 async function salvarItemEstoque(id) {
     if (!temPermissao('estoque', 'editar')) { alert('❌ Sem permissão.'); return; }
-    const btn = document.querySelector('#modalEstoque .success');
+    const btn = document.getElementById('btnSalvarEstoque');
     if (!btn) return;
-    const original = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = 'Salvando...';
+    const original = showLoading(btn, 'Salvando...');
     try {
         const produto = document.getElementById('estoque_produto')?.value?.toUpperCase().trim();
         const descricao = document.getElementById('estoque_descricao')?.value?.trim() || '';
         const categoria = document.getElementById('estoque_categoria')?.value;
         const quantidade = parseInt(document.getElementById('estoque_quantidade')?.value) || 0;
-        const valor = converterValorParaNumero(document.getElementById('estoque_valor')?.value || '0,00');
+        const valor = converterParaNumero(document.getElementById('estoque_valor')?.value || '0,00');
         const fornecedor = document.getElementById('estoque_fornecedor')?.value || '';
         const colecao = document.getElementById('estoque_colecao')?.value?.toUpperCase().trim() || '';
         const status = document.getElementById('estoque_status')?.value || 'Em Estoque';
@@ -2562,20 +2686,24 @@ async function salvarItemEstoque(id) {
         }
         fecharModal('modalEstoque');
         mostrar('estoque');
-    } catch (e) { alert('Erro: ' + e.message); } finally { btn.disabled = false; btn.innerHTML = original; }
+        alert('✅ Item salvo com sucesso!');
+    } catch (e) { alert('❌ Erro: ' + e.message); console.error(e); } finally { hideLoading(btn, original); }
 }
 async function excluirItemEstoque(id) {
     if (!temPermissao('estoque', 'editar')) { alert('❌ Sem permissão.'); return; }
     if (!confirm('Excluir item e histórico?')) return;
-    const item = estoque.find(e => e.id === id);
-    if (!item) return;
-    const movs = movimentacoes.filter(m => m.produtoId === id);
-    for (const m of movs) await db.collection('movimentacoes_estoque').doc(m.id).delete();
-    await db.collection('estoque').doc(id).delete();
-    estoque = estoque.filter(e => e.id !== id);
-    movimentacoes = movimentacoes.filter(m => m.produtoId !== id);
-    await adicionarLog('EXCLUIU ITEM ESTOQUE', item.produto);
-    mostrar('estoque');
+    try {
+        const item = estoque.find(e => e.id === id);
+        if (!item) return;
+        const movs = movimentacoes.filter(m => m.produtoId === id);
+        for (const m of movs) await db.collection('movimentacoes_estoque').doc(m.id).delete();
+        await db.collection('estoque').doc(id).delete();
+        estoque = estoque.filter(e => e.id !== id);
+        movimentacoes = movimentacoes.filter(m => m.produtoId !== id);
+        await adicionarLog('EXCLUIU ITEM ESTOQUE', item.produto);
+        mostrar('estoque');
+        alert('✅ Item excluído.');
+    } catch (e) { alert('❌ Erro: ' + e.message); console.error(e); }
 }
 
 // ============================================
@@ -2679,7 +2807,7 @@ function gerarRelatorios(dados) {
     const fornRank = {}; dados.forEach(l=>{ if(l.fornecedor) fornRank[l.fornecedor]=(fornRank[l.fornecedor]||0)+1; });
     const topForn = Object.entries(fornRank).sort((a,b)=>b[1]-a[1]).slice(0,5);
     document.getElementById('conteudoRelatorios').innerHTML = `
-        <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Total Itens</h4><div class="value">${dados.reduce((a,l)=>a+(l.itens||0),0)}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${dados.filter(l=>l.status==='ENTREGUE').length}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${dados.filter(l=>l.status==='EM ABERTO'||!l.status).length}</div></div></div>
+        <div class="kpi-grid"><div class="kpi-card"><h4>Total Pedidos</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>Total Itens</h4><div class="value">${dados.reduce((a,l)=>a+converterParaNumero(l.itens),0)}</div></div><div class="kpi-card"><h4>Entregues</h4><div class="value">${dados.filter(l=>l.status==='ENTREGUE').length}</div></div><div class="kpi-card"><h4>Pendentes</h4><div class="value">${dados.filter(l=>l.status==='EM ABERTO'||!l.status).length}</div></div></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:20px 0">
             <div class="chart-container"><h4>📅 Pedidos por Mês</h4><table>${Object.entries(meses).map(([m,q])=>`<tr><td>${m}</td><td>${q}</td></tr>`).join('')}</table></div>
             <div class="chart-container"><h4>📌 Status</h4><table>${Object.entries(status).map(([s,q])=>`<tr><td>${s}</td><td>${q}</td></tr>`).join('')}</table></div>
@@ -2702,7 +2830,7 @@ function exportarRelatoriosExcel() {
     const wsData = [['Pedido','Data','Cliente','OC','Fornecedor','Categoria','Itens','Status','Condição','Entrega','Etiqueta','Observações','Valor']];
     lancamentos.forEach(l => { wsData.push([l.pedido||'', formatarData(l.data), l.cliente||'', l.oc||'', l.fornecedor||'', l.categoria||'', l.itens||'', l.status||'', l.condicao||'', formatarData(l.entrega), l.etiqueta||'', (l.observacoes||'').substring(0,100), podeVerCompra ? (l.valor||'') : '••••']); });
     const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(wsData); XLSX.utils.book_append_sheet(wb, ws, 'Relatório'); XLSX.writeFile(wb, `relatorio_${new Date().toISOString().slice(0,10)}.xlsx`);
-    alert('Exportado!');
+    alert('✅ Exportado!');
 }
 function gerarPDF() {
     const elemento = document.getElementById('conteudoRelatorios');
@@ -2765,12 +2893,17 @@ function aplicarFiltroDashboard() {
     gerarDashboard(dados);
 }
 function gerarDashboard(dados) {
+    if (window.graficoStatus) { window.graficoStatus.destroy(); window.graficoStatus = null; }
+    if (window.graficoTipo) { window.graficoTipo.destroy(); window.graficoTipo = null; }
+    if (window.graficoCondicao) { window.graficoCondicao.destroy(); window.graficoCondicao = null; }
+    if (window.graficoMensal) { window.graficoMensal.destroy(); window.graficoMensal = null; }
+
     const dadosParaCalculo = dados.filter(l => l.tipo !== 'SHOWROOM');
     const dadosOC = dados.filter(l => l.tipo === 'OC');
     const lembretes = gerarLembretes();
     const total = dados.length;
     const entregues = dados.filter(l => l.status === 'ENTREGUE').length;
-    const atrasados = dados.filter(l => l.status === 'ATRASADO').length;
+    const atrasados = dados.filter(l => isPedidoAtrasado(l)).length;
     const pendentes = dados.filter(l => l.status === 'EM ABERTO' || l.status === 'EM ROTA' || !l.status).length;
     let totalDiasPagamento = 0, countPagamento = 0, totalDiasEntrega = 0, countEntrega = 0;
     dadosParaCalculo.forEach(l => {
@@ -2799,17 +2932,14 @@ function gerarDashboard(dados) {
             const data = new Date(l.data);
             const mesAno = `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}`;
             if (!mesesMap[mesAno]) mesesMap[mesAno] = { total: 0, count: 0 };
-            mesesMap[mesAno].total += l.valor;
+            mesesMap[mesAno].total += converterParaNumero(l.valor);
             mesesMap[mesAno].count += 1;
         }
     });
     const labelsMeses = Object.keys(mesesMap).sort().slice(-6);
     const valoresMeses = labelsMeses.map(m => mesesMap[m].total);
     const countMeses = labelsMeses.map(m => mesesMap[m].count);
-    if (window.graficoStatus) window.graficoStatus.destroy();
-    if (window.graficoTipo) window.graficoTipo.destroy();
-    if (window.graficoCondicao) window.graficoCondicao.destroy();
-    if (window.graficoMensal) window.graficoMensal.destroy();
+
     document.getElementById('conteudoDashboard').innerHTML = `
         <div class="lembretes-bar">${lembretes.map(l=>`<span class="lembrete-item ${l.tipo}">${l.icon} ${l.msg}</span>`).join(' | ')}${lembretes.length===0?'✅ Nenhum lembrete':''}</div>
         <div class="kpi-grid"><div class="kpi-card"><h4>📊 TOTAL</h4><div class="value">${total}</div></div><div class="kpi-card"><h4>✅ ENTREGUES</h4><div class="value">${entregues}</div></div><div class="kpi-card"><h4>⚠️ ATRASADOS</h4><div class="value">${atrasados}</div></div><div class="kpi-card"><h4>⏳ PENDENTES</h4><div class="value">${pendentes}</div></div></div>
@@ -2853,7 +2983,7 @@ function gerarLembretes() {
             else if (diff === 1) lembretes.push({tipo:'alerta-1d', icon:'🟠', msg:`AMANHÃ: Pedido #${l.pedido} - Entrega`});
             else if (diff <= 7 && diff > 1) lembretes.push({tipo:'alerta-7d', icon:'🟡', msg:`${diff}d: Pedido #${l.pedido} - Entrega`});
         }
-        if (l.status === 'ATRASADO') lembretes.push({tipo:'urgente', icon:'⚠️', msg:`ATRASADO: Pedido #${l.pedido}`});
+        if (isPedidoAtrasado(l)) lembretes.push({tipo:'urgente', icon:'⚠️', msg:`ATRASADO: Pedido #${l.pedido}`});
     });
     return lembretes.slice(0,8);
 }
@@ -2885,12 +3015,15 @@ async function adicionarUsuario() {
     const senha = document.getElementById('nova_senha')?.value || '';
     if (!nome) { alert('Digite um nome.'); return; }
     if (usuarios.some(u => u.nome === nome)) { alert('Usuário já existe.'); return; }
-    const permissoes = {}; GUIA_LISTA.forEach(g => { if (g.id === 'usuarios' || g.id === 'logs') permissoes[g.id] = 'SEM ACESSO'; else permissoes[g.id] = 'VISUALIZAR'; });
-    const novo = { nome, senha, perfil: 'consultor', permissoes, podeEditarLancamentos: false };
-    const doc = await db.collection('usuarios').add(novo);
-    usuarios.push({ id: doc.id, ...novo });
-    await adicionarLog('ADICIONOU USUÁRIO', nome);
-    mostrar('usuarios');
+    try {
+        const permissoes = {}; GUIA_LISTA.forEach(g => { if (g.id === 'usuarios' || g.id === 'logs') permissoes[g.id] = 'SEM ACESSO'; else permissoes[g.id] = 'VISUALIZAR'; });
+        const novo = { nome, senha, perfil: 'consultor', permissoes, podeEditarLancamentos: false };
+        const doc = await db.collection('usuarios').add(novo);
+        usuarios.push({ id: doc.id, ...novo });
+        await adicionarLog('ADICIONOU USUÁRIO', nome);
+        mostrar('usuarios');
+        alert('✅ Usuário adicionado.');
+    } catch (e) { alert('❌ Erro: ' + e.message); console.error(e); }
 }
 async function excluirUsuario(id) {
     if (!temPermissao('usuarios', 'editar')) { alert('❌ Sem permissão.'); return; }
@@ -2898,14 +3031,17 @@ async function excluirUsuario(id) {
     const u = usuarios.find(u => u.id === id);
     if (u.nome === 'Admin') { alert('Não pode excluir o Admin.'); return; }
     if (!confirm('Excluir usuário?')) return;
-    await db.collection('usuarios').doc(id).delete();
-    usuarios = usuarios.filter(u => u.id !== id);
-    if (usuarioAtual === u.nome) {
-        usuarioAtual = usuarios[0].nome;
-        usuarioPermissao = usuarioAtual === 'Admin' ? 'admin' : (usuarioAtual === 'Victor Hugo' ? 'logistica' : 'consultor');
-    }
-    await adicionarLog('EXCLUIU USUÁRIO', u.nome);
-    mostrar('usuarios');
+    try {
+        await db.collection('usuarios').doc(id).delete();
+        usuarios = usuarios.filter(u => u.id !== id);
+        if (usuarioAtual === u.nome) {
+            usuarioAtual = usuarios[0].nome;
+            usuarioPermissao = usuarioAtual === 'Admin' ? 'admin' : (usuarioAtual === 'Victor Hugo' ? 'logistica' : 'consultor');
+        }
+        await adicionarLog('EXCLUIU USUÁRIO', u.nome);
+        mostrar('usuarios');
+        alert('✅ Usuário excluído.');
+    } catch (e) { alert('❌ Erro: ' + e.message); console.error(e); }
 }
 function abrirModalEdicaoUsuario(id) {
     if (!temPermissao('usuarios', 'editar')) { alert('❌ Sem permissão.'); return; }
@@ -2928,19 +3064,18 @@ function abrirModalEdicaoUsuario(id) {
         <div style="margin:10px 0;"><label><input type="checkbox" id="edit_user_podeEditarLanc" ${u.podeEditarLancamentos?'checked':''}> Pode editar lançamentos (mesmo sendo Logística)</label></div>
         <h3 style="margin-top:15px;font-size:14px;">🔐 Permissões por Guia</h3>
         <div class="permissoes-grid" id="permissoesGrid">${guiasHtml}</div>
-        <div style="text-align:right;margin-top:20px"><button class="success" onclick="salvarEdicaoUsuario('${id}')">💾 SALVAR</button></div>
+        <div style="text-align:right;margin-top:20px"><button class="success" id="btnSalvarUsuario" onclick="salvarEdicaoUsuario('${id}')">💾 SALVAR</button></div>
     `;
     modal.classList.add('active');
 }
 async function salvarEdicaoUsuario(id) {
     if (!temPermissao('usuarios', 'editar')) { alert('❌ Sem permissão.'); return; }
-    const btn = document.querySelector('#modalUsuarios .success');
+    const btn = document.getElementById('btnSalvarUsuario');
     if (!btn) return;
-    const original = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = 'Salvando...';
+    const original = showLoading(btn, 'Salvando...');
     try {
         const u = usuarios.find(u => u.id === id);
+        const nomeAnterior = u.nome;
         const novoNome = document.getElementById('edit_user_nome')?.value;
         const novoPerfil = document.getElementById('edit_user_perfil')?.value || 'consultor';
         const novaSenha = document.getElementById('edit_user_senha')?.value;
@@ -2956,6 +3091,10 @@ async function salvarEdicaoUsuario(id) {
         document.querySelectorAll('#permissoesGrid select').forEach(sel => { permissoes[sel.dataset.guia] = sel.value; });
         u.permissoes = permissoes;
         await db.collection('usuarios').doc(id).update(u);
+        if (usuarioAtual === nomeAnterior) {
+            usuarioAtual = novoNome;
+            salvarSessao(usuarioAtual, usuarioPermissao);
+        }
         if (usuarioAtual === u.nome) {
             usuarioPermissao = u.perfil || 'consultor';
             const menuEstoque = getElement('menuEstoque');
@@ -2968,7 +3107,8 @@ async function salvarEdicaoUsuario(id) {
         await adicionarLog('EDITOU USUÁRIO', u.nome);
         fecharModal('modalUsuarios');
         mostrar('usuarios');
-    } catch (e) { alert('Erro ao salvar: ' + e.message); } finally { btn.disabled = false; btn.innerHTML = original; }
+        alert('✅ Usuário atualizado.');
+    } catch (e) { alert('❌ Erro ao salvar: ' + e.message); console.error(e); } finally { hideLoading(btn, original); }
 }
 function telaLogs() {
     if (!temPermissao('logs', 'acesso')) return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2></div>`;
@@ -2985,6 +3125,7 @@ async function mostrar(tela) {
         if (main) main.innerHTML = topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2><p>Você não tem permissão para acessar "${tela}".</p></div>`;
         return;
     }
+    telaAtual = tela;
     const main = getElement('main-content');
     if (!main) return;
     if (window.innerWidth <= 1024) {
@@ -3006,7 +3147,6 @@ async function mostrar(tela) {
             case 'logs': main.innerHTML = telaLogs(); break;
             default: main.innerHTML = telaPedidos();
         }
-        await adicionarLog('VISUALIZOU', tela);
     } catch (error) {
         console.error('Erro ao mostrar tela:', error);
         main.innerHTML = topBar() + `<div class="box"><h2>⚠️ Erro</h2><p>${escapeHtml(error.message)}</p><button onclick="location.reload()">Recarregar</button></div>`;
