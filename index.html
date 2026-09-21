@@ -95,9 +95,6 @@
         .table-container tr.atrasado-row:hover td { background-color: #ffcdd2 !important; }
         .table-container td.text-wrap { white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
         
-        /* ============================================
-           COLUNA AÇÕES — ALINHAMENTO CORRIGIDO
-           ============================================ */
         .acoes-cell {
             white-space: nowrap;
             text-align: center;
@@ -166,7 +163,7 @@
         .lancamentos-table col.c-user    { width: 62px; }
         .lancamentos-table col.c-edit    { width: 72px; }
         .lancamentos-table col.c-obs     { width: 42px; }
-        .lancamentos-table col.c-acoes   { width: 130px; }  /* ← 4 botões cabem */
+        .lancamentos-table col.c-acoes   { width: 130px; }
         
         .estoque-table col.c-num    { width: 38px; }
         .estoque-table col.c-prod   { width: 150px; }
@@ -179,7 +176,7 @@
         .estoque-table col.c-valor  { width: 90px; }
         .estoque-table col.c-img    { width: 62px; }
         .estoque-table col.c-mov    { width: 120px; }
-        .estoque-table col.c-acoes  { width: 200px; }  /* ← 4 botões cabem folgado */
+        .estoque-table col.c-acoes  { width: 200px; }
         
         .pedidos-table col.c-num    { width: 45px; }
         .pedidos-table col.c-pedido { width: 80px; }
@@ -514,7 +511,6 @@
 <div id="globalLoadingOverlay"><div class="spinner"></div></div>
 <div class="toast-container" id="toastContainer"></div>
 
-<!-- Modais -->
 <div class="modal" id="modalEditarFornecedor"><div class="modal-content"><div class="modal-header"><h3>✏️ Editar Fornecedor</h3><span class="close-modal" onclick="fecharModal('modalEditarFornecedor')">&times;</span></div><div id="modalEditarFornecedorContent"></div></div></div>
 <div class="modal" id="modalEditarPedido"><div class="modal-content"><div class="modal-header"><h3>✏️ Editar Pedido</h3><span class="close-modal" onclick="fecharModal('modalEditarPedido')">&times;</span></div><div id="modalEditarPedidoContent"></div></div></div>
 <div class="modal" id="modalEditarLancamento"><div class="modal-content"><div class="modal-header"><h3>✏️ Editar Lançamento</h3><span class="close-modal" onclick="fecharModal('modalEditarLancamento')">&times;</span></div><div id="modalEditarLancamentoContent"></div></div></div>
@@ -544,9 +540,6 @@
 <img id="imagePreviewFloat" class="image-preview-float" src="" alt="Preview ampliada">
 
 <script>
-// ============================================
-// CONFIGURAÇÃO DO FIREBASE
-// ============================================
 const firebaseConfig = {
     apiKey: "AIzaSyB_y-pm046iaXL3xFrUDusPyh3yyrtsOoY",
     authDomain: "sistema-breton.firebaseapp.com",
@@ -570,9 +563,6 @@ try {
     firebaseInicializado = false;
 }
 
-// ============================================
-// CACHE E VARIÁVEIS GLOBAIS
-// ============================================
 const DOMCache = {};
 function getElement(id) {
     if (!id) return null;
@@ -643,7 +633,7 @@ function validarCpfCnpj(valor) {
 }
 
 async function hashSenha(senha) {
-    if (!crypto || !crypto.subtle) return senha; // fallback para navegadores antigos / não-HTTPS
+    if (!crypto || !crypto.subtle) return senha;
     try {
         const encoder = new TextEncoder();
         const data = encoder.encode('BRETON::' + senha + '::SALT2025');
@@ -651,7 +641,7 @@ async function hashSenha(senha) {
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     } catch (e) {
-        console.warn('hashSenha falhou, usando senha em claro:', e);
+        console.warn('hashSenha falhou:', e);
         return senha;
     }
 }
@@ -820,9 +810,6 @@ const transicoesValidas = {
     'CANCELADO': []
 };
 
-// ============================================
-// FUNÇÕES AUXILIARES
-// ============================================
 function formatarData(dataStr) {
     if (!dataStr || typeof dataStr !== 'string') return '-';
     const partes = dataStr.split('-');
@@ -940,9 +927,6 @@ window.addEventListener('scroll', function() {
 window.addEventListener('offline', () => toast('⚠️ Você está offline. Algumas ações podem falhar.', 'warning', 5000));
 window.addEventListener('online', () => toast('✅ Conexão restaurada.', 'success', 3000));
 
-// ============================================
-// PERMISSÕES
-// ============================================
 function getPermissoesUsuario(usuario) {
     if (!usuario) return null;
     if (usuario.nome === 'Admin' || usuario.perfil === 'admin') {
@@ -993,9 +977,6 @@ function podeEditarLancamentos() {
     return false;
 }
 
-// ============================================
-// LOADING / OVERLAY
-// ============================================
 function showLoading(button, text = 'Salvando...') {
     if (!button) return '';
     const originalText = button.innerHTML;
@@ -1026,17 +1007,11 @@ function fecharModal(modalId) {
     if (modal) modal.classList.remove('active');
 }
 
-// ============================================
-// FIREBASE - CARREGAR DADOS
-// ============================================
 async function carregarDados() {
     if (!firebaseInicializado || !db) throw new Error('Firebase não está inicializado.');
     showLoadingOverlay(true);
     try {
-        const [
-            clientesSnap, fornecedoresSnap, lancamentosSnap,
-            anexosSnap, usuariosSnap, logsSnap, estoqueSnap, movimentacoesSnap
-        ] = await Promise.all([
+        const [clientesSnap, fornecedoresSnap, lancamentosSnap, anexosSnap, usuariosSnap, logsSnap, estoqueSnap, movimentacoesSnap] = await Promise.all([
             db.collection('clientes').get(),
             db.collection('fornecedores').get(),
             db.collection('lancamentos').get(),
@@ -1046,7 +1021,6 @@ async function carregarDados() {
             db.collection('estoque').get(),
             db.collection('movimentacoes_estoque').get()
         ]);
-
         clientes = clientesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         fornecedores = fornecedoresSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         lancamentos = lancamentosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1055,21 +1029,15 @@ async function carregarDados() {
         logs = logsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         estoque = estoqueSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         movimentacoes = movimentacoesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
         showLoadingOverlay(false);
         return true;
-    } catch (error) {
-        showLoadingOverlay(false);
-        throw error;
-    }
+    } catch (error) { showLoadingOverlay(false); throw error; }
 }
 
 function ativarListenersTempoReal() {
     desativarListenersTempoReal();
     if (!firebaseInicializado || !db) return;
-
     const colecoes = ['clientes', 'fornecedores', 'lancamentos', 'anexos', 'usuarios', 'logs', 'estoque', 'movimentacoes_estoque'];
-
     colecoes.forEach(nome => {
         const unsub = db.collection(nome).onSnapshot(snapshot => {
             const novos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1081,82 +1049,56 @@ function ativarListenersTempoReal() {
             else if (nome === 'logs') logs = novos;
             else if (nome === 'estoque') estoque = novos;
             else if (nome === 'movimentacoes_estoque') movimentacoes = novos;
-
             if (_ignorarProximoSnapshot) { _ignorarProximoSnapshot = false; return; }
-            // ⚡ CORRIGIDO: não re-renderiza se houver modal aberto OU se o usuário estiver digitando
             if (document.querySelector('.modal.active, .confirm-modal.active')) return;
             if (usuarioAtual && telaAtual) {
                 const campoAtivo = document.activeElement;
                 const isDigitando = campoAtivo && (campoAtivo.tagName === 'INPUT' || campoAtivo.tagName === 'TEXTAREA' || campoAtivo.tagName === 'SELECT') && !campoAtivo.readOnly;
-                if (!isDigitando) {
-                    try { renderizarTelaAtual(); } catch (e) { /* silencioso */ }
-                }
+                if (!isDigitando) { try { renderizarTelaAtual(); } catch (e) {} }
             }
-        }, err => {
-            console.warn(`Listener ${nome} falhou:`, err.message);
-        });
+        }, err => { console.warn(`Listener ${nome} falhou:`, err.message); });
         unsubscribeListeners.push(unsub);
     });
 }
-
 function desativarListenersTempoReal() {
     unsubscribeListeners.forEach(unsub => { try { unsub(); } catch(e){} });
     unsubscribeListeners = [];
 }
 
 function capturarEstadoFiltros() {
-    const buscaPedidos = document.getElementById('buscaCliente');
-    if (buscaPedidos) filtrosEstado.pedidos.busca = buscaPedidos.value;
-    const buscaForn = document.getElementById('buscaFornecedor');
-    if (buscaForn) filtrosEstado.fornecedores.busca = buscaForn.value;
-    const buscaLanc = document.getElementById('buscaLancamento');
-    if (buscaLanc) filtrosEstado.lancamentos.busca = buscaLanc.value;
-    const details = document.querySelector('details');
-    if (details) filtrosEstado.lancamentos.detailsAberto = details.open;
-    const abaAtiva = document.querySelector('.tab-content.active');
-    if (abaAtiva) filtrosEstado.lancamentos.abaAtiva = abaAtiva.id;
-    const buscaEst = document.getElementById('buscaEstoque');
-    if (buscaEst) filtrosEstado.estoque.busca = buscaEst.value;
-    const catEst = document.getElementById('filtroEstoqueCategoria');
-    if (catEst) filtrosEstado.estoque.categoria = catEst.value;
-    const fornEst = document.getElementById('filtroEstoqueFornecedor');
-    if (fornEst) filtrosEstado.estoque.fornecedor = fornEst.value;
+    const b1 = document.getElementById('buscaCliente'); if (b1) filtrosEstado.pedidos.busca = b1.value;
+    const b2 = document.getElementById('buscaFornecedor'); if (b2) filtrosEstado.fornecedores.busca = b2.value;
+    const b3 = document.getElementById('buscaLancamento'); if (b3) filtrosEstado.lancamentos.busca = b3.value;
+    const d = document.querySelector('details'); if (d) filtrosEstado.lancamentos.detailsAberto = d.open;
+    const aba = document.querySelector('.tab-content.active'); if (aba) filtrosEstado.lancamentos.abaAtiva = aba.id;
+    const b4 = document.getElementById('buscaEstoque'); if (b4) filtrosEstado.estoque.busca = b4.value;
+    const c1 = document.getElementById('filtroEstoqueCategoria'); if (c1) filtrosEstado.estoque.categoria = c1.value;
+    const c2 = document.getElementById('filtroEstoqueFornecedor'); if (c2) filtrosEstado.estoque.fornecedor = c2.value;
 }
-
 function restaurarEstadoFiltros() {
-    const buscaPedidos = document.getElementById('buscaCliente');
-    if (buscaPedidos && filtrosEstado.pedidos.busca) buscaPedidos.value = filtrosEstado.pedidos.busca;
-    const buscaForn = document.getElementById('buscaFornecedor');
-    if (buscaForn && filtrosEstado.fornecedores.busca) buscaForn.value = filtrosEstado.fornecedores.busca;
-    const buscaLanc = document.getElementById('buscaLancamento');
-    if (buscaLanc && filtrosEstado.lancamentos.busca) buscaLanc.value = filtrosEstado.lancamentos.busca;
-    const details = document.querySelector('details');
-    if (details && filtrosEstado.lancamentos.detailsAberto) details.open = true;
+    const b1 = document.getElementById('buscaCliente'); if (b1 && filtrosEstado.pedidos.busca) b1.value = filtrosEstado.pedidos.busca;
+    const b2 = document.getElementById('buscaFornecedor'); if (b2 && filtrosEstado.fornecedores.busca) b2.value = filtrosEstado.fornecedores.busca;
+    const b3 = document.getElementById('buscaLancamento'); if (b3 && filtrosEstado.lancamentos.busca) b3.value = filtrosEstado.lancamentos.busca;
+    const d = document.querySelector('details'); if (d && filtrosEstado.lancamentos.detailsAberto) d.open = true;
     if (filtrosEstado.lancamentos.abaAtiva) {
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         const aba = document.getElementById(filtrosEstado.lancamentos.abaAtiva);
         if (aba) aba.classList.add('active');
         const idx = filtrosEstado.lancamentos.abaAtiva === 'tab1' ? 0 : filtrosEstado.lancamentos.abaAtiva === 'tab2' ? 1 : 2;
-        const btns = document.querySelectorAll('.tab-btn');
-        if (btns[idx]) btns[idx].classList.add('active');
+        const btns = document.querySelectorAll('.tab-btn'); if (btns[idx]) btns[idx].classList.add('active');
     }
-    const buscaEst = document.getElementById('buscaEstoque');
-    if (buscaEst && filtrosEstado.estoque.busca) buscaEst.value = filtrosEstado.estoque.busca;
-    const catEst = document.getElementById('filtroEstoqueCategoria');
-    if (catEst && filtrosEstado.estoque.categoria) catEst.value = filtrosEstado.estoque.categoria;
-    const fornEst = document.getElementById('filtroEstoqueFornecedor');
-    if (fornEst && filtrosEstado.estoque.fornecedor) fornEst.value = filtrosEstado.estoque.fornecedor;
+    const b4 = document.getElementById('buscaEstoque'); if (b4 && filtrosEstado.estoque.busca) b4.value = filtrosEstado.estoque.busca;
+    const c1 = document.getElementById('filtroEstoqueCategoria'); if (c1 && filtrosEstado.estoque.categoria) c1.value = filtrosEstado.estoque.categoria;
+    const c2 = document.getElementById('filtroEstoqueFornecedor'); if (c2 && filtrosEstado.estoque.fornecedor) c2.value = filtrosEstado.estoque.fornecedor;
 }
 
-// ⚡ FILTRO VISUAL (sem re-render) — resolve o problema de digitação
 function filtrarLinhasTabela(tbodyId, termo) {
     const tbody = document.getElementById(tbodyId);
     if (!tbody) return;
     const t = (termo || '').toLowerCase().trim();
-    const rows = tbody.querySelectorAll('tr');
-    rows.forEach(row => {
-        if (row.querySelector('td[colspan]')) return; // ignora linha "Nenhum"
+    tbody.querySelectorAll('tr').forEach(row => {
+        if (row.querySelector('td[colspan]')) return;
         const texto = row.textContent.toLowerCase();
         row.style.display = (!t || texto.includes(t)) ? '' : 'none';
     });
@@ -1179,46 +1121,25 @@ function renderizarTelaAtual() {
     }
 }
 
-// ============================================
-// LOG - FIREBASE
-// ============================================
 async function adicionarLog(acao, detalhe = '') {
-    try {
-        if (!db) return;
-        const log = { data: new Date().toISOString(), usuario: usuarioAtual || 'Sistema', acao, detalhe };
-        await db.collection('logs').add(log);
-    } catch (error) { console.error('Erro ao adicionar log:', error); }
+    try { if (!db) return; await db.collection('logs').add({ data: new Date().toISOString(), usuario: usuarioAtual || 'Sistema', acao, detalhe }); }
+    catch (error) { console.error('Erro ao adicionar log:', error); }
 }
 
-// ============================================
-// HISTÓRICO DE EDIÇÕES
-// ============================================
 async function registrarHistorico(colecao, docId, campo, valorAntigo, valorNovo) {
     if (valorAntigo === valorNovo) return;
     try {
         if (!db) return;
-        await db.collection('historico').add({
-            colecao, docId, campo,
-            valorAntigo: valorAntigo === undefined ? null : valorAntigo,
-            valorNovo: valorNovo === undefined ? null : valorNovo,
-            usuario: usuarioAtual,
-            data: new Date().toISOString()
-        });
+        await db.collection('historico').add({ colecao, docId, campo, valorAntigo: valorAntigo === undefined ? null : valorAntigo, valorNovo: valorNovo === undefined ? null : valorNovo, usuario: usuarioAtual, data: new Date().toISOString() });
     } catch (e) { console.warn('Falha ao registrar histórico:', e); }
 }
-
 function abrirModalHistorico(colecao, docId) {
     const modal = getElement('modalHistorico');
     const content = getElement('modalHistoricoContent');
     if (!modal || !content) return;
     content.innerHTML = '<p>Carregando...</p>';
     modal.classList.add('active');
-    // ⚡ CORRIGIDO: sem orderBy no Firestore (evita índice composto), ordena no JS
-    db.collection('historico')
-        .where('colecao', '==', colecao)
-        .where('docId', '==', docId)
-        .limit(200)
-        .get()
+    db.collection('historico').where('colecao', '==', colecao).where('docId', '==', docId).limit(200).get()
         .then(snap => {
             const itens = snap.docs.map(d => d.data());
             itens.sort((a, b) => new Date(b.data) - new Date(a.data));
@@ -1229,17 +1150,11 @@ function abrirModalHistorico(colecao, docId) {
                     <div><strong>${escapeHtml(h.usuario)}</strong> em ${new Date(h.data).toLocaleString()}</div>
                     <div class="campo">${escapeHtml(h.campo)}:</div>
                     <div><span class="valor-antigo">${escapeHtml(String(h.valorAntigo ?? '-'))}</span> → <span class="valor-novo">${escapeHtml(String(h.valorNovo ?? '-'))}</span></div>
-                </div>
-            `).join('');
+                </div>`).join('');
         })
-        .catch(err => {
-            content.innerHTML = `<p style="color:#d32f2f;">Erro ao carregar histórico: ${escapeHtml(err.message)}</p>`;
-        });
+        .catch(err => { content.innerHTML = `<p style="color:#d32f2f;">Erro: ${escapeHtml(err.message)}</p>`; });
 }
 
-// ============================================
-// TOP BAR
-// ============================================
 function topBar() {
     return `<div class="top-bar">
         <div style="display:flex; align-items:center; gap:10px;">
@@ -1252,7 +1167,6 @@ function topBar() {
         </div>
     </div>`;
 }
-
 async function atualizarDados() {
     if (!firebaseInicializado || !db) { toast('Firebase não disponível.', 'error'); return; }
     if (!usuarioAtual) { toast('Faça login primeiro.', 'error'); return; }
@@ -1261,18 +1175,12 @@ async function atualizarDados() {
         const original = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '🔄 Carregando...';
-        try {
-            await carregarDados();
-            await mostrar(telaAtual);
-            toast('Dados atualizados com sucesso!', 'success');
-        } catch (error) { toast('Erro ao atualizar dados.', 'error'); console.error(error); }
+        try { await carregarDados(); await mostrar(telaAtual); toast('Dados atualizados com sucesso!', 'success'); }
+        catch (error) { toast('Erro ao atualizar dados.', 'error'); console.error(error); }
         finally { btn.disabled = false; btn.innerHTML = original; }
     } else location.reload();
 }
 
-// ============================================
-// TELA DE LOGIN
-// ============================================
 function mostrarLogin(erro = null) {
     desativarListenersTempoReal();
     const sidebar = getElement('sidebar');
@@ -1281,17 +1189,11 @@ function mostrarLogin(erro = null) {
     if (sidebar) { sidebar.classList.remove('open'); sidebar.style.display = 'none'; }
     if (footer) footer.style.display = 'none';
     if (footerVerse) footerVerse.style.display = 'none';
-
     const main = getElement('main-content');
     if (!main) return;
-
-    const usuariosOptions = usuarios.length > 0 ?
-        usuarios.map(u => `<option value="${escapeHtml(u.nome)}">${escapeHtml(u.nome)}</option>`).join('') :
-        '<option value="">Nenhum usuário carregado</option>';
-
+    const usuariosOptions = usuarios.length > 0 ? usuarios.map(u => `<option value="${escapeHtml(u.nome)}">${escapeHtml(u.nome)}</option>`).join('') : '<option value="">Nenhum usuário carregado</option>';
     let errorHtml = '';
     if (erro) errorHtml = `<div class="error-message-box"><strong>⚠️ Erro ao conectar</strong>${escapeHtml(erro)}<br><small>Tente novamente.</small><br><button onclick="tentarCarregarUsuarios()" style="margin-top:10px;">🔄 Tentar novamente</button></div>`;
-
     main.innerHTML = `
         <div class="login-container">
             <div class="login-box">
@@ -1305,12 +1207,10 @@ function mostrarLogin(erro = null) {
             </div>
         </div>`;
 }
-
 async function tentarCarregarUsuarios() {
     try { await carregarDados(); mostrarLogin(); }
     catch (e) { mostrarLogin('Falha ao carregar usuários: ' + e.message); }
 }
-
 async function fazerLogin() {
     if (!iniciarSubmit('login')) return;
     const select = document.getElementById('loginUsuario');
@@ -1319,44 +1219,32 @@ async function fazerLogin() {
     const errorDiv = document.getElementById('loginError');
     if (!errorDiv) { finalizarSubmit('login'); return; }
     errorDiv.style.display = 'none'; errorDiv.textContent = '';
-
     if (!firebaseInicializado || !db) { errorDiv.style.display = 'block'; errorDiv.textContent = '❌ Firebase não disponível.'; finalizarSubmit('login'); return; }
-
     try {
         if (usuarios.length === 0) await carregarDados();
         const usuario = usuarios.find(u => u.nome === nome);
         if (!usuario) { errorDiv.style.display = 'block'; errorDiv.textContent = '❌ Usuário não encontrado!'; finalizarSubmit('login'); return; }
-
         const { ok, precisaMigrar } = await verificarSenha(senha, usuario.senha);
         if (!ok) { errorDiv.style.display = 'block'; errorDiv.textContent = '❌ Senha incorreta!'; finalizarSubmit('login'); return; }
-
         if (precisaMigrar) {
-            try {
-                const novoHash = await hashSenha(senha);
-                await db.collection('usuarios').doc(usuario.id).update({ senha: novoHash });
-                usuario.senha = novoHash;
-                await adicionarLog('MIGROU SENHA PARA HASH', usuario.nome);
-            } catch (e) { console.warn('Falha ao migrar senha:', e); }
+            try { const novoHash = await hashSenha(senha); await db.collection('usuarios').doc(usuario.id).update({ senha: novoHash }); usuario.senha = novoHash; await adicionarLog('MIGROU SENHA PARA HASH', usuario.nome); }
+            catch (e) { console.warn('Falha ao migrar senha:', e); }
         }
-
         usuarioAtual = nome;
         usuarioPermissao = usuario.perfil || 'consultor';
         salvarSessao(usuarioAtual, usuarioPermissao);
-
         const menuEstoque = getElement('menuEstoque');
         const menuUsuarios = getElement('menuUsuarios');
         const menuLogs = getElement('menuLogs');
         const sidebar = getElement('sidebar');
         const footer = getElement('footer');
         const footerVerse = getElement('footerVerse');
-
         if (menuEstoque) menuEstoque.style.display = temPermissao('estoque', 'acesso') ? 'block' : 'none';
         if (menuUsuarios) menuUsuarios.style.display = temPermissao('usuarios', 'acesso') ? 'block' : 'none';
         if (menuLogs) menuLogs.style.display = temPermissao('logs', 'acesso') ? 'block' : 'none';
         if (sidebar) { sidebar.style.display = 'block'; sidebar.classList.add('open'); }
         if (footer) footer.style.display = 'block';
         if (footerVerse) footerVerse.style.display = 'block';
-
         await adicionarLog('LOGIN', nome);
         ativarListenersTempoReal();
         mostrar('pedidos');
@@ -1364,11 +1252,8 @@ async function fazerLogin() {
         errorDiv.style.display = 'block';
         errorDiv.textContent = `❌ Erro: ${error.message}`;
         mostrarLogin(error.message);
-    } finally {
-        finalizarSubmit('login');
-    }
+    } finally { finalizarSubmit('login'); }
 }
-
 function logout() {
     usuarioAtual = null; usuarioPermissao = null; limparSessao();
     desativarListenersTempoReal();
@@ -1378,14 +1263,10 @@ function logout() {
     if (sidebar) { sidebar.style.display = 'none'; sidebar.classList.remove('open'); }
     if (footer) footer.style.display = 'none';
     if (footerVerse) footerVerse.style.display = 'none';
-    const overlay = getElement('sidebarOverlay');
-    if (overlay) overlay.classList.remove('active');
+    const overlay = getElement('sidebarOverlay'); if (overlay) overlay.classList.remove('active');
     mostrarLogin();
 }
 
-// ============================================
-// ORDENAÇÃO E FILTROS
-// ============================================
 function aplicarOrdenacao(lista) {
     return [...lista].sort((a, b) => {
         let valA, valB;
@@ -1423,9 +1304,6 @@ function calcularTotais(lista) {
     return { totalPedidos, totalValor, totalItens, totalAtrasados };
 }
 
-// ============================================
-// TELA: PEDIDOS
-// ============================================
 function telaPedidos() {
     if (!temPermissao('pedidos', 'acesso')) return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2></div>`;
     const podeEditar = temPermissao('pedidos', 'editar');
@@ -1434,7 +1312,6 @@ function telaPedidos() {
     if (currentPagePedidos > totalPages) currentPagePedidos = 1;
     const start = (currentPagePedidos - 1) * rowsPerPagePedidos;
     const clientesPagina = clientes.slice(start, start + rowsPerPagePedidos);
-
     return topBar() + `
         <div class="box">
             <h2>📋 Pedidos</h2>
@@ -1450,9 +1327,7 @@ function telaPedidos() {
             <div class="search-box"><input type="text" id="buscaCliente" placeholder="🔍 Buscar..." oninput="filtrarClientes()" value="${escapeHtml(filtrosEstado.pedidos.busca)}" aria-label="Buscar clientes"></div>
             <div class="table-container">
                 <table class="pedidos-table">
-                    <colgroup>
-                        <col class="c-num"><col class="c-pedido"><col class="c-data"><col class="c-cli"><col class="c-cpf"><col class="c-cont"><col class="c-acoes">
-                    </colgroup>
+                    <colgroup><col class="c-num"><col class="c-pedido"><col class="c-data"><col class="c-cli"><col class="c-cpf"><col class="c-cont"><col class="c-acoes"></colgroup>
                     <thead><tr><th scope="col">#</th><th scope="col">Pedido</th><th scope="col">Data</th><th scope="col">Cliente</th><th scope="col">CPF/CNPJ</th><th scope="col">Contato</th><th scope="col" style="text-align:center;">Ações</th></tr></thead>
                     <tbody id="clientesBody">
                         ${clientesPagina.map((c,i)=>`<tr>
@@ -1462,11 +1337,9 @@ function telaPedidos() {
                             <td class="cell-truncate" title="${escapeHtml(c.cliente||'')}">${escapeHtml(c.cliente)}</td>
                             <td>${escapeHtml(c.cpf_cnpj||'-')}</td>
                             <td class="cell-truncate" title="${escapeHtml(c.contato||'')}">${escapeHtml(c.contato||'-')}</td>
-                            <td class="acoes-cell">
-                                <div class="acoes-wrapper">
-                                    ${podeEditar ? `<button class="small" data-tooltip="Editar" onclick="abrirModalEdicaoPedido('${c.id}')">✏️</button><button class="small danger" data-tooltip="Excluir" onclick="excluirCliente('${c.id}')">🗑️</button>` : (podeVisualizar ? '<span style="color:#999;font-size:11px;">Visualização</span>' : '')}
-                                </div>
-                            </td>
+                            <td class="acoes-cell"><div class="acoes-wrapper">
+                                ${podeEditar ? `<button class="small" data-tooltip="Editar" onclick="abrirModalEdicaoPedido('${c.id}')">✏️</button><button class="small danger" data-tooltip="Excluir" onclick="excluirCliente('${c.id}')">🗑️</button>` : (podeVisualizar ? '<span style="color:#999;font-size:11px;">Visualização</span>' : '')}
+                            </div></td>
                         </tr>`).join('')}
                     </tbody>
                 </table>
@@ -1487,13 +1360,11 @@ function changePagePedidos(delta) {
     const newPage = currentPagePedidos + delta;
     if (newPage >= 1 && newPage <= total) { currentPagePedidos = newPage; renderizarTelaAtual(); }
 }
-// ⚡ FILTRO VISUAL: filtra sem re-renderizar
 function filtrarClientes() {
     const input = document.getElementById('buscaCliente');
     filtrosEstado.pedidos.busca = input ? input.value : '';
     filtrarLinhasTabela('clientesBody', filtrosEstado.pedidos.busca);
 }
-
 async function adicionarCliente() {
     if (!temPermissao('pedidos', 'editar')) { toast('Sem permissão.', 'error'); return; }
     if (!iniciarSubmit('addCliente')) return;
@@ -1521,9 +1392,7 @@ async function excluirCliente(id) {
     const c = clientes.find(c => c.id === id);
     if (!c) return;
     const vinculados = lancamentos.filter(l => l.pedido == c.pedido).length;
-    const msg = vinculados > 0
-        ? `Cliente "${c.cliente}" possui ${vinculados} lançamento(s) vinculado(s). Excluir mesmo assim? (Os lançamentos NÃO serão removidos)`
-        : `Excluir cliente "${c.cliente}"?`;
+    const msg = vinculados > 0 ? `Cliente "${c.cliente}" possui ${vinculados} lançamento(s) vinculado(s). Excluir mesmo assim?` : `Excluir cliente "${c.cliente}"?`;
     const ok = await confirmar('Excluir Cliente', msg);
     if (!ok) return;
     try {
@@ -1541,15 +1410,14 @@ function abrirModalEdicaoPedido(id) {
     const modal = getElement('modalEditarPedido');
     const content = getElement('modalEditarPedidoContent');
     if (!modal || !content) return;
-    content.innerHTML = `
-        <div class="form-grid">
-            <div class="form-group"><label for="edit_cli_pedido">Nº Pedido</label><input type="number" id="edit_cli_pedido" value="${c.pedido}"></div>
-            <div class="form-group"><label for="edit_cli_data">Data</label><input type="date" id="edit_cli_data" value="${c.data}"></div>
-            <div class="form-group"><label for="edit_cli_nome">Cliente</label><input type="text" id="edit_cli_nome" value="${escapeHtml(c.cliente)}" style="text-transform:uppercase"></div>
-            <div class="form-group"><label for="edit_cli_cpf">CPF/CNPJ</label><input type="text" id="edit_cli_cpf" value="${escapeHtml(c.cpf_cnpj||'')}"></div>
-            <div class="form-group"><label for="edit_cli_contato">Contato</label><input type="text" id="edit_cli_contato" value="${escapeHtml(c.contato||'')}"></div>
-        </div>
-        <div style="text-align:right; margin-top:20px"><button class="success" id="btnSalvarEdicaoCliente" onclick="salvarEdicaoCliente('${id}')">💾 SALVAR</button></div>`;
+    content.innerHTML = `<div class="form-grid">
+        <div class="form-group"><label for="edit_cli_pedido">Nº Pedido</label><input type="number" id="edit_cli_pedido" value="${c.pedido}"></div>
+        <div class="form-group"><label for="edit_cli_data">Data</label><input type="date" id="edit_cli_data" value="${c.data}"></div>
+        <div class="form-group"><label for="edit_cli_nome">Cliente</label><input type="text" id="edit_cli_nome" value="${escapeHtml(c.cliente)}" style="text-transform:uppercase"></div>
+        <div class="form-group"><label for="edit_cli_cpf">CPF/CNPJ</label><input type="text" id="edit_cli_cpf" value="${escapeHtml(c.cpf_cnpj||'')}"></div>
+        <div class="form-group"><label for="edit_cli_contato">Contato</label><input type="text" id="edit_cli_contato" value="${escapeHtml(c.contato||'')}"></div>
+    </div>
+    <div style="text-align:right; margin-top:20px"><button class="success" id="btnSalvarEdicaoCliente" onclick="salvarEdicaoCliente('${id}')">💾 SALVAR</button></div>`;
     modal.classList.add('active');
 }
 async function salvarEdicaoCliente(id) {
@@ -1565,17 +1433,9 @@ async function salvarEdicaoCliente(id) {
         const novoCpf = document.getElementById('edit_cli_cpf')?.value || '';
         if (!validarCpfCnpj(novoCpf)) { toast('CPF/CNPJ inválido.', 'error'); return; }
         const dadosAntigos = { pedido: c.pedido, data: c.data, cliente: c.cliente, cpf_cnpj: c.cpf_cnpj, contato: c.contato };
-        const novosDados = {
-            pedido: novoPedido,
-            data: document.getElementById('edit_cli_data')?.value || c.data,
-            cliente: document.getElementById('edit_cli_nome')?.value?.toUpperCase() || c.cliente,
-            cpf_cnpj: novoCpf,
-            contato: document.getElementById('edit_cli_contato')?.value || ''
-        };
+        const novosDados = { pedido: novoPedido, data: document.getElementById('edit_cli_data')?.value || c.data, cliente: document.getElementById('edit_cli_nome')?.value?.toUpperCase() || c.cliente, cpf_cnpj: novoCpf, contato: document.getElementById('edit_cli_contato')?.value || '' };
         for (const campo of Object.keys(novosDados)) {
-            if (String(dadosAntigos[campo] ?? '') !== String(novosDados[campo] ?? '')) {
-                await registrarHistorico('clientes', id, campo, dadosAntigos[campo], novosDados[campo]);
-            }
+            if (String(dadosAntigos[campo] ?? '') !== String(novosDados[campo] ?? '')) await registrarHistorico('clientes', id, campo, dadosAntigos[campo], novosDados[campo]);
         }
         _ignorarProximoSnapshot = true;
         await db.collection('clientes').doc(id).update(novosDados);
@@ -1586,14 +1446,10 @@ async function salvarEdicaoCliente(id) {
     } catch (e) { toast('Erro: ' + e.message, 'error'); } finally { hideLoading(btn, original); finalizarSubmit('saveCliente'); }
 }
 
-// ============================================
-// TELA: FORNECEDORES
-// ============================================
 function telaFornecedores() {
     if (!temPermissao('fornecedores', 'acesso')) return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2></div>`;
     const podeEditar = temPermissao('fornecedores', 'editar');
     const podeVisualizar = temPermissao('fornecedores', 'visualizar');
-
     return topBar() + `
         <div class="box">
             <h2>📦 Fornecedores</h2>
@@ -1610,9 +1466,7 @@ function telaFornecedores() {
             <div class="search-box"><input type="text" id="buscaFornecedor" placeholder="🔍 Buscar..." oninput="filtrarFornecedores()" value="${escapeHtml(filtrosEstado.fornecedores.busca)}" aria-label="Buscar fornecedores"></div>
             <div class="table-container">
                 <table class="fornec-table">
-                    <colgroup>
-                        <col class="c-num"><col class="c-cod"><col class="c-nome"><col class="c-cpf"><col class="c-cont"><col class="c-cond"><col class="c-col"><col class="c-acoes">
-                    </colgroup>
+                    <colgroup><col class="c-num"><col class="c-cod"><col class="c-nome"><col class="c-cpf"><col class="c-cont"><col class="c-cond"><col class="c-col"><col class="c-acoes"></colgroup>
                     <thead><tr><th scope="col">#</th><th scope="col">COD</th><th scope="col">Fornecedor</th><th scope="col">CPF/CNPJ</th><th scope="col">Contato</th><th scope="col">Condição</th><th scope="col">Coleção</th><th scope="col" style="text-align:center;">Ações</th></tr></thead>
                     <tbody id="fornecedoresBody">
                         ${fornecedores.map((f,i)=>`<tr>
@@ -1623,18 +1477,15 @@ function telaFornecedores() {
                             <td class="cell-truncate" title="${escapeHtml(f.contato||'')}">${escapeHtml(f.contato||'-')}</td>
                             <td>${escapeHtml(f.condicao||'-')}</td>
                             <td>${escapeHtml(f.colecao||'-')}</td>
-                            <td class="acoes-cell">
-                                <div class="acoes-wrapper">
-                                    ${podeEditar ? `<button class="small" data-tooltip="Editar" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" data-tooltip="Excluir" onclick="excluirFornecedor('${f.id}')">🗑️</button>` : (podeVisualizar ? '<span style="color:#999;font-size:11px;">Visualização</span>' : '')}
-                                </div>
-                            </td>
+                            <td class="acoes-cell"><div class="acoes-wrapper">
+                                ${podeEditar ? `<button class="small" data-tooltip="Editar" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" data-tooltip="Excluir" onclick="excluirFornecedor('${f.id}')">🗑️</button>` : (podeVisualizar ? '<span style="color:#999;font-size:11px;">Visualização</span>' : '')}
+                            </div></td>
                         </tr>`).join('')}
                     </tbody>
                 </table>
             </div>
         </div>`;
 }
-// ⚡ FILTRO VISUAL
 function filtrarFornecedores() {
     const input = document.getElementById('buscaFornecedor');
     filtrosEstado.fornecedores.busca = input ? input.value : '';
@@ -1665,9 +1516,7 @@ async function excluirFornecedor(id) {
     const f = fornecedores.find(f => f.id === id);
     if (!f) return;
     const vinculados = lancamentos.filter(l => l.fornecedor === f.nome).length;
-    const msg = vinculados > 0
-        ? `Fornecedor "${f.nome}" possui ${vinculados} lançamento(s) vinculado(s). Excluir mesmo assim?`
-        : `Excluir fornecedor "${f.nome}"?`;
+    const msg = vinculados > 0 ? `Fornecedor "${f.nome}" possui ${vinculados} lançamento(s) vinculado(s). Excluir mesmo assim?` : `Excluir fornecedor "${f.nome}"?`;
     const ok = await confirmar('Excluir Fornecedor', msg);
     if (!ok) return;
     try {
@@ -1685,16 +1534,15 @@ function abrirModalEdicaoFornecedor(id) {
     const modal = getElement('modalEditarFornecedor');
     const content = getElement('modalEditarFornecedorContent');
     if (!modal || !content) return;
-    content.innerHTML = `
-        <div class="form-grid">
-            <div class="form-group"><label for="edit_for_cod">Código</label><input type="text" id="edit_for_cod" value="${escapeHtml(f.cod||'')}" readonly></div>
-            <div class="form-group"><label for="edit_for_nome">Fornecedor</label><input type="text" id="edit_for_nome" value="${escapeHtml(f.nome)}" style="text-transform:uppercase"></div>
-            <div class="form-group"><label for="edit_for_cpf">CPF/CNPJ</label><input type="text" id="edit_for_cpf" value="${escapeHtml(f.cpf_cnpj||'')}"></div>
-            <div class="form-group"><label for="edit_for_contato">Contato</label><input type="text" id="edit_for_contato" value="${escapeHtml(f.contato||'')}"></div>
-            <div class="form-group"><label for="edit_for_condicao">Condição</label><select id="edit_for_condicao"><option value="">Selecione</option><option value="FATURADO" ${f.condicao==='FATURADO'?'selected':''}>FATURADO</option><option value="28D" ${f.condicao==='28D'?'selected':''}>28D</option><option value="ENTRADA + ENTREGA" ${f.condicao==='ENTRADA + ENTREGA'?'selected':''}>ENTRADA + ENTREGA</option><option value="ANTECIPADO" ${f.condicao==='ANTECIPADO'?'selected':''}>ANTECIPADO</option></select></div>
-            <div class="form-group"><label for="edit_for_colecao">Coleção</label><input type="text" id="edit_for_colecao" value="${escapeHtml(f.colecao||'')}" style="text-transform:uppercase"></div>
-        </div>
-        <div style="text-align:right;margin-top:20px"><button class="success" id="btnSalvarEdicaoFornecedor" onclick="salvarEdicaoFornecedor('${id}')">💾 SALVAR</button></div>`;
+    content.innerHTML = `<div class="form-grid">
+        <div class="form-group"><label for="edit_for_cod">Código</label><input type="text" id="edit_for_cod" value="${escapeHtml(f.cod||'')}" readonly></div>
+        <div class="form-group"><label for="edit_for_nome">Fornecedor</label><input type="text" id="edit_for_nome" value="${escapeHtml(f.nome)}" style="text-transform:uppercase"></div>
+        <div class="form-group"><label for="edit_for_cpf">CPF/CNPJ</label><input type="text" id="edit_for_cpf" value="${escapeHtml(f.cpf_cnpj||'')}"></div>
+        <div class="form-group"><label for="edit_for_contato">Contato</label><input type="text" id="edit_for_contato" value="${escapeHtml(f.contato||'')}"></div>
+        <div class="form-group"><label for="edit_for_condicao">Condição</label><select id="edit_for_condicao"><option value="">Selecione</option><option value="FATURADO" ${f.condicao==='FATURADO'?'selected':''}>FATURADO</option><option value="28D" ${f.condicao==='28D'?'selected':''}>28D</option><option value="ENTRADA + ENTREGA" ${f.condicao==='ENTRADA + ENTREGA'?'selected':''}>ENTRADA + ENTREGA</option><option value="ANTECIPADO" ${f.condicao==='ANTECIPADO'?'selected':''}>ANTECIPADO</option></select></div>
+        <div class="form-group"><label for="edit_for_colecao">Coleção</label><input type="text" id="edit_for_colecao" value="${escapeHtml(f.colecao||'')}" style="text-transform:uppercase"></div>
+    </div>
+    <div style="text-align:right;margin-top:20px"><button class="success" id="btnSalvarEdicaoFornecedor" onclick="salvarEdicaoFornecedor('${id}')">💾 SALVAR</button></div>`;
     modal.classList.add('active');
 }
 async function salvarEdicaoFornecedor(id) {
@@ -1710,17 +1558,9 @@ async function salvarEdicaoFornecedor(id) {
         const novoCpf = document.getElementById('edit_for_cpf')?.value || '';
         if (!validarCpfCnpj(novoCpf)) { toast('CPF/CNPJ inválido.', 'error'); return; }
         const dadosAntigos = { nome: f.nome, cpf_cnpj: f.cpf_cnpj, contato: f.contato, condicao: f.condicao, colecao: f.colecao };
-        const novosDados = {
-            nome: novoNome,
-            cpf_cnpj: novoCpf,
-            contato: document.getElementById('edit_for_contato')?.value || '',
-            condicao: document.getElementById('edit_for_condicao')?.value || '',
-            colecao: document.getElementById('edit_for_colecao')?.value?.toUpperCase() || ''
-        };
+        const novosDados = { nome: novoNome, cpf_cnpj: novoCpf, contato: document.getElementById('edit_for_contato')?.value || '', condicao: document.getElementById('edit_for_condicao')?.value || '', colecao: document.getElementById('edit_for_colecao')?.value?.toUpperCase() || '' };
         for (const campo of Object.keys(novosDados)) {
-            if (String(dadosAntigos[campo] ?? '') !== String(novosDados[campo] ?? '')) {
-                await registrarHistorico('fornecedores', id, campo, dadosAntigos[campo], novosDados[campo]);
-            }
+            if (String(dadosAntigos[campo] ?? '') !== String(novosDados[campo] ?? '')) await registrarHistorico('fornecedores', id, campo, dadosAntigos[campo], novosDados[campo]);
         }
         _ignorarProximoSnapshot = true;
         await db.collection('fornecedores').doc(id).update(novosDados);
@@ -1731,9 +1571,6 @@ async function salvarEdicaoFornecedor(id) {
     } catch (e) { toast('Erro: ' + e.message, 'error'); console.error(e); } finally { hideLoading(btn, original); finalizarSubmit('saveFornecedor'); }
 }
 
-// ============================================
-// TELA: LANÇAMENTOS
-// ============================================
 function toggleEtiquetaField() {
     const tipo = document.getElementById('lan_tipo');
     const etiquetaField = document.getElementById('etiquetaField');
@@ -1774,8 +1611,13 @@ function preencherClienteAuto() {
     const dataEl = document.getElementById('lan_data');
     if (!pedido) { if (clienteEl) clienteEl.value = ''; if (dataEl) dataEl.value = ''; return; }
     const cliente = buscarClientePorPedido(pedido);
-    if (cliente) { if (clienteEl) clienteEl.value = cliente.cliente; if (dataEl) dataEl.value = cliente.data; }
-    else { if (clienteEl) clienteEl.value = ''; if (dataEl) dataEl.value = ''; toast(`Pedido #${pedido} não está cadastrado em Clientes.`, 'warning', 5000); }
+    if (cliente) {
+        if (clienteEl) clienteEl.value = cliente.cliente;
+        if (dataEl) dataEl.value = cliente.data;
+    } else {
+        if (clienteEl) clienteEl.value = '';
+        if (dataEl) dataEl.value = '';
+    }
 }
 function atualizarContadorCaracteres(textarea, max = 100) {
     if (!textarea) return;
@@ -1827,7 +1669,6 @@ function telaLancamentos() {
     const etiquetas = getEtiquetas();
     const etiquetaOptions = etiquetas.map(e => `<option value="${escapeHtml(e)}" ${currentEtiquetaFilter===e?'selected':''}>${escapeHtml(e)}</option>`).join('');
     const proximoPedido = gerarProximoNumeroPedido();
-
     let optionsCat = `<option value="">Selecione</option>` + categorias.map(c => `<option value="${c}">${c}</option>`).join('');
     let optionsForn = `<option value="">Selecione</option>` + fornecedores.map(f => `<option value="${escapeHtml(f.nome)}">${escapeHtml(f.nome)} (${escapeHtml(f.cod||'')})</option>`).join('');
     let optionsTipo = tiposPedido.map(t => `<option value="${t}">${t}</option>`).join('');
@@ -1840,12 +1681,10 @@ function telaLancamentos() {
         const disabled = qtd <= 0 ? 'disabled' : '';
         return `<option value="${e.id}" ${disabled}>${escapeHtml(e.produto)} ${statusText}</option>`;
     }).join('');
-
     const detailsAberto = filtrosEstado.lancamentos.detailsAberto ? 'open' : '';
     const abaAtiva = filtrosEstado.lancamentos.abaAtiva || 'tab1';
     const tabActive = (t) => abaAtiva === t ? 'active' : '';
     const contentActive = (t) => abaAtiva === t ? 'active' : '';
-
     return topBar() + `
         <div class="box">
             <h2>📝 Lançamentos</h2>
@@ -1900,9 +1739,7 @@ function telaLancamentos() {
                             </div>
                             <div class="form-group" id="showroomEstoqueGroup" style="display:none;">
                                 <label for="lan_produto_estoque">🪑 Móvel do Estoque</label>
-                                <select id="lan_produto_estoque">
-                                    <option value="">Selecione um móvel</option>${optionsEstoque}
-                                </select>
+                                <select id="lan_produto_estoque"><option value="">Selecione um móvel</option>${optionsEstoque}</select>
                                 <small style="color:#666;font-size:10px;">Consulte a disponibilidade. A baixa será feita pela logística.</small>
                             </div>
                         </div>
@@ -1978,7 +1815,6 @@ function renderLancamentos() {
     const end = start + rowsPerPage;
     const dadosPagina = dadosFiltradosCache.slice(start, end);
     const totaisFiltrados = calcularTotais(dadosFiltradosCache);
-
     const tbody = document.getElementById('lancamentosBody');
     if (!tbody) return;
     tbody.innerHTML = dadosPagina.map((l, idx) => {
@@ -2023,14 +1859,13 @@ function renderLancamentos() {
             <td class="acoes-cell">
                 <div class="acoes-wrapper">
                     ${podeEditar ? `<button class="small" data-tooltip="Editar" onclick="abrirModalEdicaoLancamento('${l.id}')">✏️</button>` : `<button class="small" disabled style="opacity:0.4;">✏️</button>`}
-                    ${podeEditar ? `<button class="small" data-tooltip="Duplicar" onclick="duplicarLancamento('${l.id}')">📋</button>` : ''}
+                    ${podeEditar ? `<button class="small" data-tooltip="Novo item da mesma OC" onclick="duplicarLancamento('${l.id}')">➕</button>` : ''}
                     <button class="small info" data-tooltip="Anexos" onclick="abrirModalAnexos(${l.pedido})">📎</button>
                     ${podeEditar ? `<button class="small danger" data-tooltip="Excluir" onclick="excluirLancamento('${l.id}')">🗑️</button>` : ''}
                 </div>
             </td>
         </tr>`;
     }).join('');
-
     const tfoot = document.getElementById('lancamentosFooter');
     if (tfoot) {
         tfoot.innerHTML = `<tr style="background:#FAF0F0; font-weight:bold;">
@@ -2060,13 +1895,11 @@ function setFilterType(tipo) { currentFilterType = tipo; currentPage = 1; render
 function setFilterEtiqueta(valor) { currentEtiquetaFilter = valor; currentPage = 1; renderizarTelaAtual(); }
 function setOrder(order) { currentOrder = order; currentPage = 1; renderizarTelaAtual(); }
 function toggleOrderDirection() { currentOrderDirection = currentOrderDirection === 'asc' ? 'desc' : 'asc'; currentPage = 1; renderizarTelaAtual(); }
-// ⚡ FILTRO VISUAL
 function filtrarLancamentos() {
     const input = document.getElementById('buscaLancamento');
     filtrosEstado.lancamentos.busca = input ? input.value : '';
     filtrarLinhasTabela('lancamentosBody', filtrosEstado.lancamentos.busca);
 }
-
 function exportarLancamentosExcel() {
     if (lancamentos.length === 0) { toast('Não há dados!', 'warning'); return; }
     let dados = getLancamentosFiltrados();
@@ -2102,12 +1935,7 @@ async function adicionarLancamento() {
         if (!document.getElementById('lan_mes')?.value) { toast('Mês/Ano obrigatório.', 'warning'); return; }
         const pedido = document.getElementById('lan_pedido')?.value;
         if (!pedido) { toast('Pedido obrigatório.', 'warning'); return; }
-
-        if (lancamentos.some(l => parseInt(l.pedido, 10) === parseInt(pedido, 10))) {
-            toast(`Já existe um lançamento com o nº de pedido ${pedido}.`, 'error');
-            return;
-        }
-
+        // ⚡ Permitido lançar várias vezes o mesmo pedido/OC
         const valor = converterParaNumero(document.getElementById('lan_valor')?.value || '0,00');
         let obs = document.getElementById('lan_observacoes')?.value || '';
         if (obs.length > 100) obs = obs.substring(0,100);
@@ -2116,7 +1944,6 @@ async function adicionarLancamento() {
         if (tipo === 'SHOWROOM') etiqueta = document.getElementById('lan_etiqueta')?.value?.toUpperCase() || '';
         let produtos = ''; let produtoEstoqueId = ''; let statusSaida = '';
         const itens = parseInt(document.getElementById('lan_itens')?.value, 10) || 0;
-
         if (tipo === 'SHOWROOM') {
             const produtoId = document.getElementById('lan_produto_estoque')?.value;
             if (!produtoId) { toast('Selecione um móvel do estoque para SHOWROOM.', 'warning'); return; }
@@ -2130,7 +1957,6 @@ async function adicionarLancamento() {
         } else {
             produtos = document.getElementById('lan_produtos')?.value?.toUpperCase() || '';
         }
-
         let l = {
             pedido: pedido, data: document.getElementById('lan_data')?.value || new Date().toISOString().split('T')[0],
             mes: document.getElementById('lan_mes')?.value, tipo: tipo,
@@ -2155,7 +1981,6 @@ async function adicionarLancamento() {
             observacoes: obs, usuario: usuarioAtual, criado: new Date().toISOString(),
             produtoEstoqueId: produtoEstoqueId, statusSaida: statusSaida
         };
-
         _ignorarProximoSnapshot = true;
         await db.collection('lancamentos').add(l);
         await adicionarLog('ADICIONOU LANÇAMENTO', `Pedido ${l.pedido} - ${tipo}`);
@@ -2182,16 +2007,30 @@ async function duplicarLancamento(id) {
     if (!podeEditarLancamentos()) { toast('Sem permissão.', 'error'); return; }
     const original = lancamentos.find(l => l.id === id);
     if (!original) return;
-    const ok = await confirmar('Duplicar Lançamento', `Duplicar o lançamento do pedido #${original.pedido}?`);
+    const ok = await confirmar('Adicionar Novo Item', 
+        `Criar um novo lançamento com o MESMO pedido #${original.pedido} e a MESMA OC "${original.oc || 'sem OC'}"? ` +
+        `Use isso quando a mesma OC tiver vários itens para lançar.`);
     if (!ok) return;
     try {
-        const novoPedido = gerarProximoNumeroPedido();
-        const novo = { ...original, pedido: novoPedido, observacoes: (original.observacoes ? '[CÓPIA] ' + original.observacoes.substring(0,90) : 'CÓPIA'), criado: new Date().toISOString(), usuario: usuarioAtual, statusSaida: original.tipo === 'SHOWROOM' ? 'pendente' : '' };
+        const novo = { ...original,
+            produtos: '',
+            itens: 0,
+            categoria: '',
+            valor: 0,
+            nf: '',
+            etiqueta: '',
+            observacoes: 'NOVO ITEM DA MESMA OC',
+            criado: new Date().toISOString(),
+            usuario: usuarioAtual,
+            editadoEm: null,
+            editadoPor: null,
+            statusSaida: original.tipo === 'SHOWROOM' ? 'pendente' : ''
+        };
         delete novo.id;
         _ignorarProximoSnapshot = true;
         await db.collection('lancamentos').add(novo);
-        await adicionarLog('DUPLICOU LANÇAMENTO', `Pedido ${original.pedido} → ${novoPedido}`);
-        toast(`Lançamento duplicado como pedido #${novoPedido}.`, 'success');
+        await adicionarLog('NOVO ITEM NA MESMA OC', `Pedido ${original.pedido} - OC ${original.oc || 's/OC'}`);
+        toast(`Novo item criado para o pedido #${original.pedido} (mesma OC).`, 'success');
         mostrar('lancamentos');
     } catch (e) { toast('Erro: ' + e.message, 'error'); console.error(e); }
 }
@@ -2253,11 +2092,8 @@ async function salvarEdicaoLancamento(id) {
         const l = lancamentos.find(l => l.id === id);
         if (!l) throw new Error('Lançamento não encontrado');
         const getValue = (idCampo, fallback = '') => { const el = document.getElementById(idCampo); return el ? el.value : fallback; };
-
         const novoPedido = parseInt(getValue('edit_lan_pedido'), 10) || l.pedido;
-        const conflito = lancamentos.some(x => x.id !== id && parseInt(x.pedido, 10) === novoPedido);
-        if (conflito) { toast(`Já existe outro lançamento com o nº de pedido ${novoPedido}.`, 'error'); return; }
-
+        // ⚡ Permitido vários lançamentos com o mesmo pedido
         const novoStatus = getValue('edit_lan_status') || l.status;
         if (novoStatus !== l.status) {
             const permitidos = transicoesValidas[l.status] || [];
@@ -2266,9 +2102,7 @@ async function salvarEdicaoLancamento(id) {
                 if (!ok) return;
             }
         }
-
         const dadosAntigos = { pedido: l.pedido, data: l.data, mes: l.mes, tipo: l.tipo, cliente: l.cliente, oc: l.oc, fornecedor: l.fornecedor, categoria: l.categoria, itens: l.itens, produtos: l.produtos, etiqueta: l.etiqueta, valor: l.valor, data_pagto: l.data_pagto, condicao: l.condicao, prev_fat: l.prev_fat, data_fat: l.data_fat, prev_chegada: l.prev_chegada, novo_prazo: l.novo_prazo, status: l.status, nf: l.nf, transportadora: l.transportadora, chegada: l.chegada, conferencia: l.conferencia, entrega: l.entrega, prazo_final: l.prazo_final, observacoes: l.observacoes };
-
         l.pedido = novoPedido;
         l.data = getValue('edit_lan_data') || l.data;
         l.mes = getValue('edit_lan_mes') || l.mes;
@@ -2290,14 +2124,12 @@ async function salvarEdicaoLancamento(id) {
         l.observacoes = getValue('edit_lan_observacoes').substring(0, 100);
         l.editadoPor = usuarioAtual;
         l.editadoEm = new Date().toISOString();
-
         const dadosNovos = { pedido: l.pedido, data: l.data, mes: l.mes, tipo: l.tipo, cliente: l.cliente, oc: l.oc, fornecedor: l.fornecedor, categoria: l.categoria, itens: l.itens, produtos: l.produtos, etiqueta: l.etiqueta, valor: l.valor, data_pagto: l.data_pagto, condicao: l.condicao, prev_fat: l.prev_fat, data_fat: l.data_fat, prev_chegada: l.prev_chegada, novo_prazo: l.novo_prazo, status: l.status, nf: l.nf, transportadora: l.transportadora, chegada: l.chegada, conferencia: l.conferencia, entrega: l.entrega, prazo_final: l.prazo_final, observacoes: l.observacoes };
         for (const campo of Object.keys(dadosNovos)) {
             if (String(dadosAntigos[campo] ?? '') !== String(dadosNovos[campo] ?? '')) {
                 await registrarHistorico('lancamentos', id, campo, dadosAntigos[campo], dadosNovos[campo]);
             }
         }
-
         _ignorarProximoSnapshot = true;
         await db.collection('lancamentos').doc(id).update(l);
         await adicionarLog('EDITOU LANÇAMENTO', `Pedido ${l.pedido}`);
@@ -2308,9 +2140,6 @@ async function salvarEdicaoLancamento(id) {
     finally { hideLoading(btn, original); finalizarSubmit('saveLancamento'); }
 }
 
-// ============================================
-// TELA: ANEXOS
-// ============================================
 function telaAnexos() {
     if (!temPermissao('anexos', 'acesso')) return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2></div>`;
     return topBar() + `
@@ -2372,14 +2201,11 @@ async function anexarArquivo(pedido) {
                 const ref = storage.ref(storagePath);
                 await ref.put(file);
                 url = await ref.getDownloadURL();
-            } catch (storageErr) {
-                console.warn('Storage falhou, usando base64:', storageErr.message);
-                url = '';
-            }
+            } catch (storageErr) { console.warn('Storage falhou:', storageErr.message); url = ''; }
         }
         if (!url) {
             if (file.size > 900 * 1024) {
-                toast('Firebase Storage indisponível e arquivo > 900 KB. Ative o Storage no console Firebase ou use arquivo menor.', 'error', 6000);
+                toast('Firebase Storage indisponível e arquivo > 900 KB.', 'error', 6000);
                 if (uploadArea) uploadArea.textContent = '📂 Anexar arquivo (máx 5 MB)';
                 return;
             }
@@ -2418,7 +2244,7 @@ async function excluirAnexo(id, pedido) {
     if (!ok) return;
     try {
         const a = anexos.find(a => a.id === id);
-        if (a?.storagePath && storage) { try { await storage.ref(a.storagePath).delete(); } catch (e) { console.warn('Storage delete falhou:', e.message); } }
+        if (a?.storagePath && storage) { try { await storage.ref(a.storagePath).delete(); } catch (e) {} }
         _ignorarProximoSnapshot = true;
         await db.collection('anexos').doc(id).delete();
         await adicionarLog('EXCLUIU ANEXO', a?.nome || '');
@@ -2443,9 +2269,6 @@ function limparBuscaAnexos() {
     document.querySelectorAll('#anexosLista > div').forEach(d => d.style.display = '');
 }
 
-// ============================================
-// TELA: ESTOQUE (SIMPLIFICADO - 4 BOTÕES: 👁️ ✏️ 🗑️ 📦)
-// ============================================
 function telaEstoque() {
     if (!temPermissao('estoque', 'acesso')) return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2></div>`;
     const podeEditar = temPermissao('estoque', 'editar');
@@ -2457,15 +2280,12 @@ function telaEstoque() {
     const pendentesEntrada = movimentacoes.filter(m => m.tipo === 'entrada' && m.status === 'pendente').length;
     const pendentesDevolucao = movimentacoes.filter(m => m.tipo === 'devolucao' && m.status === 'pendente').length;
     const totalPendencias = pendentes + pendentesEntrada + pendentesDevolucao;
-
     const totalPages = Math.ceil(estoque.length / rowsPerPageEstoque);
     if (currentPageEstoque > totalPages) currentPageEstoque = 1;
     const start = (currentPageEstoque - 1) * rowsPerPageEstoque;
     const estoquePagina = estoque.slice(start, start + rowsPerPageEstoque);
-
     const optionsCat = `<option value="">Todas categorias</option>` + categorias.map(c => `<option value="${c}" ${filtrosEstado.estoque.categoria===c?'selected':''}>${c}</option>`).join('');
     const optionsForn = `<option value="">Todos fornecedores</option>` + fornecedores.map(f => `<option value="${escapeHtml(f.nome)}" ${filtrosEstado.estoque.fornecedor===f.nome?'selected':''}>${escapeHtml(f.nome)}</option>`).join('');
-
     return topBar() + `
         <div class="box">
             <h2>🏷️ Estoque ShowRoom</h2>
@@ -2548,7 +2368,6 @@ function changePageEstoque(delta) {
     const newPage = currentPageEstoque + delta;
     if (newPage >= 1 && newPage <= total) { currentPageEstoque = newPage; renderizarTelaAtual(); }
 }
-// ⚡ FILTRO VISUAL
 function filtrarEstoque() {
     const busca = document.getElementById('buscaEstoque')?.value || '';
     const categoria = document.getElementById('filtroEstoqueCategoria')?.value || '';
@@ -2570,9 +2389,6 @@ function filtrarEstoque() {
     });
 }
 
-// ============================================
-// MODAL UNIFICADO DE MOVIMENTAÇÃO
-// ============================================
 function abrirModalMovimentacao(produtoId = null) {
     if (!temPermissao('estoque', 'editar')) { toast('Sem permissão.', 'error'); return; }
     const modal = getElement('modalMovimentacaoEstoque');
@@ -2580,9 +2396,7 @@ function abrirModalMovimentacao(produtoId = null) {
     const title = getElement('modalMovimentacaoTitle');
     if (!modal || !content) return;
     if (title) title.textContent = '📦 Movimentar Estoque';
-
     const optionsProdutos = estoque.map(e => `<option value="${e.id}" ${e.id===produtoId?'selected':''}>${escapeHtml(e.produto)} (${e.quantidade||0})</option>`).join('');
-
     content.innerHTML = `
         <div class="form-tabs">
             <button class="tab-btn active" data-tipo="entrada" onclick="mudarAbaMovimentacao('entrada', this)">🟢 ENTRADA</button>
@@ -2618,11 +2432,9 @@ function abrirModalMovimentacao(produtoId = null) {
                 <div class="form-group" style="grid-column:span 2;"><label>Observação</label><textarea id="mov_observacao_devolucao" rows="2"></textarea></div>
             </div>
             <div style="text-align:right;margin-top:15px"><button class="info" onclick="confirmarMovimentacao('devolucao')">🔵 Registrar Devolução</button></div>
-        </div>
-    `;
+        </div>`;
     modal.classList.add('active');
 }
-
 function mudarAbaMovimentacao(tipo, btn) {
     const parent = btn.closest('.modal-content');
     parent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -2632,7 +2444,6 @@ function mudarAbaMovimentacao(tipo, btn) {
     if (aba) aba.classList.add('active');
     btn.classList.add('active');
 }
-
 async function confirmarMovimentacao(tipo, callback = null) {
     if (!temPermissao('estoque', 'editar')) { toast('Sem permissão.', 'error'); return; }
     if (!iniciarSubmit('movEstoque_' + tipo)) return;
@@ -2647,17 +2458,15 @@ async function confirmarMovimentacao(tipo, callback = null) {
         if (!produtoId) { toast('Selecione um produto.', 'warning'); return; }
         if (!quantidade || quantidade <= 0) { toast('Quantidade deve ser maior que zero.', 'warning'); return; }
         if (!motivo) { toast('Motivo obrigatório.', 'warning'); return; }
-
         const produto = estoque.find(e => e.id === produtoId);
         if (!produto) { toast('Produto não encontrado.', 'error'); return; }
         let novaQuantidade = converterParaNumero(produto.quantidade);
         let mensagem = '';
-
         if (tipo === 'entrada') { novaQuantidade += quantidade; mensagem = `Entrada de ${quantidade} unidades. Motivo: ${motivo}`; }
         else if (tipo === 'saida') {
             if (quantidade > novaQuantidade && usuarioAtual !== 'Admin') { toast(`Estoque insuficiente. Disponível: ${novaQuantidade}`, 'error'); return; }
             if (quantidade > novaQuantidade && usuarioAtual === 'Admin') {
-                const ok = await confirmar('Saldo Negativo', `Estoque insuficiente (${novaQuantidade}). Prosseguir com saldo negativo?`);
+                const ok = await confirmar('Saldo Negativo', `Estoque insuficiente (${novaQuantidade}). Prosseguir?`);
                 if (!ok) return;
             }
             novaQuantidade -= quantidade;
@@ -2667,13 +2476,12 @@ async function confirmarMovimentacao(tipo, callback = null) {
             _ignorarProximoSnapshot = true;
             await db.collection('movimentacoes_estoque').add(mov);
             await adicionarLog('CRIOU DEVOLUÇÃO PENDENTE', `${produto.produto} - ${quantidade}`);
-            toast('Devolução registrada como pendente. Aguardando confirmação da logística.', 'info');
+            toast('Devolução registrada como pendente.', 'info');
             fecharModal('modalMovimentacaoEstoque');
-            if (callback) try { await callback(); } catch(e) { console.warn(e); }
+            if (callback) try { await callback(); } catch(e) {}
             mostrar('estoque');
             return;
         }
-
         _ignorarProximoSnapshot = true;
         await db.collection('estoque').doc(produtoId).update({
             quantidade: novaQuantidade,
@@ -2684,16 +2492,13 @@ async function confirmarMovimentacao(tipo, callback = null) {
         await db.collection('movimentacoes_estoque').add(mov);
         await adicionarLog('MOVIMENTOU ESTOQUE', `${produto.produto} - ${mensagem}`);
         fecharModal('modalMovimentacaoEstoque');
-        if (callback) { try { await callback(); } catch(e) { console.warn('Callback falhou:', e); } }
+        if (callback) { try { await callback(); } catch(e) {} }
         mostrar('estoque');
         toast('Movimentação realizada com sucesso!', 'success');
     } catch (e) { toast('Erro: ' + e.message, 'error'); console.error(e); }
     finally { if (btn) hideLoading(btn, original); finalizarSubmit('movEstoque_' + tipo); }
 }
 
-// ============================================
-// PENDÊNCIAS
-// ============================================
 function abrirModalPendencias() {
     if (!temPermissao('estoque', 'editar')) { toast('Sem permissão.', 'error'); return; }
     const modal = getElement('modalPendenciasEstoque');
@@ -2706,9 +2511,9 @@ function abrirModalPendencias() {
         content.innerHTML = `<p style="text-align:center;padding:20px;color:#666;">✅ Nenhuma movimentação pendente.</p>`;
     } else {
         let html = `<div class="table-container"><table><thead><tr><th scope="col">Data</th><th scope="col">Tipo</th><th scope="col">Produto</th><th scope="col">Qtd</th><th scope="col">Origem</th><th scope="col">Status</th><th scope="col">Ação</th></tr></thead><tbody>`;
-        pendenciasShowroom.forEach(l => { const prod = estoque.find(e => e.id === l.produtoEstoqueId); const nomeProd = prod ? prod.produto : l.produtos || 'Produto removido'; html += `<tr><td>${formatarData(l.data)}</td><td>🔴 Saída (Showroom)</td><td>${escapeHtml(nomeProd)}</td><td>${l.itens||1}</td><td>Venda #${escapeHtml(String(l.pedido))} - ${escapeHtml(l.cliente||'')}</td><td><span class="status-badge em-aberto">⏳</span></td><td><button class="small success" onclick="confirmarPendenciaShowroom('${l.id}')">✅ Confirmar</button></td></tr>`; });
-        pendenciasEntrada.forEach(m => { html += `<tr><td>${new Date(m.data).toLocaleDateString()}</td><td>🟢 Entrada</td><td>${escapeHtml(m.produtoNome)}</td><td>${m.quantidade}</td><td>${escapeHtml(m.documento || 'N/I')}</td><td><span class="status-badge em-aberto">⏳</span></td><td><button class="small success" onclick="confirmarPendenciaEntrada('${m.id}')">✅ Confirmar</button></td></tr>`; });
-        pendenciasDevolucao.forEach(m => { html += `<tr><td>${new Date(m.data).toLocaleDateString()}</td><td>🔵 Devolução</td><td>${escapeHtml(m.produtoNome)}</td><td>${m.quantidade}</td><td>${escapeHtml(m.documento || 'N/I')}</td><td><span class="status-badge em-aberto">⏳</span></td><td><button class="small success" onclick="confirmarPendenciaDevolucao('${m.id}')">✅ Confirmar</button></td></tr>`; });
+        pendenciasShowroom.forEach(l => { const prod = estoque.find(e => e.id === l.produtoEstoqueId); const nomeProd = prod ? prod.produto : l.produtos || 'Produto removido'; html += `<tr><td>${formatarData(l.data)}</td><td>🔴 Saída</td><td>${escapeHtml(nomeProd)}</td><td>${l.itens||1}</td><td>Venda #${escapeHtml(String(l.pedido))}</td><td><span class="status-badge em-aberto">⏳</span></td><td><button class="small success" onclick="confirmarPendenciaShowroom('${l.id}')">✅</button></td></tr>`; });
+        pendenciasEntrada.forEach(m => { html += `<tr><td>${new Date(m.data).toLocaleDateString()}</td><td>🟢 Entrada</td><td>${escapeHtml(m.produtoNome)}</td><td>${m.quantidade}</td><td>${escapeHtml(m.documento || 'N/I')}</td><td><span class="status-badge em-aberto">⏳</span></td><td><button class="small success" onclick="confirmarPendenciaEntrada('${m.id}')">✅</button></td></tr>`; });
+        pendenciasDevolucao.forEach(m => { html += `<tr><td>${new Date(m.data).toLocaleDateString()}</td><td>🔵 Devolução</td><td>${escapeHtml(m.produtoNome)}</td><td>${m.quantidade}</td><td>${escapeHtml(m.documento || 'N/I')}</td><td><span class="status-badge em-aberto">⏳</span></td><td><button class="small success" onclick="confirmarPendenciaDevolucao('${m.id}')">✅</button></td></tr>`; });
         html += `</tbody></table></div>`;
         content.innerHTML = html;
     }
@@ -2719,7 +2524,6 @@ async function confirmarPendenciaShowroom(lancamentoId) {
     if (!lanc) { toast('Lançamento não encontrado.', 'error'); return; }
     fecharModal('modalPendenciasEstoque');
     abrirModalMovimentacao(lanc.produtoEstoqueId);
-    // Preenche a aba de saída
     mudarAbaMovimentacao('saida', document.querySelector('#modalMovimentacaoEstoque .tab-btn[data-tipo="saida"]'));
     requestAnimationFrame(() => {
         const qtd = document.getElementById('mov_quantidade_saida');
@@ -2736,7 +2540,7 @@ async function confirmarPendenciaShowroom(lancamentoId) {
             _ignorarProximoSnapshot = true;
             await db.collection('lancamentos').doc(lancamentoId).update({ statusSaida: 'confirmada', editadoEm: new Date().toISOString(), editadoPor: usuarioAtual });
             await adicionarLog('CONFIRMOU SAÍDA SHOWROOM', `Pedido ${lanc.pedido}`);
-        } catch (e) { console.warn('Falha ao atualizar statusSaida:', e); }
+        } catch (e) {}
         window._pendenciaShowroomCallback = null;
     };
 }
@@ -2744,12 +2548,7 @@ async function confirmarPendenciaEntrada(movimentoId) {
     const mov = movimentacoes.find(m => m.id === movimentoId);
     if (!mov) { toast('Movimento não encontrado.', 'error'); return; }
     const produto = estoque.find(e => e.id === mov.produtoId);
-    if (!produto) {
-        _ignorarProximoSnapshot = true;
-        await db.collection('movimentacoes_estoque').doc(movimentoId).update({ status: 'cancelada', observacao: (mov.observacao ? mov.observacao + ' | ' : '') + 'Produto removido.' });
-        fecharModal('modalPendenciasEstoque'); mostrar('estoque');
-        toast('Produto foi removido. Pendência cancelada.', 'warning'); return;
-    }
+    if (!produto) { _ignorarProximoSnapshot = true; await db.collection('movimentacoes_estoque').doc(movimentoId).update({ status: 'cancelada' }); fecharModal('modalPendenciasEstoque'); mostrar('estoque'); toast('Produto removido. Pendência cancelada.', 'warning'); return; }
     const novaQuantidade = converterParaNumero(produto.quantidade) + converterParaNumero(mov.quantidade);
     try {
         _ignorarProximoSnapshot = true;
@@ -2758,18 +2557,13 @@ async function confirmarPendenciaEntrada(movimentoId) {
         await adicionarLog('CONFIRMOU ENTRADA', `${produto.produto} - ${mov.quantidade}`);
         fecharModal('modalPendenciasEstoque'); mostrar('estoque');
         toast('Entrada confirmada.', 'success');
-    } catch (e) { toast('Erro: ' + e.message, 'error'); console.error(e); }
+    } catch (e) { toast('Erro: ' + e.message, 'error'); }
 }
 async function confirmarPendenciaDevolucao(movimentoId) {
     const mov = movimentacoes.find(m => m.id === movimentoId);
     if (!mov) { toast('Movimento não encontrado.', 'error'); return; }
     const produto = estoque.find(e => e.id === mov.produtoId);
-    if (!produto) {
-        _ignorarProximoSnapshot = true;
-        await db.collection('movimentacoes_estoque').doc(movimentoId).update({ status: 'cancelada', observacao: (mov.observacao ? mov.observacao + ' | ' : '') + 'Produto removido.' });
-        fecharModal('modalPendenciasEstoque'); mostrar('estoque');
-        toast('Produto foi removido. Pendência cancelada.', 'warning'); return;
-    }
+    if (!produto) { _ignorarProximoSnapshot = true; await db.collection('movimentacoes_estoque').doc(movimentoId).update({ status: 'cancelada' }); fecharModal('modalPendenciasEstoque'); mostrar('estoque'); toast('Produto removido. Pendência cancelada.', 'warning'); return; }
     const novaQuantidade = converterParaNumero(produto.quantidade) + converterParaNumero(mov.quantidade);
     try {
         _ignorarProximoSnapshot = true;
@@ -2778,12 +2572,9 @@ async function confirmarPendenciaDevolucao(movimentoId) {
         await adicionarLog('CONFIRMOU DEVOLUÇÃO', `${produto.produto} - ${mov.quantidade}`);
         fecharModal('modalPendenciasEstoque'); mostrar('estoque');
         toast('Devolução confirmada.', 'success');
-    } catch (e) { toast('Erro: ' + e.message, 'error'); console.error(e); }
+    } catch (e) { toast('Erro: ' + e.message, 'error'); }
 }
 
-// ============================================
-// VISUALIZAR
-// ============================================
 function abrirModalVisualizarEstoque(produtoId) {
     const modal = getElement('modalVisualizarEstoque');
     const content = getElement('modalVisualizarEstoqueContent');
@@ -2824,9 +2615,6 @@ function abrirModalVisualizarEstoque(produtoId) {
     modal.classList.add('active');
 }
 
-// ============================================
-// CADASTRO/EDIÇÃO ITEM ESTOQUE
-// ============================================
 function abrirModalEstoque(id = null) {
     if (!temPermissao('estoque', 'editar')) { toast('Sem permissão.', 'error'); return; }
     const modal = getElement('modalEstoque');
@@ -2900,7 +2688,7 @@ async function salvarItemEstoque(id) {
         if (document.getElementById('estoque_imagem_remover')?.value === 'true') imagem = '';
         else if (document.getElementById('estoque_imagem')?.files?.[0]) {
             const file = document.getElementById('estoque_imagem').files[0];
-            if (file.size > 900 * 1024) { toast('Imagem muito grande (> 900 KB). Reduza antes de enviar.', 'error'); return; }
+            if (file.size > 900 * 1024) { toast('Imagem muito grande (> 900 KB).', 'error'); return; }
             imagem = await new Promise((resolve) => { const r = new FileReader(); r.onload = (e) => resolve(e.target.result); r.readAsDataURL(file); });
         } else if (id) { const existing = estoque.find(e => e.id === id); if (existing) imagem = existing.imagem || ''; }
         const agora = new Date().toISOString();
@@ -2942,9 +2730,6 @@ async function excluirItemEstoque(id) {
     } catch (e) { toast('Erro: ' + e.message, 'error'); console.error(e); }
 }
 
-// ============================================
-// PREVIEW / LIGHTBOX
-// ============================================
 function showImagePreview(event, url) {
     const preview = document.getElementById('imagePreviewFloat');
     if (!preview) return;
@@ -2970,9 +2755,6 @@ function fecharLightbox() {
     if (lb) lb.style.display = 'none';
 }
 
-// ============================================
-// RELATÓRIOS
-// ============================================
 function telaRelatorios() {
     if (!temPermissao('relatorios', 'acesso')) return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2></div>`;
     const etiquetas = getEtiquetas();
@@ -3078,8 +2860,7 @@ function gerarPDF() {
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        let heightLeft = pdfHeight;
-        let position = 0;
+        let heightLeft = pdfHeight; let position = 0;
         pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
         heightLeft -= pdf.internal.pageSize.getHeight();
         while (heightLeft > 0) {
@@ -3092,9 +2873,6 @@ function gerarPDF() {
     }).catch(err => toast('Erro ao gerar PDF: ' + err.message, 'error'));
 }
 
-// ============================================
-// DASHBOARD
-// ============================================
 function telaDashboard() {
     if (!temPermissao('dashboard', 'acesso')) return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2></div>`;
     return topBar() + `
@@ -3229,9 +3007,6 @@ function gerarLembretes() {
     return lembretes.slice(0,8);
 }
 
-// ============================================
-// USUÁRIOS E LOGS
-// ============================================
 function telaUsuarios() {
     if (!temPermissao('usuarios', 'acesso')) return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2></div>`;
     const podeEditar = temPermissao('usuarios', 'editar');
@@ -3246,9 +3021,7 @@ function telaUsuarios() {
             </div>` : ''}
             <div class="table-container">
                 <table class="usuarios-table">
-                    <colgroup>
-                        <col class="c-num"><col class="c-nome"><col class="c-perf"><col class="c-senha"><col class="c-pode"><col class="c-acoes">
-                    </colgroup>
+                    <colgroup><col class="c-num"><col class="c-nome"><col class="c-perf"><col class="c-senha"><col class="c-pode"><col class="c-acoes"></colgroup>
                     <thead><tr><th scope="col">#</th><th scope="col">Usuário</th><th scope="col">Perfil</th><th scope="col">Senha</th><th scope="col">Pode editar lançamentos?</th><th scope="col" style="text-align:center;">Ações</th></tr></thead>
                     <tbody>
                         ${usuarios.map((u,i)=>`<tr>
@@ -3257,11 +3030,9 @@ function telaUsuarios() {
                             <td>${escapeHtml(u.perfil||'consultor')}</td>
                             <td>${u.senha?'••••••':'Sem senha'}</td>
                             <td>${u.podeEditarLancamentos?'✅ Sim':'❌ Não'}</td>
-                            <td class="acoes-cell">
-                                <div class="acoes-wrapper">
-                                    ${podeEditar ? `<button class="small" data-tooltip="Editar" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️</button><button class="small danger" data-tooltip="Excluir" onclick="excluirUsuario('${u.id}')">🗑️</button>` : ''}
-                                </div>
-                            </td>
+                            <td class="acoes-cell"><div class="acoes-wrapper">
+                                ${podeEditar ? `<button class="small" data-tooltip="Editar" onclick="abrirModalEdicaoUsuario('${u.id}')">✏️</button><button class="small danger" data-tooltip="Excluir" onclick="excluirUsuario('${u.id}')">🗑️</button>` : ''}
+                            </div></td>
                         </tr>`).join('')}
                     </tbody>
                 </table>
@@ -3349,14 +3120,10 @@ async function salvarEdicaoUsuario(id) {
         u.nome = novoNome;
         u.perfil = novoPerfil;
         u.podeEditarLancamentos = podeEditarLanc;
-        if (novaSenha) {
-            if (novaSenha !== confirm) { toast('Senhas não conferem.', 'error'); return; }
-            u.senha = await hashSenha(novaSenha);
-        }
+        if (novaSenha) { if (novaSenha !== confirm) { toast('Senhas não conferem.', 'error'); return; } u.senha = await hashSenha(novaSenha); }
         const permissoes = {};
         document.querySelectorAll('#permissoesGrid select').forEach(sel => { permissoes[sel.dataset.guia] = sel.value; });
         u.permissoes = permissoes;
-        // ⚡ CORRIGIDO: só atualiza usuarioAtual DEPOIS do Firestore confirmar
         _ignorarProximoSnapshot = true;
         await db.collection('usuarios').doc(id).update(u);
         if (usuarioAtual === nomeAnterior) { usuarioAtual = novoNome; usuarioPermissao = u.perfil || 'consultor'; salvarSessao(usuarioAtual, usuarioPermissao); }
@@ -3381,9 +3148,6 @@ function telaLogs() {
     return topBar() + `<div class="box"><h2>📋 Logs</h2><div class="log-viewer" role="log" aria-live="polite">${logsOrdenados.map(l=>`<div class="log-entry"><span class="log-time">[${new Date(l.data).toLocaleString()}]</span> <span class="log-user">${escapeHtml(l.usuario)}</span> <span class="log-action">${escapeHtml(l.acao)}</span>${l.detalhe?` - ${escapeHtml(l.detalhe)}`:''}</div>`).join('')}${logs.length===0?'<div>Nenhum log.</div>':''}</div></div>`;
 }
 
-// ============================================
-// MOSTRAR
-// ============================================
 async function mostrar(tela) {
     if (!usuarioAtual) { mostrarLogin(); return; }
     if (!temPermissao(tela, 'acesso')) {
@@ -3419,13 +3183,9 @@ async function mostrar(tela) {
     }
 }
 
-// ============================================
-// INICIALIZAÇÃO
-// ============================================
 (async function init() {
     const main = getElement('main-content');
     if (main) main.innerHTML = `<div class="login-container"><div class="login-box"><h1>BRETON BELÉM</h1><h2>Carregando...</h2><div style="text-align:center;padding:20px;"><div class="loading-spinner" style="width:30px;height:30px;border-width:4px;border-color:#5C2A2A;border-top-color:transparent;"></div></div></div></div>`;
-
     try {
         await carregarDados();
         if (restaurarSessao()) {
