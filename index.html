@@ -1053,7 +1053,7 @@ function ativarListenersTempoReal() {
             if (document.querySelector('.modal.active, .confirm-modal.active')) return;
             if (usuarioAtual && telaAtual) {
                 const campoAtivo = document.activeElement;
-                const isDigitando = campoAtivo && (campoAtivo.tagName === 'INPUT' || campoAtivo.tagName === 'TEXTAREA' || campoAtivo.tagName === 'SELECT') && !campoAtivo.readOnly;
+                const isDigitando = campoAtivo && (campoAtivo.tagName === 'INPUT' || campoAtivo.tagName === 'TEXTAREA') && !campoAtivo.readOnly;
                 if (!isDigitando) { try { renderizarTelaAtual(); } catch (e) {} }
             }
         }, err => { console.warn(`Listener ${nome} falhou:`, err.message); });
@@ -1093,15 +1093,16 @@ function restaurarEstadoFiltros() {
     const c2 = document.getElementById('filtroEstoqueFornecedor'); if (c2 && filtrosEstado.estoque.fornecedor) c2.value = filtrosEstado.estoque.fornecedor;
 }
 
-function filtrarLinhasTabela(tbodyId, termo) {
-    const tbody = document.getElementById(tbodyId);
-    if (!tbody) return;
-    const t = (termo || '').toLowerCase().trim();
-    tbody.querySelectorAll('tr').forEach(row => {
-        if (row.querySelector('td[colspan]')) return;
-        const texto = row.textContent.toLowerCase();
-        row.style.display = (!t || texto.includes(t)) ? '' : 'none';
-    });
+function aplicarFocoBusca(idInput, valor) {
+    setTimeout(() => {
+        const inp = document.getElementById(idInput);
+        if (inp && valor) {
+            try {
+                inp.focus();
+                inp.setSelectionRange(inp.value.length, inp.value.length);
+            } catch (e) {}
+        }
+    }, 50);
 }
 
 function renderizarTelaAtual() {
@@ -1109,12 +1110,12 @@ function renderizarTelaAtual() {
     if (!main || !usuarioAtual) return;
     capturarEstadoFiltros();
     switch(telaAtual) {
-        case 'pedidos': main.innerHTML = telaPedidos(); setTimeout(() => { renderPaginacaoPedidos(); restaurarEstadoFiltros(); }, 30); break;
-        case 'fornecedores': main.innerHTML = telaFornecedores(); setTimeout(restaurarEstadoFiltros, 30); break;
-        case 'lancamentos': main.innerHTML = telaLancamentos(); setTimeout(() => { renderLancamentos(); toggleEtiquetaField(); restaurarEstadoFiltros(); }, 30); break;
+        case 'pedidos': main.innerHTML = telaPedidos(); setTimeout(() => { renderPaginacaoPedidos(); restaurarEstadoFiltros(); aplicarFocoBusca('buscaCliente', filtrosEstado.pedidos.busca); }, 30); break;
+        case 'fornecedores': main.innerHTML = telaFornecedores(); setTimeout(() => { restaurarEstadoFiltros(); aplicarFocoBusca('buscaFornecedor', filtrosEstado.fornecedores.busca); }, 30); break;
+        case 'lancamentos': main.innerHTML = telaLancamentos(); setTimeout(() => { renderLancamentos(); toggleEtiquetaField(); restaurarEstadoFiltros(); aplicarFocoBusca('buscaLancamento', filtrosEstado.lancamentos.busca); }, 30); break;
         case 'relatorios': main.innerHTML = telaRelatorios(); setTimeout(() => { aplicarFiltrosRelatorio(); }, 30); break;
         case 'dashboard': main.innerHTML = telaDashboard(); setTimeout(() => { aplicarFiltroDashboard(); }, 30); break;
-        case 'estoque': main.innerHTML = telaEstoque(); setTimeout(() => { renderPaginacaoEstoque(); restaurarEstadoFiltros(); }, 30); break;
+        case 'estoque': main.innerHTML = telaEstoque(); setTimeout(() => { renderPaginacaoEstoque(); restaurarEstadoFiltros(); aplicarFocoBusca('buscaEstoque', filtrosEstado.estoque.busca); }, 30); break;
         case 'anexos': main.innerHTML = telaAnexos(); break;
         case 'usuarios': main.innerHTML = telaUsuarios(); break;
         case 'logs': main.innerHTML = telaLogs(); break;
@@ -1290,9 +1291,24 @@ function aplicarFiltroEtiqueta(lista) {
     if (currentEtiquetaFilter === "TODAS") return lista;
     return lista.filter(l => l.etiqueta === currentEtiquetaFilter);
 }
+function aplicarFiltroBuscaLancamentos(lista) {
+    const busca = (filtrosEstado.lancamentos.busca || '').toLowerCase().trim();
+    if (!busca) return lista;
+    return lista.filter(l =>
+        (l.pedido?.toString().includes(busca)) ||
+        (l.cliente?.toLowerCase().includes(busca)) ||
+        (l.fornecedor?.toLowerCase().includes(busca)) ||
+        (l.oc?.toLowerCase().includes(busca)) ||
+        (l.nf?.toLowerCase().includes(busca)) ||
+        (l.produtos?.toLowerCase().includes(busca)) ||
+        (l.categoria?.toLowerCase().includes(busca)) ||
+        (l.etiqueta?.toLowerCase().includes(busca))
+    );
+}
 function getLancamentosFiltrados() {
     let filtrados = aplicarFiltroTipo(lancamentos);
     filtrados = aplicarFiltroEtiqueta(filtrados);
+    filtrados = aplicarFiltroBuscaLancamentos(filtrados);
     filtrados = aplicarOrdenacao(filtrados);
     return filtrados;
 }
@@ -1308,10 +1324,24 @@ function telaPedidos() {
     if (!temPermissao('pedidos', 'acesso')) return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2></div>`;
     const podeEditar = temPermissao('pedidos', 'editar');
     const podeVisualizar = temPermissao('pedidos', 'visualizar');
-    const totalPages = Math.ceil(clientes.length / rowsPerPagePedidos);
+    
+    // ⚡ BUSCA GLOBAL (antes da paginação)
+    const busca = (filtrosEstado.pedidos.busca || '').toLowerCase().trim();
+    let clientesFiltrados = clientes;
+    if (busca) {
+        clientesFiltrados = clientes.filter(c =>
+            (c.pedido?.toString().includes(busca)) ||
+            (c.cliente?.toLowerCase().includes(busca)) ||
+            (c.cpf_cnpj?.toLowerCase().includes(busca)) ||
+            (c.contato?.toLowerCase().includes(busca))
+        );
+    }
+    
+    const totalPages = Math.ceil(clientesFiltrados.length / rowsPerPagePedidos);
     if (currentPagePedidos > totalPages) currentPagePedidos = 1;
     const start = (currentPagePedidos - 1) * rowsPerPagePedidos;
-    const clientesPagina = clientes.slice(start, start + rowsPerPagePedidos);
+    const clientesPagina = clientesFiltrados.slice(start, start + rowsPerPagePedidos);
+    
     return topBar() + `
         <div class="box">
             <h2>📋 Pedidos</h2>
@@ -1324,7 +1354,7 @@ function telaPedidos() {
                 <div class="form-group"><label for="cli_contato">Contato</label><input type="text" id="cli_contato" placeholder="Telefone/Email"></div>
                 <div class="form-group" style="justify-content:flex-end"><button class="success" id="btnAdicionarCliente" onclick="adicionarCliente()">➕ Adicionar</button></div>
             </div>` : ''}
-            <div class="search-box"><input type="text" id="buscaCliente" placeholder="🔍 Buscar..." oninput="filtrarClientes()" value="${escapeHtml(filtrosEstado.pedidos.busca)}" aria-label="Buscar clientes"></div>
+            <div class="search-box"><input type="text" id="buscaCliente" placeholder="🔍 Buscar (pedido, cliente, CPF, contato)..." oninput="filtrarClientes()" value="${escapeHtml(filtrosEstado.pedidos.busca)}" aria-label="Buscar clientes"></div>
             <div class="table-container">
                 <table class="pedidos-table">
                     <colgroup><col class="c-num"><col class="c-pedido"><col class="c-data"><col class="c-cli"><col class="c-cpf"><col class="c-cont"><col class="c-acoes"></colgroup>
@@ -1341,6 +1371,7 @@ function telaPedidos() {
                                 ${podeEditar ? `<button class="small" data-tooltip="Editar" onclick="abrirModalEdicaoPedido('${c.id}')">✏️</button><button class="small danger" data-tooltip="Excluir" onclick="excluirCliente('${c.id}')">🗑️</button>` : (podeVisualizar ? '<span style="color:#999;font-size:11px;">Visualização</span>' : '')}
                             </div></td>
                         </tr>`).join('')}
+                        ${clientesPagina.length === 0 ? `<tr><td colspan="7" class="text-center">Nenhum cliente encontrado${busca ? ' para "' + escapeHtml(busca) + '"' : ''}.</td></tr>` : ''}
                     </tbody>
                 </table>
             </div>
@@ -1348,7 +1379,17 @@ function telaPedidos() {
         </div>`;
 }
 function renderPaginacaoPedidos() {
-    const total = Math.ceil(clientes.length / rowsPerPagePedidos);
+    const busca = (filtrosEstado.pedidos.busca || '').toLowerCase().trim();
+    let clientesFiltrados = clientes;
+    if (busca) {
+        clientesFiltrados = clientes.filter(c =>
+            (c.pedido?.toString().includes(busca)) ||
+            (c.cliente?.toLowerCase().includes(busca)) ||
+            (c.cpf_cnpj?.toLowerCase().includes(busca)) ||
+            (c.contato?.toLowerCase().includes(busca))
+        );
+    }
+    const total = Math.ceil(clientesFiltrados.length / rowsPerPagePedidos);
     const pag = document.getElementById('paginationPedidos');
     if (!pag) return;
     if (total <= 1) { pag.innerHTML = ''; return; }
@@ -1360,10 +1401,19 @@ function changePagePedidos(delta) {
     const newPage = currentPagePedidos + delta;
     if (newPage >= 1 && newPage <= total) { currentPagePedidos = newPage; renderizarTelaAtual(); }
 }
+// ⚡ BUSCA GLOBAL
 function filtrarClientes() {
     const input = document.getElementById('buscaCliente');
     filtrosEstado.pedidos.busca = input ? input.value : '';
-    filtrarLinhasTabela('clientesBody', filtrosEstado.pedidos.busca);
+    currentPagePedidos = 1;
+    const main = getElement('main-content');
+    if (!main) return;
+    main.innerHTML = telaPedidos();
+    setTimeout(() => {
+        renderPaginacaoPedidos();
+        restaurarEstadoFiltros();
+        aplicarFocoBusca('buscaCliente', filtrosEstado.pedidos.busca);
+    }, 30);
 }
 async function adicionarCliente() {
     if (!temPermissao('pedidos', 'editar')) { toast('Sem permissão.', 'error'); return; }
@@ -1450,6 +1500,21 @@ function telaFornecedores() {
     if (!temPermissao('fornecedores', 'acesso')) return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2></div>`;
     const podeEditar = temPermissao('fornecedores', 'editar');
     const podeVisualizar = temPermissao('fornecedores', 'visualizar');
+    
+    // ⚡ BUSCA GLOBAL
+    const busca = (filtrosEstado.fornecedores.busca || '').toLowerCase().trim();
+    let fornecedoresFiltrados = fornecedores;
+    if (busca) {
+        fornecedoresFiltrados = fornecedores.filter(f =>
+            (f.nome?.toLowerCase().includes(busca)) ||
+            (f.cod?.toLowerCase().includes(busca)) ||
+            (f.cpf_cnpj?.toLowerCase().includes(busca)) ||
+            (f.contato?.toLowerCase().includes(busca)) ||
+            (f.condicao?.toLowerCase().includes(busca)) ||
+            (f.colecao?.toLowerCase().includes(busca))
+        );
+    }
+    
     return topBar() + `
         <div class="box">
             <h2>📦 Fornecedores</h2>
@@ -1463,13 +1528,13 @@ function telaFornecedores() {
                 <div class="form-group"><label for="for_colecao">Coleção</label><input type="text" id="for_colecao" style="text-transform:uppercase"></div>
                 <div class="form-group" style="justify-content:flex-end"><button class="success" id="btnSalvarFornecedor" onclick="adicionarFornecedor()">➕ Adicionar</button></div>
             </div>` : ''}
-            <div class="search-box"><input type="text" id="buscaFornecedor" placeholder="🔍 Buscar..." oninput="filtrarFornecedores()" value="${escapeHtml(filtrosEstado.fornecedores.busca)}" aria-label="Buscar fornecedores"></div>
+            <div class="search-box"><input type="text" id="buscaFornecedor" placeholder="🔍 Buscar (nome, código, CNPJ, contato, condição, coleção)..." oninput="filtrarFornecedores()" value="${escapeHtml(filtrosEstado.fornecedores.busca)}" aria-label="Buscar fornecedores"></div>
             <div class="table-container">
                 <table class="fornec-table">
                     <colgroup><col class="c-num"><col class="c-cod"><col class="c-nome"><col class="c-cpf"><col class="c-cont"><col class="c-cond"><col class="c-col"><col class="c-acoes"></colgroup>
                     <thead><tr><th scope="col">#</th><th scope="col">COD</th><th scope="col">Fornecedor</th><th scope="col">CPF/CNPJ</th><th scope="col">Contato</th><th scope="col">Condição</th><th scope="col">Coleção</th><th scope="col" style="text-align:center;">Ações</th></tr></thead>
                     <tbody id="fornecedoresBody">
-                        ${fornecedores.map((f,i)=>`<tr>
+                        ${fornecedoresFiltrados.map((f,i)=>`<tr>
                             <td>${i+1}</td>
                             <td>${escapeHtml(f.cod||'-')}</td>
                             <td class="cell-truncate" title="${escapeHtml(f.nome||'')}">${escapeHtml(f.nome)}</td>
@@ -1481,15 +1546,23 @@ function telaFornecedores() {
                                 ${podeEditar ? `<button class="small" data-tooltip="Editar" onclick="abrirModalEdicaoFornecedor('${f.id}')">✏️</button><button class="small danger" data-tooltip="Excluir" onclick="excluirFornecedor('${f.id}')">🗑️</button>` : (podeVisualizar ? '<span style="color:#999;font-size:11px;">Visualização</span>' : '')}
                             </div></td>
                         </tr>`).join('')}
+                        ${fornecedoresFiltrados.length === 0 ? `<tr><td colspan="8" class="text-center">Nenhum fornecedor encontrado${busca ? ' para "' + escapeHtml(busca) + '"' : ''}.</td></tr>` : ''}
                     </tbody>
                 </table>
             </div>
         </div>`;
 }
+// ⚡ BUSCA GLOBAL
 function filtrarFornecedores() {
     const input = document.getElementById('buscaFornecedor');
     filtrosEstado.fornecedores.busca = input ? input.value : '';
-    filtrarLinhasTabela('fornecedoresBody', filtrosEstado.fornecedores.busca);
+    const main = getElement('main-content');
+    if (!main) return;
+    main.innerHTML = telaFornecedores();
+    setTimeout(() => {
+        restaurarEstadoFiltros();
+        aplicarFocoBusca('buscaFornecedor', filtrosEstado.fornecedores.busca);
+    }, 30);
 }
 async function adicionarFornecedor() {
     if (!temPermissao('fornecedores', 'editar')) { toast('Sem permissão.', 'error'); return; }
@@ -1773,7 +1846,7 @@ function telaLancamentos() {
                     <div style="text-align:center;margin-top:20px"><button class="salvar" id="btnSalvarLancamento" onclick="adicionarLancamento()">💾 SALVAR LANÇAMENTO</button></div>
                 </div>
             </details>` : ''}
-            <div class="search-box"><input type="text" id="buscaLancamento" placeholder="🔍 Buscar..." oninput="filtrarLancamentos()" value="${escapeHtml(filtrosEstado.lancamentos.busca)}" aria-label="Buscar lançamentos"></div>
+            <div class="search-box"><input type="text" id="buscaLancamento" placeholder="🔍 Buscar (pedido, cliente, OC, NF, produto, categoria, etiqueta)..." oninput="filtrarLancamentos()" value="${escapeHtml(filtrosEstado.lancamentos.busca)}" aria-label="Buscar lançamentos"></div>
             <div class="table-container">
                 <table class="lancamentos-table">
                     <colgroup>
@@ -1795,19 +1868,9 @@ function telaLancamentos() {
         </div>`;
 }
 function renderLancamentos() {
-    const lancamentosFiltrados = getLancamentosFiltrados();
-    const busca = (document.getElementById('buscaLancamento')?.value || filtrosEstado.lancamentos.busca || '').toLowerCase();
+    const dadosFiltrados = getLancamentosFiltrados();
     const podeEditar = podeEditarLancamentos();
     const podeVerCompra = podeVisualizarCompra();
-    let dadosFiltrados = lancamentosFiltrados;
-    if (busca) {
-        dadosFiltrados = dadosFiltrados.filter(l =>
-            (l.pedido?.toString().includes(busca)) || (l.cliente?.toLowerCase().includes(busca)) ||
-            (l.fornecedor?.toLowerCase().includes(busca)) || (l.oc?.toLowerCase().includes(busca)) ||
-            (l.nf?.toLowerCase().includes(busca)) || (l.produtos?.toLowerCase().includes(busca)) ||
-            (l.categoria?.toLowerCase().includes(busca))
-        );
-    }
     dadosFiltradosCache = dadosFiltrados;
     const totalPages = Math.ceil(dadosFiltradosCache.length / rowsPerPage);
     if (currentPage > totalPages) currentPage = 1;
@@ -1815,6 +1878,7 @@ function renderLancamentos() {
     const end = start + rowsPerPage;
     const dadosPagina = dadosFiltradosCache.slice(start, end);
     const totaisFiltrados = calcularTotais(dadosFiltradosCache);
+    const busca = (filtrosEstado.lancamentos.busca || '').trim();
     const tbody = document.getElementById('lancamentosBody');
     if (!tbody) return;
     tbody.innerHTML = dadosPagina.map((l, idx) => {
@@ -1866,10 +1930,13 @@ function renderLancamentos() {
             </td>
         </tr>`;
     }).join('');
+    if (dadosPagina.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="30" class="text-center">Nenhum lançamento encontrado${busca ? ' para "' + escapeHtml(busca) + '"' : ''}.</td></tr>`;
+    }
     const tfoot = document.getElementById('lancamentosFooter');
     if (tfoot) {
         tfoot.innerHTML = `<tr style="background:#FAF0F0; font-weight:bold;">
-            <td colspan="12" style="text-align:right;">TOTAL:</td>
+            <td colspan="12" style="text-align:right;">TOTAL (filtrado):</td>
             <td>${podeVerCompra ? formatarValor(totaisFiltrados.totalValor) : '••••'}</td>
             <td colspan="9"></td>
             <td>${totaisFiltrados.totalItens} itens</td>
@@ -1895,23 +1962,18 @@ function setFilterType(tipo) { currentFilterType = tipo; currentPage = 1; render
 function setFilterEtiqueta(valor) { currentEtiquetaFilter = valor; currentPage = 1; renderizarTelaAtual(); }
 function setOrder(order) { currentOrder = order; currentPage = 1; renderizarTelaAtual(); }
 function toggleOrderDirection() { currentOrderDirection = currentOrderDirection === 'asc' ? 'desc' : 'asc'; currentPage = 1; renderizarTelaAtual(); }
+
+// ⚡ BUSCA GLOBAL em Lançamentos
 function filtrarLancamentos() {
     const input = document.getElementById('buscaLancamento');
     filtrosEstado.lancamentos.busca = input ? input.value : '';
-    filtrarLinhasTabela('lancamentosBody', filtrosEstado.lancamentos.busca);
+    currentPage = 1;
+    renderLancamentos();
+    aplicarFocoBusca('buscaLancamento', filtrosEstado.lancamentos.busca);
 }
 function exportarLancamentosExcel() {
     if (lancamentos.length === 0) { toast('Não há dados!', 'warning'); return; }
-    let dados = getLancamentosFiltrados();
-    const busca = (document.getElementById('buscaLancamento')?.value || filtrosEstado.lancamentos.busca || '').toLowerCase();
-    if (busca) {
-        dados = dados.filter(l =>
-            (l.pedido?.toString().includes(busca)) || (l.cliente?.toLowerCase().includes(busca)) ||
-            (l.fornecedor?.toLowerCase().includes(busca)) || (l.oc?.toLowerCase().includes(busca)) ||
-            (l.nf?.toLowerCase().includes(busca)) || (l.produtos?.toLowerCase().includes(busca)) ||
-            (l.categoria?.toLowerCase().includes(busca))
-        );
-    }
+    const dados = getLancamentosFiltrados();
     const podeVerCompra = podeVisualizarCompra();
     const wsData = [['#','Pedido','Data','Mês','Tipo','Cliente','OC','Fornecedor','Categoria','Itens','Produtos','Etiqueta','Valor','Data Pagto','Condição','Prev.Fat','Data Fat','Prev.Chegada','Novo Prazo','Status','NF','Transportadora','Chegada','Conf','Entrega','Prazo Final','Usuário','Observações']];
     dados.forEach((l, idx) => {
@@ -1923,7 +1985,6 @@ function exportarLancamentosExcel() {
     XLSX.writeFile(wb, `lancamentos_${new Date().toISOString().slice(0,10)}.xlsx`);
     toast('Arquivo exportado!', 'success');
 }
-
 async function adicionarLancamento() {
     if (!podeEditarLancamentos()) { toast('Sem permissão.', 'error'); return; }
     if (!iniciarSubmit('addLancamento')) return;
@@ -1935,7 +1996,6 @@ async function adicionarLancamento() {
         if (!document.getElementById('lan_mes')?.value) { toast('Mês/Ano obrigatório.', 'warning'); return; }
         const pedido = document.getElementById('lan_pedido')?.value;
         if (!pedido) { toast('Pedido obrigatório.', 'warning'); return; }
-        // ⚡ Permitido lançar várias vezes o mesmo pedido/OC
         const valor = converterParaNumero(document.getElementById('lan_valor')?.value || '0,00');
         let obs = document.getElementById('lan_observacoes')?.value || '';
         if (obs.length > 100) obs = obs.substring(0,100);
@@ -2013,17 +2073,10 @@ async function duplicarLancamento(id) {
     if (!ok) return;
     try {
         const novo = { ...original,
-            produtos: '',
-            itens: 0,
-            categoria: '',
-            valor: 0,
-            nf: '',
-            etiqueta: '',
+            produtos: '', itens: 0, categoria: '', valor: 0, nf: '', etiqueta: '',
             observacoes: 'NOVO ITEM DA MESMA OC',
-            criado: new Date().toISOString(),
-            usuario: usuarioAtual,
-            editadoEm: null,
-            editadoPor: null,
+            criado: new Date().toISOString(), usuario: usuarioAtual,
+            editadoEm: null, editadoPor: null,
             statusSaida: original.tipo === 'SHOWROOM' ? 'pendente' : ''
         };
         delete novo.id;
@@ -2093,7 +2146,6 @@ async function salvarEdicaoLancamento(id) {
         if (!l) throw new Error('Lançamento não encontrado');
         const getValue = (idCampo, fallback = '') => { const el = document.getElementById(idCampo); return el ? el.value : fallback; };
         const novoPedido = parseInt(getValue('edit_lan_pedido'), 10) || l.pedido;
-        // ⚡ Permitido vários lançamentos com o mesmo pedido
         const novoStatus = getValue('edit_lan_status') || l.status;
         if (novoStatus !== l.status) {
             const permitidos = transicoesValidas[l.status] || [];
@@ -2280,10 +2332,30 @@ function telaEstoque() {
     const pendentesEntrada = movimentacoes.filter(m => m.tipo === 'entrada' && m.status === 'pendente').length;
     const pendentesDevolucao = movimentacoes.filter(m => m.tipo === 'devolucao' && m.status === 'pendente').length;
     const totalPendencias = pendentes + pendentesEntrada + pendentesDevolucao;
-    const totalPages = Math.ceil(estoque.length / rowsPerPageEstoque);
+    
+    // ⚡ BUSCA GLOBAL no estoque
+    const busca = (filtrosEstado.estoque.busca || '').toLowerCase().trim();
+    const categoria = filtrosEstado.estoque.categoria || '';
+    const fornecedor = filtrosEstado.estoque.fornecedor || '';
+    let estoqueFiltrado = estoque;
+    if (busca) {
+        estoqueFiltrado = estoqueFiltrado.filter(e =>
+            (e.produto?.toLowerCase().includes(busca)) ||
+            (e.descricao?.toLowerCase().includes(busca)) ||
+            (e.categoria?.toLowerCase().includes(busca)) ||
+            (e.fornecedor?.toLowerCase().includes(busca)) ||
+            (e.colecao?.toLowerCase().includes(busca)) ||
+            (e.codigoProduto?.toLowerCase().includes(busca)) ||
+            (e.numeroEtiqueta?.toLowerCase().includes(busca))
+        );
+    }
+    if (categoria) estoqueFiltrado = estoqueFiltrado.filter(e => e.categoria === categoria);
+    if (fornecedor) estoqueFiltrado = estoqueFiltrado.filter(e => e.fornecedor === fornecedor);
+    
+    const totalPages = Math.ceil(estoqueFiltrado.length / rowsPerPageEstoque);
     if (currentPageEstoque > totalPages) currentPageEstoque = 1;
     const start = (currentPageEstoque - 1) * rowsPerPageEstoque;
-    const estoquePagina = estoque.slice(start, start + rowsPerPageEstoque);
+    const estoquePagina = estoqueFiltrado.slice(start, start + rowsPerPageEstoque);
     const optionsCat = `<option value="">Todas categorias</option>` + categorias.map(c => `<option value="${c}" ${filtrosEstado.estoque.categoria===c?'selected':''}>${c}</option>`).join('');
     const optionsForn = `<option value="">Todos fornecedores</option>` + fornecedores.map(f => `<option value="${escapeHtml(f.nome)}" ${filtrosEstado.estoque.fornecedor===f.nome?'selected':''}>${escapeHtml(f.nome)}</option>`).join('');
     return topBar() + `
@@ -2300,7 +2372,7 @@ function telaEstoque() {
                 <button class="info" onclick="abrirModalEstoque()" style="background:#6c757d;">✏️ Cadastrar Produto</button>
             </div>
             <div class="filtros-rapidos">
-                <input type="text" id="buscaEstoque" placeholder="🔍 Buscar..." oninput="filtrarEstoque()" value="${escapeHtml(filtrosEstado.estoque.busca)}" style="padding:4px 10px;border-radius:20px;border:1px solid #ddd;font-size:11px;" aria-label="Buscar no estoque">
+                <input type="text" id="buscaEstoque" placeholder="🔍 Buscar (produto, descrição, categoria, fornecedor, código, etiqueta)..." oninput="filtrarEstoque()" value="${escapeHtml(filtrosEstado.estoque.busca)}" style="padding:4px 10px;border-radius:20px;border:1px solid #ddd;font-size:11px;" aria-label="Buscar no estoque">
                 <select class="filtro-etiqueta-select" id="filtroEstoqueCategoria" onchange="filtrarEstoque()" aria-label="Filtrar por categoria">${optionsCat}</select>
                 <select class="filtro-etiqueta-select" id="filtroEstoqueFornecedor" onchange="filtrarEstoque()" aria-label="Filtrar por fornecedor">${optionsForn}</select>
             </div>
@@ -2348,7 +2420,7 @@ function telaEstoque() {
                                 </td>
                             </tr>`;
                         }).join('')}
-                        ${estoque.length === 0 ? `<tr><td colspan="12" class="text-center">Nenhum item cadastrado.</td></tr>` : ''}
+                        ${estoqueFiltrado.length === 0 ? `<tr><td colspan="12" class="text-center">Nenhum produto encontrado${busca ? ' para "' + escapeHtml(busca) + '"' : ''}.</td></tr>` : ''}
                     </tbody>
                 </table>
             </div>
@@ -2356,7 +2428,24 @@ function telaEstoque() {
         </div>`;
 }
 function renderPaginacaoEstoque() {
-    const total = Math.ceil(estoque.length / rowsPerPageEstoque);
+    const busca = (filtrosEstado.estoque.busca || '').toLowerCase().trim();
+    const categoria = filtrosEstado.estoque.categoria || '';
+    const fornecedor = filtrosEstado.estoque.fornecedor || '';
+    let estoqueFiltrado = estoque;
+    if (busca) {
+        estoqueFiltrado = estoqueFiltrado.filter(e =>
+            (e.produto?.toLowerCase().includes(busca)) ||
+            (e.descricao?.toLowerCase().includes(busca)) ||
+            (e.categoria?.toLowerCase().includes(busca)) ||
+            (e.fornecedor?.toLowerCase().includes(busca)) ||
+            (e.colecao?.toLowerCase().includes(busca)) ||
+            (e.codigoProduto?.toLowerCase().includes(busca)) ||
+            (e.numeroEtiqueta?.toLowerCase().includes(busca))
+        );
+    }
+    if (categoria) estoqueFiltrado = estoqueFiltrado.filter(e => e.categoria === categoria);
+    if (fornecedor) estoqueFiltrado = estoqueFiltrado.filter(e => e.fornecedor === fornecedor);
+    const total = Math.ceil(estoqueFiltrado.length / rowsPerPageEstoque);
     const pag = document.getElementById('paginationEstoque');
     if (!pag) return;
     if (total <= 1) { pag.innerHTML = ''; return; }
@@ -2368,25 +2457,21 @@ function changePageEstoque(delta) {
     const newPage = currentPageEstoque + delta;
     if (newPage >= 1 && newPage <= total) { currentPageEstoque = newPage; renderizarTelaAtual(); }
 }
+// ⚡ BUSCA GLOBAL no Estoque
 function filtrarEstoque() {
     const busca = document.getElementById('buscaEstoque')?.value || '';
     const categoria = document.getElementById('filtroEstoqueCategoria')?.value || '';
     const fornecedor = document.getElementById('filtroEstoqueFornecedor')?.value || '';
     filtrosEstado.estoque = { busca, categoria, fornecedor };
-    const tbody = document.getElementById('estoqueBody');
-    if (!tbody) return;
-    const t = busca.toLowerCase().trim();
-    tbody.querySelectorAll('tr').forEach(row => {
-        if (row.querySelector('td[colspan]')) return;
-        const texto = row.textContent.toLowerCase();
-        const cat = row.cells?.[3]?.textContent?.trim() || '';
-        const forn = row.cells?.[6]?.textContent?.trim() || '';
-        let show = true;
-        if (t && !texto.includes(t)) show = false;
-        if (categoria && cat !== categoria) show = false;
-        if (fornecedor && forn !== fornecedor) show = false;
-        row.style.display = show ? '' : 'none';
-    });
+    currentPageEstoque = 1;
+    const main = getElement('main-content');
+    if (!main) return;
+    main.innerHTML = telaEstoque();
+    setTimeout(() => {
+        renderPaginacaoEstoque();
+        restaurarEstadoFiltros();
+        aplicarFocoBusca('buscaEstoque', busca);
+    }, 30);
 }
 
 function abrirModalMovimentacao(produtoId = null) {
