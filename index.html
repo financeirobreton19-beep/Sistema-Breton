@@ -98,40 +98,43 @@
         .acoes-cell {
             white-space: nowrap;
             text-align: center;
-            vertical-align: middle;
-            padding: 4px 4px !important;
+            vertical-align: middle !important;
+            padding: 6px 4px !important;
         }
         .acoes-wrapper {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 3px;
+            gap: 4px;
             flex-wrap: nowrap;
             vertical-align: middle;
+            min-height: 28px;
         }
         .acoes-wrapper button {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 3px 5px;
+            padding: 4px 6px;
             font-size: 11px;
-            min-width: 24px;
-            height: 24px;
-            border-radius: 3px;
+            min-width: 26px;
+            height: 26px;
+            border-radius: 4px;
             line-height: 1;
+            flex-shrink: 0;
         }
         .acoes-wrapper .pendencia-badge {
             display: inline-flex;
             align-items: center;
-            gap: 3px;
+            gap: 2px;
             background: #fff3e0;
             color: #e65100;
             padding: 2px 6px;
             border-radius: 10px;
-            font-size: 9px;
+            font-size: 10px;
             font-weight: bold;
             border: 1px solid #ffe0b2;
-            margin-right: 2px;
+            height: 26px;
+            line-height: 1;
         }
         
         .lancamentos-table col.c-num     { width: 38px; }
@@ -177,6 +180,8 @@
         .estoque-table col.c-img    { width: 62px; }
         .estoque-table col.c-mov    { width: 120px; }
         .estoque-table col.c-acoes  { width: 200px; }
+        .estoque-table td.acoes-cell { vertical-align: middle !important; }
+        .estoque-table .acoes-wrapper { min-height: 32px; }
         
         .pedidos-table col.c-num    { width: 45px; }
         .pedidos-table col.c-pedido { width: 80px; }
@@ -438,6 +443,57 @@
         .confirm-content p { color: #666; margin-bottom: 20px; font-size: 14px; }
         .confirm-buttons { display: flex; gap: 10px; justify-content: center; }
         
+        /* ===== SISTEMA DE ALERTAS VISUAIS ===== */
+        .table-container tr.faturado-row td { background-color: #e3f2fd !important; }
+        .table-container tr.faturado-row:hover td { background-color: #bbdef5 !important; }
+        .table-container tr.faturado-row td:first-child { border-left: 4px solid #0288d1; }
+        
+        .table-container tr.fat-proximo-row td { background-color: #fff9c4 !important; }
+        .table-container tr.fat-proximo-row:hover td { background-color: #fff59d !important; }
+        .table-container tr.fat-proximo-row td:first-child { border-left: 4px solid #f9a825; }
+        
+        .table-container tr.fat-vencido-row td { background-color: #ffe0b2 !important; }
+        .table-container tr.fat-vencido-row:hover td { background-color: #ffcc80 !important; }
+        .table-container tr.fat-vencido-row td:first-child { border-left: 4px solid #e65100; }
+        
+        .table-container tr.entrega-proxima-row td { background-color: #ffebee !important; }
+        .table-container tr.entrega-proxima-row:hover td { background-color: #ffcdd2 !important; }
+        .table-container tr.entrega-proxima-row td:first-child { border-left: 4px solid #d32f2f; }
+        
+        .table-container tr.entrega-vencida-row td { background-color: #ffcdd2 !important; }
+        .table-container tr.entrega-vencida-row:hover td { background-color: #ef9a9a !important; }
+        .table-container tr.entrega-vencida-row td:first-child { border-left: 4px solid #b71c1c; }
+        
+        .table-container tr.entrega-vencida-row td:last-child::after,
+        .table-container tr.fat-vencido-row td:last-child::after {
+            content: " ⚠️";
+            font-weight: bold;
+        }
+        .table-container tr.entrega-proxima-row td:last-child::after {
+            content: " 🔔";
+        }
+        .table-container tr.fat-proximo-row td:last-child::after {
+            content: " ⏰";
+        }
+        
+        .faturado-count {
+            background: #e3f2fd;
+            color: #0b5e7e;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            border: 1px solid #bbdef5;
+            transition: all 0.2s;
+        }
+        .faturado-count:hover { background: #bbdef5; transform: scale(1.05); }
+        
+        .filtro-tipo-btn.faturado-btn.active {
+            background: #0288d1;
+            border-color: #0288d1;
+            color: white;
+        }
+        
         @media (max-width: 1024px) {
             .main { margin-left: 0; padding: 10px; }
             .sidebar { transform: translateX(-100%); width: 260px; }
@@ -449,7 +505,7 @@
             .footer-verse { left: 10px; bottom: 4px; font-size: 8px; }
             .resumo-rapido { gap: 10px; font-size: 11px; padding: 6px 12px; }
             .filtros-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-            .charts-grid { grid-template-columns: 1fr; }
+            .charts-grid { grid-template-columns: 1fr !important; }
             .modal-content { width: 95%; max-width: 95%; padding: 15px; }
             .form-grid { grid-template-columns: 1fr 1fr; }
             .login-box { max-width: 90%; padding: 20px; }
@@ -1285,25 +1341,38 @@ function aplicarOrdenacao(lista) {
 }
 function aplicarFiltroTipo(lista) {
     if (currentFilterType === "TODOS") return lista;
+    if (currentFilterType === "FATURADO") {
+        return lista.filter(l => (l.status || '').toUpperCase().trim() === 'FATURADO');
+    }
     return lista.filter(l => l.tipo === currentFilterType);
 }
 function aplicarFiltroEtiqueta(lista) {
     if (currentEtiquetaFilter === "TODAS") return lista;
     return lista.filter(l => l.etiqueta === currentEtiquetaFilter);
 }
+function normalizarTexto(str) {
+    if (str === undefined || str === null) return '';
+    return String(str)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[.\-\/_\s]+/g, '')
+        .trim();
+}
 function aplicarFiltroBuscaLancamentos(lista) {
-    const busca = (filtrosEstado.lancamentos.busca || '').toLowerCase().trim();
-    if (!busca) return lista;
-    return lista.filter(l =>
-        (l.pedido?.toString().includes(busca)) ||
-        (l.cliente?.toLowerCase().includes(busca)) ||
-        (l.fornecedor?.toLowerCase().includes(busca)) ||
-        (l.oc?.toLowerCase().includes(busca)) ||
-        (l.nf?.toLowerCase().includes(busca)) ||
-        (l.produtos?.toLowerCase().includes(busca)) ||
-        (l.categoria?.toLowerCase().includes(busca)) ||
-        (l.etiqueta?.toLowerCase().includes(busca))
-    );
+    const buscaBruta = (filtrosEstado.lancamentos.busca || '').trim();
+    if (!buscaBruta) return lista;
+    const palavras = buscaBruta.split(/\s+/).map(p => normalizarTexto(p)).filter(p => p);
+    return lista.filter(l => {
+        const campos = [
+            l.pedido, l.cliente, l.fornecedor, l.oc, l.nf,
+            l.produtos, l.categoria, l.etiqueta, l.transportadora,
+            l.mes, l.condicao, l.status, l.observacoes,
+            l.tipo, l.usuario
+        ];
+        const textoCompleto = normalizarTexto(campos.join(' '));
+        return palavras.every(p => textoCompleto.includes(p));
+    });
 }
 function getLancamentosFiltrados() {
     let filtrados = aplicarFiltroTipo(lancamentos);
@@ -1319,13 +1388,10 @@ function calcularTotais(lista) {
     const totalAtrasados = lista.filter(l => isPedidoAtrasado(l)).length;
     return { totalPedidos, totalValor, totalItens, totalAtrasados };
 }
-
 function telaPedidos() {
     if (!temPermissao('pedidos', 'acesso')) return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2></div>`;
     const podeEditar = temPermissao('pedidos', 'editar');
     const podeVisualizar = temPermissao('pedidos', 'visualizar');
-    
-    // ⚡ BUSCA GLOBAL (antes da paginação)
     const busca = (filtrosEstado.pedidos.busca || '').toLowerCase().trim();
     let clientesFiltrados = clientes;
     if (busca) {
@@ -1336,12 +1402,10 @@ function telaPedidos() {
             (c.contato?.toLowerCase().includes(busca))
         );
     }
-    
     const totalPages = Math.ceil(clientesFiltrados.length / rowsPerPagePedidos);
     if (currentPagePedidos > totalPages) currentPagePedidos = 1;
     const start = (currentPagePedidos - 1) * rowsPerPagePedidos;
     const clientesPagina = clientesFiltrados.slice(start, start + rowsPerPagePedidos);
-    
     return topBar() + `
         <div class="box">
             <h2>📋 Pedidos</h2>
@@ -1401,7 +1465,6 @@ function changePagePedidos(delta) {
     const newPage = currentPagePedidos + delta;
     if (newPage >= 1 && newPage <= total) { currentPagePedidos = newPage; renderizarTelaAtual(); }
 }
-// ⚡ BUSCA GLOBAL
 function filtrarClientes() {
     const input = document.getElementById('buscaCliente');
     filtrosEstado.pedidos.busca = input ? input.value : '';
@@ -1500,8 +1563,6 @@ function telaFornecedores() {
     if (!temPermissao('fornecedores', 'acesso')) return topBar() + `<div class="box"><h2>🔒 Acesso Negado</h2></div>`;
     const podeEditar = temPermissao('fornecedores', 'editar');
     const podeVisualizar = temPermissao('fornecedores', 'visualizar');
-    
-    // ⚡ BUSCA GLOBAL
     const busca = (filtrosEstado.fornecedores.busca || '').toLowerCase().trim();
     let fornecedoresFiltrados = fornecedores;
     if (busca) {
@@ -1514,7 +1575,6 @@ function telaFornecedores() {
             (f.colecao?.toLowerCase().includes(busca))
         );
     }
-    
     return topBar() + `
         <div class="box">
             <h2>📦 Fornecedores</h2>
@@ -1552,7 +1612,6 @@ function telaFornecedores() {
             </div>
         </div>`;
 }
-// ⚡ BUSCA GLOBAL
 function filtrarFornecedores() {
     const input = document.getElementById('buscaFornecedor');
     filtrosEstado.fornecedores.busca = input ? input.value : '';
@@ -1758,6 +1817,7 @@ function telaLancamentos() {
     const abaAtiva = filtrosEstado.lancamentos.abaAtiva || 'tab1';
     const tabActive = (t) => abaAtiva === t ? 'active' : '';
     const contentActive = (t) => abaAtiva === t ? 'active' : '';
+    const totalFaturados = lancamentosFiltrados.filter(x => (x.status || '').toUpperCase().trim() === 'FATURADO').length;
     return topBar() + `
         <div class="box">
             <h2>📝 Lançamentos</h2>
@@ -1766,6 +1826,7 @@ function telaLancamentos() {
                 <span class="resumo-item">💰 <strong>${podeVerCompra ? formatarValor(totais.totalValor) : '••••'}</strong></span>
                 <span class="resumo-item">📦 <strong>${totais.totalItens}</strong> itens</span>
                 <span class="resumo-item">⚠️ <strong>${totais.totalAtrasados}</strong> atrasados <span class="atrasados-count">${totais.totalAtrasados}</span></span>
+                ${totalFaturados > 0 ? `<span class="resumo-item">📋 <strong>${totalFaturados}</strong> faturados <span class="faturado-count" onclick="setFilterType('FATURADO')" title="Clique para filtrar apenas faturados">ver</span></span>` : ''}
                 <button class="btn-excel" onclick="exportarLancamentosExcel()">📊 Excel</button>
             </div>
             <div class="filtros-rapidos">
@@ -1774,6 +1835,7 @@ function telaLancamentos() {
                 <button class="filtro-tipo-btn ${currentFilterType==='SHOWROOM'?'active':''}" onclick="setFilterType('SHOWROOM')">🖼️ SHOWROOM</button>
                 <button class="filtro-tipo-btn ${currentFilterType==='ESTOQUE'?'active':''}" onclick="setFilterType('ESTOQUE')">📦 ESTOQUE</button>
                 <button class="filtro-tipo-btn ${currentFilterType==='ASSISTENCIA'?'active':''}" onclick="setFilterType('ASSISTENCIA')">🔧 ASSISTENCIA</button>
+                <button class="filtro-tipo-btn faturado-btn ${currentFilterType==='FATURADO'?'active':''}" onclick="setFilterType('FATURADO')">📋 FATURADO</button>
                 <select class="filtro-etiqueta-select" id="filtroEtiqueta" onchange="setFilterEtiqueta(this.value)" aria-label="Filtrar por etiqueta">
                     <option value="TODAS" ${currentEtiquetaFilter==='TODAS'?'selected':''}>🏷️ Todas</option>${etiquetaOptions}
                 </select>
@@ -1846,7 +1908,7 @@ function telaLancamentos() {
                     <div style="text-align:center;margin-top:20px"><button class="salvar" id="btnSalvarLancamento" onclick="adicionarLancamento()">💾 SALVAR LANÇAMENTO</button></div>
                 </div>
             </details>` : ''}
-            <div class="search-box"><input type="text" id="buscaLancamento" placeholder="🔍 Buscar (pedido, cliente, OC, NF, produto, categoria, etiqueta)..." oninput="filtrarLancamentos()" value="${escapeHtml(filtrosEstado.lancamentos.busca)}" aria-label="Buscar lançamentos"></div>
+            <div class="search-box"><input type="text" id="buscaLancamento" placeholder="🔍 Buscar (pedido, cliente, OC, NF, produto, categoria, etiqueta, fornecedor, status...)" oninput="filtrarLancamentos()" value="${escapeHtml(filtrosEstado.lancamentos.busca)}" aria-label="Buscar lançamentos"></div>
             <div class="table-container">
                 <table class="lancamentos-table">
                     <colgroup>
@@ -1882,8 +1944,32 @@ function renderLancamentos() {
     const tbody = document.getElementById('lancamentosBody');
     if (!tbody) return;
     tbody.innerHTML = dadosPagina.map((l, idx) => {
-        const atrasado = isPedidoAtrasado(l);
-        const rowClass = atrasado ? 'atrasado-row' : '';
+        // ===== NOVA LÓGICA DE CORES =====
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const faturado = (l.status || '').toUpperCase().trim() === 'FATURADO';
+        const statusFinalizado = ['ENTREGUE','ENTREGUE EM BELÉM','FINALIZADO/AG PGT','CANCELADO'].includes((l.status || '').toUpperCase().trim());
+
+        let diasFat = null;
+        if (l.prev_fat && !faturado && !statusFinalizado) {
+            const dataFat = new Date(l.prev_fat); dataFat.setHours(0,0,0,0);
+            diasFat = Math.round((dataFat - hoje) / 86400000);
+        }
+
+        let diasEntrega = null;
+        if (l.entrega && !statusFinalizado) {
+            const dataEnt = new Date(l.entrega); dataEnt.setHours(0,0,0,0);
+            diasEntrega = Math.round((dataEnt - hoje) / 86400000);
+        }
+
+        const classes = [];
+        if (diasEntrega !== null && diasEntrega < 0) classes.push('entrega-vencida-row');
+        else if (diasFat !== null && diasFat < 0) classes.push('fat-vencido-row');
+        else if (diasEntrega !== null && diasEntrega <= 7) classes.push('entrega-proxima-row');
+        else if (diasFat !== null && diasFat <= 7) classes.push('fat-proximo-row');
+        else if (faturado) classes.push('faturado-row');
+
+        const rowClass = classes.join(' ');
+
         let statusSaidaBadge = '';
         if (l.tipo === 'SHOWROOM') {
             if (l.statusSaida === 'pendente') statusSaidaBadge = '<span class="status-badge em-aberto" style="font-size:8px;">⏳</span>';
@@ -1962,8 +2048,6 @@ function setFilterType(tipo) { currentFilterType = tipo; currentPage = 1; render
 function setFilterEtiqueta(valor) { currentEtiquetaFilter = valor; currentPage = 1; renderizarTelaAtual(); }
 function setOrder(order) { currentOrder = order; currentPage = 1; renderizarTelaAtual(); }
 function toggleOrderDirection() { currentOrderDirection = currentOrderDirection === 'asc' ? 'desc' : 'asc'; currentPage = 1; renderizarTelaAtual(); }
-
-// ⚡ BUSCA GLOBAL em Lançamentos
 function filtrarLancamentos() {
     const input = document.getElementById('buscaLancamento');
     filtrosEstado.lancamentos.busca = input ? input.value : '';
@@ -2332,8 +2416,6 @@ function telaEstoque() {
     const pendentesEntrada = movimentacoes.filter(m => m.tipo === 'entrada' && m.status === 'pendente').length;
     const pendentesDevolucao = movimentacoes.filter(m => m.tipo === 'devolucao' && m.status === 'pendente').length;
     const totalPendencias = pendentes + pendentesEntrada + pendentesDevolucao;
-    
-    // ⚡ BUSCA GLOBAL no estoque
     const busca = (filtrosEstado.estoque.busca || '').toLowerCase().trim();
     const categoria = filtrosEstado.estoque.categoria || '';
     const fornecedor = filtrosEstado.estoque.fornecedor || '';
@@ -2351,7 +2433,6 @@ function telaEstoque() {
     }
     if (categoria) estoqueFiltrado = estoqueFiltrado.filter(e => e.categoria === categoria);
     if (fornecedor) estoqueFiltrado = estoqueFiltrado.filter(e => e.fornecedor === fornecedor);
-    
     const totalPages = Math.ceil(estoqueFiltrado.length / rowsPerPageEstoque);
     if (currentPageEstoque > totalPages) currentPageEstoque = 1;
     const start = (currentPageEstoque - 1) * rowsPerPageEstoque;
@@ -2457,7 +2538,6 @@ function changePageEstoque(delta) {
     const newPage = currentPageEstoque + delta;
     if (newPage >= 1 && newPage <= total) { currentPageEstoque = newPage; renderizarTelaAtual(); }
 }
-// ⚡ BUSCA GLOBAL no Estoque
 function filtrarEstoque() {
     const busca = document.getElementById('buscaEstoque')?.value || '';
     const categoria = document.getElementById('filtroEstoqueCategoria')?.value || '';
@@ -2892,18 +2972,67 @@ function aplicarFiltrosRelatorio() {
 }
 function gerarRelatorios(dados) {
     const total = dados.length;
-    const meses = {}; dados.forEach(l=>{ if(l.data){ let d=new Date(l.data); let m=d.toLocaleString('pt-BR',{month:'long',year:'numeric'}); meses[m]=(meses[m]||0)+1; } });
+    
+    const meses = {};
+    dados.forEach(l => {
+        if (l.data) {
+            const d = new Date(l.data);
+            const chave = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            meses[chave] = (meses[chave] || 0) + 1;
+        }
+    });
+    const mesesOrdenados = Object.entries(meses)
+        .sort((a, b) => b[0].localeCompare(a[0]))
+        .map(([chave, qtd]) => {
+            const [ano, mes] = chave.split('-');
+            const nomesMeses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+            return [`${nomesMeses[parseInt(mes,10)-1]}/${ano}`, qtd];
+        });
+    
     const status = {}; dados.forEach(l=>{ let s=l.status||'PENDENTE'; status[s]=(status[s]||0)+1; });
     const cond = {}; dados.forEach(l=>{ let c=l.condicao||'SEM CONDIÇÃO'; cond[c]=(cond[c]||0)+1; });
     const cat = {}; dados.forEach(l=>{ let c=l.categoria||'SEM CATEGORIA'; cat[c]=(cat[c]||0)+1; });
-    const produtos = {}; dados.forEach(l=>{ if(l.produtos){ const nome=l.produtos.trim(); if(!produtos[nome]) produtos[nome]=0; produtos[nome]+=parseInt(l.itens, 10)||0; } });
-    const top8 = Object.entries(produtos).sort((a,b)=>b[1]-a[1]).slice(0,8);
-    const fornecedorCount = {}; dados.forEach(l=>{ if(l.fornecedor){ if(!fornecedorCount[l.fornecedor]) fornecedorCount[l.fornecedor]=0; fornecedorCount[l.fornecedor]++; } });
-    const topFornecedores = Object.entries(fornecedorCount).sort((a,b)=>b[1]-a[1]);
-    const clientesRank = {}; dados.forEach(l=>{ if(l.cliente) clientesRank[l.cliente]=(clientesRank[l.cliente]||0)+1; });
-    const topClientes = Object.entries(clientesRank).sort((a,b)=>b[1]-a[1]).slice(0,5);
-    const fornRank = {}; dados.forEach(l=>{ if(l.fornecedor) fornRank[l.fornecedor]=(fornRank[l.fornecedor]||0)+1; });
-    const topForn = Object.entries(fornRank).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    
+    const produtosComShow = {};
+    dados.forEach(l => {
+        if (l.produtos && (l.categoria || '').toUpperCase().trim() !== 'TECIDO') {
+            const nome = l.produtos.trim();
+            if (!produtosComShow[nome]) produtosComShow[nome] = 0;
+            produtosComShow[nome] += parseInt(l.itens, 10) || 0;
+        }
+    });
+    const top10ComShow = Object.entries(produtosComShow).sort((a,b) => b[1] - a[1]).slice(0, 10);
+    
+    const produtosSemShow = {};
+    dados.forEach(l => {
+        if (l.produtos && (l.categoria || '').toUpperCase().trim() !== 'TECIDO' && l.tipo !== 'SHOWROOM') {
+            const nome = l.produtos.trim();
+            if (!produtosSemShow[nome]) produtosSemShow[nome] = 0;
+            produtosSemShow[nome] += parseInt(l.itens, 10) || 0;
+        }
+    });
+    const top10SemShow = Object.entries(produtosSemShow).sort((a,b) => b[1] - a[1]).slice(0, 10);
+    
+    const fornComClautex = {};
+    dados.forEach(l => {
+        if (l.fornecedor && l.fornecedor.toUpperCase().includes('CLAUTEX')) {
+            fornComClautex[l.fornecedor] = (fornComClautex[l.fornecedor] || 0) + 1;
+        }
+    });
+    const topFornComClautex = Object.entries(fornComClautex).sort((a,b) => b[1] - a[1]).slice(0, 10);
+    
+    const fornSemClautex = {};
+    dados.forEach(l => {
+        if (l.fornecedor && !l.fornecedor.toUpperCase().includes('CLAUTEX')) {
+            fornSemClautex[l.fornecedor] = (fornSemClautex[l.fornecedor] || 0) + 1;
+        }
+    });
+    const topFornSemClautex = Object.entries(fornSemClautex).sort((a,b) => b[1] - a[1]).slice(0, 10);
+    
+    const clientesRank = {};
+    dados.forEach(l => { if (l.cliente) clientesRank[l.cliente] = (clientesRank[l.cliente] || 0) + 1; });
+    const topClientes = Object.entries(clientesRank).sort((a,b) => b[1] - a[1]).slice(0, 10);
+    
     const conteudo = document.getElementById('conteudoRelatorios');
     if (!conteudo) return;
     conteudo.innerHTML = `
@@ -2913,17 +3042,49 @@ function gerarRelatorios(dados) {
             <div class="kpi-card"><h4>Entregues</h4><div class="value">${dados.filter(l=>l.status==='ENTREGUE' || l.status==='ENTREGUE EM BELÉM').length}</div></div>
             <div class="kpi-card"><h4>Pendentes</h4><div class="value">${dados.filter(l=>l.status==='EM ABERTO'||!l.status).length}</div></div>
         </div>
+        
         <div class="charts-grid">
-            <div class="chart-container"><h4>📅 Pedidos por Mês</h4><table><tbody>${Object.entries(meses).map(([m,q])=>`<tr><td>${escapeHtml(m)}</td><td style="text-align:right;font-weight:600;">${q}</td></tr>`).join('')}</tbody></table></div>
+            <div class="chart-container"><h4>📅 Pedidos por Mês (mais recente primeiro)</h4><table><tbody>${mesesOrdenados.map(([m,q])=>`<tr><td>${escapeHtml(m)}</td><td style="text-align:right;font-weight:600;">${q}</td></tr>`).join('')}</tbody></table></div>
             <div class="chart-container"><h4>📌 Status</h4><table><tbody>${Object.entries(status).map(([s,q])=>`<tr><td>${escapeHtml(s)}</td><td style="text-align:right;font-weight:600;">${q}</td></tr>`).join('')}</tbody></table></div>
             <div class="chart-container"><h4>💰 Condição</h4><table><tbody>${Object.entries(cond).map(([c,q])=>`<tr><td>${escapeHtml(c)}</td><td style="text-align:right;font-weight:600;">${q}</td></tr>`).join('')}</tbody></table></div>
             <div class="chart-container"><h4>🏷️ Categoria</h4><table><tbody>${Object.entries(cat).map(([c,q])=>`<tr><td>${escapeHtml(c)}</td><td style="text-align:right;font-weight:600;">${q}</td></tr>`).join('')}</tbody></table></div>
-            <div class="chart-container"><h4>🏆 TOP 8 Produtos</h4><table><thead><tr><th scope="col">#</th><th scope="col">Produto</th><th scope="col" style="text-align:right;">Qtd</th></tr></thead><tbody>${top8.map(([prod,qtd],i)=>`<tr><td>${i+1}</td><td>${escapeHtml(prod)}</td><td style="text-align:right;font-weight:600;">${qtd}</td></tr>`).join('')}</tbody></table></div>
         </div>
-        <div class="charts-grid">
-            <div class="chart-container"><h4>🏭 Fornecedores</h4><table><thead><tr><th scope="col">Fornecedor</th><th scope="col" style="text-align:right;">Pedidos</th></tr></thead><tbody>${topFornecedores.map(([forn,qtd])=>`<tr><td>${escapeHtml(forn)}</td><td style="text-align:right;font-weight:600;">${qtd}</td></tr>`).join('')}</tbody></table></div>
-            <div class="chart-container"><h4>🏆 Top Clientes</h4><table><thead><tr><th scope="col">Cliente</th><th scope="col" style="text-align:right;">Pedidos</th></tr></thead><tbody>${topClientes.map(([c,q])=>`<tr><td>${escapeHtml(c)}</td><td style="text-align:right;font-weight:600;">${q}</td></tr>`).join('')}</tbody></table></div>
-            <div class="chart-container"><h4>🏭 Top Fornecedores (Geral)</h4><table><thead><tr><th scope="col">Fornecedor</th><th scope="col" style="text-align:right;">Pedidos</th></tr></thead><tbody>${topForn.map(([f,q])=>`<tr><td>${escapeHtml(f)}</td><td style="text-align:right;font-weight:600;">${q}</td></tr>`).join('')}</tbody></table></div>
+        
+        <h3 style="margin-top:20px;color:#5C2A2A;">🏆 TOP 10 Produtos</h3>
+        <div class="charts-grid" style="grid-template-columns: repeat(2, 1fr);">
+            <div class="chart-container">
+                <h4>🏆 TOP 10 Produtos COM SHOWROOM</h4>
+                <table><thead><tr><th scope="col">#</th><th scope="col">Produto</th><th scope="col" style="text-align:right;">Qtd</th></tr></thead>
+                <tbody>${top10ComShow.map(([p,q],i)=>`<tr><td>${i+1}</td><td>${escapeHtml(p)}</td><td style="text-align:right;font-weight:600;">${q}</td></tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:#999;">Sem dados</td></tr>'}</tbody></table>
+            </div>
+            <div class="chart-container">
+                <h4>🏆 TOP 10 Produtos SEM SHOWROOM</h4>
+                <table><thead><tr><th scope="col">#</th><th scope="col">Produto</th><th scope="col" style="text-align:right;">Qtd</th></tr></thead>
+                <tbody>${top10SemShow.map(([p,q],i)=>`<tr><td>${i+1}</td><td>${escapeHtml(p)}</td><td style="text-align:right;font-weight:600;">${q}</td></tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:#999;">Sem dados</td></tr>'}</tbody></table>
+            </div>
+        </div>
+        
+        <h3 style="margin-top:20px;color:#5C2A2A;">🏭 TOP 10 Fornecedores</h3>
+        <div class="charts-grid" style="grid-template-columns: repeat(2, 1fr);">
+            <div class="chart-container">
+                <h4>🏭 TOP 10 Fornecedores COM CLAUTEX</h4>
+                <table><thead><tr><th scope="col">#</th><th scope="col">Fornecedor</th><th scope="col" style="text-align:right;">Pedidos</th></tr></thead>
+                <tbody>${topFornComClautex.map(([f,q],i)=>`<tr><td>${i+1}</td><td>${escapeHtml(f)}</td><td style="text-align:right;font-weight:600;">${q}</td></tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:#999;">Sem dados</td></tr>'}</tbody></table>
+            </div>
+            <div class="chart-container">
+                <h4>🏭 TOP 10 Fornecedores SEM CLAUTEX</h4>
+                <table><thead><tr><th scope="col">#</th><th scope="col">Fornecedor</th><th scope="col" style="text-align:right;">Pedidos</th></tr></thead>
+                <tbody>${topFornSemClautex.map(([f,q],i)=>`<tr><td>${i+1}</td><td>${escapeHtml(f)}</td><td style="text-align:right;font-weight:600;">${q}</td></tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:#999;">Sem dados</td></tr>'}</tbody></table>
+            </div>
+        </div>
+        
+        <h3 style="margin-top:20px;color:#5C2A2A;">🏅 TOP 10 Clientes</h3>
+        <div class="charts-grid" style="grid-template-columns: 1fr;">
+            <div class="chart-container">
+                <h4>🏆 TOP 10 Clientes</h4>
+                <table><thead><tr><th scope="col">#</th><th scope="col">Cliente</th><th scope="col" style="text-align:right;">Pedidos</th></tr></thead>
+                <tbody>${topClientes.map(([c,q],i)=>`<tr><td>${i+1}</td><td>${escapeHtml(c)}</td><td style="text-align:right;font-weight:600;">${q}</td></tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:#999;">Sem dados</td></tr>'}</tbody></table>
+            </div>
         </div>`;
 }
 function exportarRelatoriosExcel() {
